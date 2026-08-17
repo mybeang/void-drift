@@ -29,7 +29,7 @@
 2. **[onepage-design.md](Docs/Designs/onepage-design.md)** — 기획 허브: 개요 + §0 문서 인덱스 + TODO
 3. **주제별 세부 문서** — onepage §0 인덱스에서 이동
    - 기획(`Docs/Designs/`): 업그레이드/무기(upgrade-pool, weapon-acquisition), 적/에디터툴(enemy-design), 조작(controls-design), UI(ui-design), 진행·난이도·점수(progression-design), 우선순위(scope-tiering)
-   - 개발·이슈(`Docs/Dev/`): 기술 설계·작업/이슈 문서
+   - 개발·이슈(`Docs/Dev/`): [backlog.md](Docs/Dev/backlog.md)(구현 태스크·이슈 트래킹), [01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md)(asmdef 어셈블리 구조·이유) 등 기술 설계 문서
 
 > 세부 문서와 onepage가 어긋나면 **세부 문서가 최신**(onepage §3·§7·§8은 초안 잔재 가능). 발견 즉시 정합화.
 
@@ -42,7 +42,7 @@
 - **UI**: 런타임 = uGUI, 에디터 = UI Toolkit
 - **마감**: 2026-08-31 ("Day5 튜닝"은 밸런싱 단계를 뜻하는 관용 라벨, 실제 5일 아님)
 - **개발 도구**: Claude + UnityMCP (CoplayDev `com.coplaydev.unity-mcp`, HTTP `127.0.0.1:8080`, `.mcp.json` 등록)
-- **씬**: `SampleScene` = **테스트·실험 전용**. **정식 게임 씬은 정식 개발 착수 전 사용자가 결정**한다.
+- **씬(결정 2026-08-17, M0-4)**: **TitleScene / GameScene / ResultScene** 3개(가볍게). Build Settings 순서 Title=0·Game=1·Result=2. **Loading은 별도 씬 아님** — GameScene 진입 시 오버레이로 뜨고 리소스 로딩 완료 후 **Fade Out**(방침만, 구현은 M2 Addressables 이후). `SampleScene` = **테스트·실험 전용**, 빌드 제외 유지.
 
 ## 4. 진행 상태 & 다음 작업 (세션 인계)
 
@@ -58,11 +58,13 @@
 **M0 진행**:
 - **M0-1 (Unity MCP 연결)** ✅ 완료 — CoplayDev MCP for Unity, HTTP `127.0.0.1:8080`, `.mcp.json` 등록·왕복 검증.
 - **M0-2 (큐브 회전 스모크)** ✅ **완료(재작업)** — 물리(Rigidbody+angularVelocity) Z축 회전, 인스펙터(속도/크기/방향), `SmokeCube` 재사용. 사용자 육안 확인. `Assets/Scripts/Smoke/CubeSpinner.cs`. (1차 임의구현은 폐기 → 재작업, 사유는 backlog M0-2 참조.)
-- **다음(대기)**: M0-3(입력 백엔드/R3.Unity 판단), M0-4(asmdef 골격). **§1-9에 따라 다음 세션은 사용자 지시 후 진행** — 자동 착수 금지.
+- **M0-3 (입력 백엔드 & R3.Unity 판단)** ✅ **완료** — 사용자 결정: 입력 = **New Input System**(`com.unity.inputsystem` 1.20.0, `activeInputHandler:1` New 단독), R3.Unity = **설치**(`com.cysharp.r3` 1.3.1 git UPM). MCP로 설치·검증(컴파일 에러 0, 왕복 정상). 구체 입력 액션 오서링은 M1-2에서. 상세는 backlog M0-3 결론.
+- **M0-4 (프로젝트 골격)** ✅ **완료** — asmdef 2개 `VD.Runtime`/`VD.Editor`(네임스페이스 루트 `VD.*`), 폴더 `Scripts/{Core,Player,Enemy,UI,Editor}`, 씬 3개(Title/Game/Result). 리플렉션 검증·컴파일 0. 기술 문서 [Docs/Dev/01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md). 파일/네임스페이스 규칙은 해당 문서·backlog M0-4 참조.
+- **다음(대기)**: **M1 코어 루프** (M1-1 게임 상태 골격부터). **§1-9에 따라 사용자 지시 후 진행** — 자동 착수 금지. **M0 전부 완료.**
 
 > ⚠️ 인계 주의: `SampleScene`의 `SmokeCube`에 **Rigidbody가 에디터에서 추가된 상태(씬 미저장일 수 있음)**. 다음 세션에서 SmokeCube 다룰 때 씬 저장 여부 확인. CubeSpinner는 `[RequireComponent(typeof(Rigidbody))]`.
 
-**⚠️ 설치 상태 실측(2026-08-17)**: UniTask ✅ / R3 코어 1.3.1 ✅(NuGet) / R3.Unity 통합 ⚠️미설치 / Addressables ❌미설치(M2에서) / MCP ✅설치완료 / Input System ⚠️확인필요(M0-3). 상세는 backlog §0.
+**⚠️ 설치 상태 실측(2026-08-17)**: UniTask ✅ / R3 코어 1.3.1 ✅(NuGet) / R3.Unity 통합 ✅설치(`com.cysharp.r3` 1.3.1) / Addressables ❌미설치(M2에서) / MCP ✅설치완료 / Input System ✅New 단독(`com.unity.inputsystem` 1.20.0, handler 1). 상세는 backlog §0.
 
 **Backlog 유지 원칙**: [scope-tiering.md](Docs/Designs/scope-tiering.md)는 티어 수준, backlog는 구현 태스크 단위(DoD 포함). **갱신은 §1-8에 따라 사용자 확인 후.**
 

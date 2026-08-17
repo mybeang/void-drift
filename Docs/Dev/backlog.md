@@ -25,10 +25,10 @@
 | Scene | `SampleScene`만 | |
 | **UniTask** | ✅ | git UPM (`com.cysharp.unitask`) |
 | **R3 코어 1.3.1** | ✅ | NuGetForUnity (`Assets/Packages/R3.1.3.1`) |
-| **R3.Unity 통합** | ⚠️ 미설치 | Unity 프레임 스케줄러/에디터 ObservableTracker 창 미사용 상태 → M0-3에서 판단 |
+| **R3.Unity 통합** | ✅ 설치 | `com.cysharp.r3` 1.3.1 (git UPM). M0-3에서 설치·검증 |
 | **Addressables** | ❌ 미설치 | M2(에디터 툴)에서 설치 |
-| **Unity MCP 브리지** | ❌ 미설치 | M0-1 |
-| **Input System** | ⚠️ 불명확 | `.inputactions`는 있으나 패키지 미확인 → M0-3에서 활성 입력 핸들러 확정 |
+| **Unity MCP 브리지** | ✅ 설치 | M0-1 완료(CoplayDev, HTTP 8080) |
+| **Input System** | ✅ New 단독 | `com.unity.inputsystem` 1.20.0, `activeInputHandler:1`. M0-3에서 확정 |
 
 ---
 
@@ -72,15 +72,20 @@
 - **1차 잔재(참고, git 커밋됨)**: `Assets/Scripts/Smoke/CubeSpinner.cs`(ns `VoidDrift.Smoke`), `SampleScene`의 `SmokeCube`. MCP 파이프라인(스크립트 생성→컴파일→GameObject/컴포넌트→플레이→상태읽기) 자체는 정상 동작 확인됨 — 재작업 시 이 파이프라인 재사용.
 - **✅ 재작업 완료(2026-08-17, 사용자 지시대로)**: **물리 엔진(Rigidbody + angularVelocity)** 로 **Z축 중심** 회전 구현. 인스펙터 노출 = 회전 속도(도/초)·큐브 크기(균일 스케일)·회전 방향(CCW/CW enum). Rigidbody `useGravity=off` + 위치3축·회전 X/Y 고정으로 제자리 Z 스핀. **기존 `SmokeCube` 재사용** + Rigidbody 추가. 검증: rotation `(0,0,z)` Z축 전용·위치 고정·90도/초 정확, 컴파일 에러 0, **사용자 육안 확인 완료**. 방식 선택 근거: 사용자가 "물리 엔진 이용"을 명시 지시, 세부 방식은 Dynamic+angularVelocity 선택.
 
-### M0-3 · 입력 백엔드 & R3.Unity 판단 🔴
+### M0-3 · 입력 백엔드 & R3.Unity 판단 🔴 `[x]`
 - **목적**: 이후 이동 구현(M1-2)이 쓸 입력 방식 확정 + R3 사용 범위 확정.
 - **작업**:
   1. Project Settings의 **Active Input Handling** 확인(Input System / 둘 다 / 레거시). `.inputactions` 실사용 여부 판단.
   2. R3를 MonoBehaviour 생명주기(구독 자동 해제)와 함께 쓸지 → **R3.Unity 통합 패키지** 설치 필요 여부 결정. (미설치면 `CancellationToken`/수동 Dispose로 커버 가능 여부 메모)
 - **DoD**: (a) 이동 입력을 어떤 API로 읽을지 1줄 결론, (b) R3.Unity 설치 여부 결론 — 둘 다 이 문서에 기록.
 - **의존**: 없음
+- **✅ 결론(2026-08-17, 사용자 결정·실측 검증)**:
+  - **실측 시작 상태**: `activeInputHandler: 0`(레거시 단독), `com.unity.inputsystem` 미설치(manifest/packages-lock/PackageCache 전부 없음). `Assets/InputSystem_Actions.inputactions`는 Unity6 기본 **템플릿 잔재**(패키지 미설치라 무력). R3 코어 1.3.1은 NuGet DLL 존재, R3.Unity 통합은 미설치.
+  - **(a) 입력 API = New Input System.** 사용자 결정으로 `com.unity.inputsystem` 1.20.0 설치 + **Active Input Handling = New 단독**(`activeInputHandler: 1`, 사용자 UI 전환 후 에디터 재부팅으로 반영 확인). 이동은 포인터/터치 델타로 **상대 드래그**를 읽음 — 구체 InputAction/EnhancedTouch 오서링은 **M1-2**에서 우리 모바일 스킴에 맞게 진행. (기존 `.inputactions` 데스크톱 템플릿은 M1-2에서 교체 예정, 현재는 그대로 둠.)
+  - **(b) R3.Unity = 설치함.** `com.cysharp.r3` 1.3.1 (git UPM `https://github.com/Cysharp/R3.git?path=src/R3.Unity/Assets/R3.Unity`). R3 코어(NuGet)는 유지 — R3.Unity는 코어를 참조만 하고 번들하지 않아 충돌 없음(컴파일 에러 0 확인). `AddTo(this)` 수명 연동 구독 해제·Unity 프레임 연산자·에디터 ObservableTracker 누수 창 사용 가능.
+  - **검증**: MCP 왕복(telemetry_ping) 정상, 콘솔 에러/경고 0(유일 항목은 무시 대상 "Claude CLI not found" Configure 메시지). 패키지 54→56, packages-lock에 두 패키지 등록 확인.
 
-### M0-4 · 프로젝트 골격 (폴더 · 어셈블리 · 네임스페이스) 🔴
+### M0-4 · 프로젝트 골격 (폴더 · 어셈블리 · 네임스페이스) 🔴 `[x]`
 - **목적**: 런타임/에디터 코드 분리 기반 마련(에디터 툴이 핵심이라 asmdef 분리 필수).
 - **작업**:
   - 폴더: `Assets/Scripts/{Core,Player,Enemy,Combat,Progression,UI,Data}`, `Assets/Scripts/Editor/`.
@@ -88,6 +93,12 @@
   - UniTask/R3 참조를 asmdef에 연결.
 - **DoD**: 빈 asmdef 2개로 컴파일 통과, Editor 어셈블리가 Runtime을 참조. 스모크 스크립트가 새 구조에 안착.
 - **의존**: M0-2
+- **✅ 완료(2026-08-17, 사용자 결정 반영)**: 상세 = [01_AssemblyDefinition.md](01_AssemblyDefinition.md)
+  - **어셈블리 2개**: `VD.Runtime`(Scripts 루트, `UniTask`·`R3.Unity` 참조 + R3 코어 자동참조) / `VD.Editor`(`Editor/`, `includePlatforms:[Editor]`, `VD.Runtime` 참조). **네임스페이스 루트 `VD.*`** (제안 `VoidDrift.*` → 접두어 `VD` 로 확정). 폴더별 분리 아님(과분리 회피).
+  - **폴더(확정)**: `Assets/Scripts/{Core,Player,Enemy,UI}` + `Editor/`. 초안의 `Combat`/`Progression`은 폐기 — 총알은 Player/Enemy 내부 구현, 진행 로직은 Core로 흡수. `Data`는 M2에서, `Core/Interface`·`Player/Struct` 등은 필요 시 생성.
+  - **파일 규칙(사용자 결정)**: 인터페이스 1파일 1개(`Core/Interface/`), 클래스 1파일 1개(소형 연관클래스 동거 허용), public struct는 별도 파일·`*/Struct` 폴더 몰기.
+  - **씬(함께 진행)**: `Assets/Scenes/` 에 TitleScene(build 0)/GameScene(1)/ResultScene(2) 생성·등록. Loading은 별도 씬 아님(GameScene 오버레이+FadeOut 방침, 미구현). SampleScene은 빌드 제외 유지.
+  - **검증**: 리플렉션으로 두 어셈블리 로드·Editor→Runtime 참조·R3/UniTask 링크 확인, 컴파일 에러 0. 마커 스크립트 2개(`VDRuntimeMarker`/`VDEditorMarker`)는 참조 검증용 임시 파일(실코드 안착 시 삭제).
 
 ---
 
@@ -329,7 +340,7 @@
 
 - **수치 미정(Day5)**: 이동 감도/데드존, 발사 간격, 적 스탯 전반, 레벨 임계값 곡선, 페이즈 길이/상승률/점프폭, 처치 점수값, 무기 레벨 수치. → 대부분 **에디터 툴/SO 데이터**로 관리(하드코딩 지양).
 - **미해결 결정**: 실드 버튼 좌/우 옵션, 데미지 넘버 도입 여부, 월드스페이스 체력바 도입 여부(빨간 피격 연출로 대체 가능).
-- **확인 필요**: Input System 활성 핸들러(M0-3), R3.Unity 통합 설치 여부(M0-3), 임포트 우주선 에셋 중 적/플레이어 배분.
+- **확인 필요**: 임포트 우주선 에셋 중 적/플레이어 배분. (~~Input System 활성 핸들러~~·~~R3.Unity 설치 여부~~ → M0-3에서 해소: New 단독 / 설치)
 
 ## 진행 로그
 
@@ -339,3 +350,5 @@
 | 2026-08-17 | M0-1 진행: MCP 구현 = CoplayDev `com.coplaydev.unity-mcp` v10.1.2 확정, manifest.json 추가. Unity 서버 기동(127.0.0.1:8080). claude CLI 미검출로 자동설정 실패 → 프로젝트 `.mcp.json` 수동 등록(`UnityMCP`, http). |
 | 2026-08-17 | M0-1 왕복 검증 완료(✅). M0-2 1차 시도 후 **재작업으로 정정** — 사용자 지시 없는 임의 구현+해석 오류(§1-7 위반). 재구현은 사용자 기준 지시 후. context.md §1에 구현 승인 규칙(§1-7·§1-8) 추가. |
 | 2026-08-17 | M0-2 **재작업 완료(✅)** — 사용자 지시대로 물리(Rigidbody+angularVelocity) Z축 회전, 인스펙터(속도/크기/방향), SmokeCube 재사용. 사용자 육안 확인. context.md §1-9(기능단위 진행·사용자 주도 페이스) 추가. |
+| 2026-08-17 | M0-3 **완료(✅)** — 사용자 결정: 입력 = **New Input System**(`com.unity.inputsystem` 1.20.0, `activeInputHandler:1` New 단독), R3.Unity = **설치**(`com.cysharp.r3` 1.3.1 git UPM). MCP로 설치·검증(컴파일 에러 0, 왕복 정상). 실측 결과 시작 상태는 레거시(handler 0)+Input System 미설치였고 `.inputactions`는 템플릿 잔재였음. |
+| 2026-08-17 | M0-4 **완료(✅)** — asmdef 2개(`VD.Runtime`/`VD.Editor`, 네임스페이스 `VD.*`) + 폴더 골격(Core/Player/Enemy/UI/Editor) + 씬 3개(Title/Game/Result, build 0~2). 리플렉션 검증·컴파일 0. 기술 문서 [01_AssemblyDefinition.md](01_AssemblyDefinition.md) 신규 작성. 초안 `Combat`/`Progression` 폴더 폐기(총알=Player/Enemy 내부, 진행=Core). |

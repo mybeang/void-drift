@@ -91,7 +91,8 @@
 - [x] ~~더블탭 입력 시스템~~ → 실드를 전용 버튼으로 변경하여 해소 (controls-design.md)
 - [x] 인게임 UI 방식 결정 → [ui-design.md](ui-design.md) (런타임=uGUI, 에디터=UI Toolkit)
 - [x] **레벨/진행 디자인** → [progression-design.md](progression-design.md) (3choice 리듬·난이도 곡선·종료/점수)
-- [~] 3D 로우폴리 에셋 소싱 — **보류(나중)**: 사용자가 Unity 프로젝트에 직접 추가 후 논의
-- [~] 사운드/BGM 방향 — **보류(나중)**: 폴리싱 단계에서
+- [x] 3D 로우폴리 에셋 소싱 → `Assets/Imports/` (Spaceships/StarSparrow/Planets/JMO VFX). 세부 배분은 개발 단계
+- [~] 사운드/BGM 방향 — **보류(나중)**: 폴리싱 단계에서 (backlog M5-5)
 - [x] 타이틀 확정 → **Void Drift** (한글 부제 "공허 속으로")
-- [ ] 레포 생성 후 본 문서를 시작점으로 누적 기획 진행
+- [x] 레포 생성 후 본 문서를 시작점으로 누적 기획 진행
+- [x] **개발 Backlog 작성** → [Docs/Dev/backlog.md](../Dev/backlog.md) (M0~M5, 구현 태스크 단위·DoD)

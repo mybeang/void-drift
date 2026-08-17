@@ -60,7 +60,7 @@
 - **DoD**: Claude에서 명령 → Unity 씬/콘솔에 반영되는 왕복 1회 성공(예: 콘솔 로그 또는 오브젝트 생성 확인). ✅ 2026-08-17 검증(인스턴스 `void-drift@5152252c...`, Unity 6000.3.13f1, `manage_scene get_active` 응답 확인).
 - **의존**: 없음
 
-### M0-2 · 스모크 테스트: 큐브 Z축 고정 회전 🔴 `[x]`
+### M0-2 · 스모크 테스트: 큐브 Z축 고정 회전 🔴 `[x]` (재작업 완료)
 - **목적**: 씬 배치 + 스크립트 컴파일 + 플레이 검증 파이프라인 확인. (사용자 지정 첫 태스크)
 - **작업**:
   1. `SmokeScene`(또는 SampleScene 재사용)에 Cube 배치.
@@ -68,7 +68,9 @@
   3. 플레이 모드에서 큐브가 제자리(Z 고정)에서 빙글빙글 도는 것 확인.
 - **DoD**: 플레이 시 큐브가 Z 고정으로 회전. 컴파일 에러 0. (가능하면 MCP로 스핀 속도 파라미터 바꿔 왕복까지)
 - **의존**: M0-1(선택 — MCP 없이 수동으로도 가능)
-- **완료(2026-08-17)**: `Assets/Scripts/Smoke/CubeSpinner.cs`(ns `VoidDrift.Smoke`) MCP로 생성·컴파일(에러 0) → `SmokeCube`(Cube) 생성+컴포넌트 부착 → 플레이 검증: rotation이 설정 비율(30:60)대로 증가, position.z=0 고정, `[CubeSpinner] Awake` 로그 확인. 전 과정 MCP 왕복으로 수행.
+- **⚠️ 재작업 사유(2026-08-17)**: 1차 시도 **폐기**. Claude가 **사용자 지시 없이 구현 방식을 임의 결정**(context.md §1-7 위반). "Z축 고정 회전" **해석 오류** — 사용자 의도는 *Z축을 회전 중심축으로 도는 것*인데, Claude 구현은 *X·Y축 회전 + Z 위치 잠금*이라 큐브가 의도와 다르게(제멋대로) 회전함. **재구현은 사용자가 회전축·"Z축 고정"의 정확한 의미·스핀 속도 등 기준을 지시한 뒤 진행.**
+- **1차 잔재(참고, git 커밋됨)**: `Assets/Scripts/Smoke/CubeSpinner.cs`(ns `VoidDrift.Smoke`), `SampleScene`의 `SmokeCube`. MCP 파이프라인(스크립트 생성→컴파일→GameObject/컴포넌트→플레이→상태읽기) 자체는 정상 동작 확인됨 — 재작업 시 이 파이프라인 재사용.
+- **✅ 재작업 완료(2026-08-17, 사용자 지시대로)**: **물리 엔진(Rigidbody + angularVelocity)** 로 **Z축 중심** 회전 구현. 인스펙터 노출 = 회전 속도(도/초)·큐브 크기(균일 스케일)·회전 방향(CCW/CW enum). Rigidbody `useGravity=off` + 위치3축·회전 X/Y 고정으로 제자리 Z 스핀. **기존 `SmokeCube` 재사용** + Rigidbody 추가. 검증: rotation `(0,0,z)` Z축 전용·위치 고정·90도/초 정확, 컴파일 에러 0, **사용자 육안 확인 완료**. 방식 선택 근거: 사용자가 "물리 엔진 이용"을 명시 지시, 세부 방식은 Dynamic+angularVelocity 선택.
 
 ### M0-3 · 입력 백엔드 & R3.Unity 판단 🔴
 - **목적**: 이후 이동 구현(M1-2)이 쓸 입력 방식 확정 + R3 사용 범위 확정.
@@ -334,4 +336,6 @@
 | 날짜 | 변경 |
 |---|---|
 | 2026-08-17 | Backlog 최초 작성 (M0~M5). 설치/에셋 상태 실측 반영. |
-| 2026-08-17 | M0-1 진행: MCP 구현 = CoplayDev `com.coplaydev.unity-mcp` v10.1.2 확정, manifest.json 추가. Unity 서버 기동(127.0.0.1:8080). claude CLI 미검출로 자동설정 실패 → 프로젝트 `.mcp.json` 수동 등록(`UnityMCP`, http). 세션 재시작 후 왕복 검증 남음. |
+| 2026-08-17 | M0-1 진행: MCP 구현 = CoplayDev `com.coplaydev.unity-mcp` v10.1.2 확정, manifest.json 추가. Unity 서버 기동(127.0.0.1:8080). claude CLI 미검출로 자동설정 실패 → 프로젝트 `.mcp.json` 수동 등록(`UnityMCP`, http). |
+| 2026-08-17 | M0-1 왕복 검증 완료(✅). M0-2 1차 시도 후 **재작업으로 정정** — 사용자 지시 없는 임의 구현+해석 오류(§1-7 위반). 재구현은 사용자 기준 지시 후. context.md §1에 구현 승인 규칙(§1-7·§1-8) 추가. |
+| 2026-08-17 | M0-2 **재작업 완료(✅)** — 사용자 지시대로 물리(Rigidbody+angularVelocity) Z축 회전, 인스펙터(속도/크기/방향), SmokeCube 재사용. 사용자 육안 확인. context.md §1-9(기능단위 진행·사용자 주도 페이스) 추가. |

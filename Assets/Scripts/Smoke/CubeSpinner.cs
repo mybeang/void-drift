@@ -3,33 +3,45 @@ using UnityEngine;
 namespace VoidDrift.Smoke
 {
     /// <summary>
-    /// M0-2 스모크 테스트: 큐브를 제자리에서 회전시키되 Z 위치를 고정한다.
-    /// 게임 컨셉의 'Z축 고정'(자유 XY 이동, Z 잠금) 파이프라인 확인용 — 실게임 로직 아님.
+    /// M0-2 스모크: 큐브를 물리 엔진(Rigidbody)으로 Z축을 중심으로 회전.
+    /// 방식 = Dynamic Rigidbody + angularVelocity (사용자 지정).
     /// </summary>
+    [RequireComponent(typeof(Rigidbody))]
     public class CubeSpinner : MonoBehaviour
     {
-        [Tooltip("초당 회전 각도(도). x/y/z 축별.")]
-        [SerializeField] private Vector3 spinDegreesPerSecond = new Vector3(30f, 60f, 0f);
+        public enum SpinDirection { CounterClockwise, Clockwise } // +Z / -Z
 
-        private float _lockedZ;
+        [Header("회전")]
+        [Tooltip("Z축 회전 속도(도/초).")]
+        [SerializeField] private float rotationSpeedDegPerSec = 90f;
+        [Tooltip("회전 방향.")]
+        [SerializeField] private SpinDirection direction = SpinDirection.CounterClockwise;
+
+        [Header("큐브")]
+        [Tooltip("큐브 크기(균일 스케일).")]
+        [SerializeField] private float cubeSize = 1f;
+
+        private Rigidbody _rb;
 
         private void Awake()
         {
-            _lockedZ = transform.position.z;
-            Debug.Log($"[CubeSpinner] Awake — Z locked at {_lockedZ}");
+            transform.localScale = Vector3.one * cubeSize;
+            _rb = GetComponent<Rigidbody>();
+            _rb.useGravity = false;
+            _rb.angularDamping = 0f; // Unity 6: angularDrag → angularDamping
+            _rb.constraints = RigidbodyConstraints.FreezePosition
+                            | RigidbodyConstraints.FreezeRotationX
+                            | RigidbodyConstraints.FreezeRotationY;
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
-            transform.Rotate(spinDegreesPerSecond * Time.deltaTime, Space.Self);
-
-            // Z축 고정: 회전/외력으로 Z가 흔들려도 초기값으로 되돌린다.
-            var p = transform.position;
-            if (!Mathf.Approximately(p.z, _lockedZ))
-            {
-                p.z = _lockedZ;
-                transform.position = p;
-            }
+            float sign = direction == SpinDirection.CounterClockwise ? 1f : -1f;
+            _rb.angularVelocity = new Vector3(0f, 0f, rotationSpeedDegPerSec * Mathf.Deg2Rad * sign);
         }
+
+#if UNITY_EDITOR
+        private void OnValidate() => transform.localScale = Vector3.one * cubeSize;
+#endif
     }
 }

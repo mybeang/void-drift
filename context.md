@@ -48,7 +48,7 @@
 
 > 다음 작업은 **다른(새) 세션**에서 진행될 수 있음. 이 섹션이 인계 기준.
 
-**현재 상태**: 기획 완료(`Docs/Designs/` 세트). Unity 프로젝트·에셋 셋업 완료(커밋 `에셋 선정 및 기본 셋팅 완료`). **Backlog 작성 완료** → [Docs/Dev/backlog.md](Docs/Dev/backlog.md) (M0~M5). 아직 게임 코드 0줄.
+**현재 상태**: 기획 완료(`Docs/Designs/` 세트). Unity 프로젝트·에셋 셋업 완료. **Backlog** → [Docs/Dev/backlog.md](Docs/Dev/backlog.md) (M0~M5). **M0 부트스트랩 전부 완료** — 어셈블리 골격·씬 3개·입력(New Input System)·리액티브 스택(R3/R3.Unity/UniTask) 확정. 게임 로직 코드는 아직 없음(참조 검증용 마커 스크립트뿐). **다음 = M1 코어 루프(새 세션 예정).**
 
 **개발 전 순서** (전부 완료):
 1. ~~Unity 프로젝트 생성~~ ✅ (사용자)
@@ -60,9 +60,16 @@
 - **M0-2 (큐브 회전 스모크)** ✅ **완료(재작업)** — 물리(Rigidbody+angularVelocity) Z축 회전, 인스펙터(속도/크기/방향), `SmokeCube` 재사용. 사용자 육안 확인. `Assets/Scripts/Smoke/CubeSpinner.cs`. (1차 임의구현은 폐기 → 재작업, 사유는 backlog M0-2 참조.)
 - **M0-3 (입력 백엔드 & R3.Unity 판단)** ✅ **완료** — 사용자 결정: 입력 = **New Input System**(`com.unity.inputsystem` 1.20.0, `activeInputHandler:1` New 단독), R3.Unity = **설치**(`com.cysharp.r3` 1.3.1 git UPM). MCP로 설치·검증(컴파일 에러 0, 왕복 정상). 구체 입력 액션 오서링은 M1-2에서. 상세는 backlog M0-3 결론.
 - **M0-4 (프로젝트 골격)** ✅ **완료** — asmdef 2개 `VD.Runtime`/`VD.Editor`(네임스페이스 루트 `VD.*`), 폴더 `Scripts/{Core,Player,Enemy,UI,Editor}`, 씬 3개(Title/Game/Result). 리플렉션 검증·컴파일 0. 기술 문서 [Docs/Dev/01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md). 파일/네임스페이스 규칙은 해당 문서·backlog M0-4 참조.
-- **다음(대기)**: **M1 코어 루프** (M1-1 게임 상태 골격부터). **§1-9에 따라 사용자 지시 후 진행** — 자동 착수 금지. **M0 전부 완료.**
+**➡️ 다음 작업: M1 코어 루프 (새 세션 인계)** — §1-9에 따라 **사용자 지시 후 착수**, 자동 금지. 시작점 = **M1-1(게임 상태 골격)** → M1-2(이동) … backlog M1 순서.
+- **입력**: **New Input System API로만** 읽는다(레거시 `Input.*` 금지, `activeInputHandler:1`). `VD.Runtime`이 `Unity.InputSystem` 참조 완료. 이동 스킴 = 상대 드래그(controls-design §3), 구체 InputAction/EnhancedTouch 오서링은 M1-2. `Assets/InputSystem_Actions.inputactions`(데스크톱 템플릿)는 M1-2에서 우리 스킴으로 교체/삭제.
+- **코드 위치·규칙**: 런타임 = `VD.Runtime`(ns `VD.Core`/`VD.Player`/`VD.Enemy`/`VD.UI`), 에디터 = `VD.Editor`. 총알은 Player/Enemy 내부. 파일/네임스페이스/struct 규칙은 [Docs/Dev/01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md) + backlog M0-4.
+- **리액티브·비동기**: R3(`ReactiveProperty`/`Subject`) + R3.Unity(`AddTo(this)` 수명 연동) 사용 가능. 비동기는 UniTask.
 
-> ⚠️ 인계 주의: `SampleScene`의 `SmokeCube`에 **Rigidbody가 에디터에서 추가된 상태(씬 미저장일 수 있음)**. 다음 세션에서 SmokeCube 다룰 때 씬 저장 여부 확인. CubeSpinner는 `[RequireComponent(typeof(Rigidbody))]`.
+> ⚠️ **M1 인계 주의**
+> - 씬 3개(Title/Game/Result) **전부 빈 상태**(카메라·라이트 없음). **M1-1에서 GameScene 카메라/기체/스포너 셋업부터**. 현재 에디터 활성 씬 = GameScene.
+> - 마커 스크립트 `VDRuntimeMarker`(`Core/`)·`VDEditorMarker`(`Editor/`)는 **참조 검증용 임시** — 실코드 안착 시 삭제.
+> - `SampleScene`/`SmokeCube`는 M0-2 테스트 잔재(빌드 제외). M1과 무관.
+> - **Unity 재부팅 시 루틴**: Unity 서버 Start → Claude에서 MCP 재연결(또는 세션 재시작). 창의 "Client Configure: Not Configured"는 무시(우리는 `.mcp.json` 수동 등록 사용).
 
 **⚠️ 설치 상태 실측(2026-08-17)**: UniTask ✅ / R3 코어 1.3.1 ✅(NuGet) / R3.Unity 통합 ✅설치(`com.cysharp.r3` 1.3.1) / Addressables ❌미설치(M2에서) / MCP ✅설치완료 / Input System ✅New 단독(`com.unity.inputsystem` 1.20.0, handler 1). 상세는 backlog §0.
 

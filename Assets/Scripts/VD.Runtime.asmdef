@@ -3,7 +3,8 @@
     "rootNamespace": "VD",
     "references": [
         "UniTask",
-        "R3.Unity"
+        "R3.Unity",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -94,7 +94,7 @@
 - **DoD**: 빈 asmdef 2개로 컴파일 통과, Editor 어셈블리가 Runtime을 참조. 스모크 스크립트가 새 구조에 안착.
 - **의존**: M0-2
 - **✅ 완료(2026-08-17, 사용자 결정 반영)**: 상세 = [01_AssemblyDefinition.md](01_AssemblyDefinition.md)
-  - **어셈블리 2개**: `VD.Runtime`(Scripts 루트, `UniTask`·`R3.Unity` 참조 + R3 코어 자동참조) / `VD.Editor`(`Editor/`, `includePlatforms:[Editor]`, `VD.Runtime` 참조). **네임스페이스 루트 `VD.*`** (제안 `VoidDrift.*` → 접두어 `VD` 로 확정). 폴더별 분리 아님(과분리 회피).
+  - **어셈블리 2개**: `VD.Runtime`(Scripts 루트, `UniTask`·`R3.Unity`·`Unity.InputSystem` 참조 + R3 코어 자동참조) / `VD.Editor`(`Editor/`, `includePlatforms:[Editor]`, `VD.Runtime` 참조). **네임스페이스 루트 `VD.*`** (제안 `VoidDrift.*` → 접두어 `VD` 로 확정). 폴더별 분리 아님(과분리 회피). (`Unity.InputSystem` 참조는 M1 준비 점검에서 누락 발견→추가: autoReferenced라도 커스텀 asmdef엔 수동 참조 필요.)
   - **폴더(확정)**: `Assets/Scripts/{Core,Player,Enemy,UI}` + `Editor/`. 초안의 `Combat`/`Progression`은 폐기 — 총알은 Player/Enemy 내부 구현, 진행 로직은 Core로 흡수. `Data`는 M2에서, `Core/Interface`·`Player/Struct` 등은 필요 시 생성.
   - **파일 규칙(사용자 결정)**: 인터페이스 1파일 1개(`Core/Interface/`), 클래스 1파일 1개(소형 연관클래스 동거 허용), public struct는 별도 파일·`*/Struct` 폴더 몰기.
   - **씬(함께 진행)**: `Assets/Scenes/` 에 TitleScene(build 0)/GameScene(1)/ResultScene(2) 생성·등록. Loading은 별도 씬 아님(GameScene 오버레이+FadeOut 방침, 미구현). SampleScene은 빌드 제외 유지.

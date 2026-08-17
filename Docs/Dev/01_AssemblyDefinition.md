@@ -104,7 +104,7 @@ M0-4의 목표는 "런타임/에디터 코드 분리 기반을 마련"하는 것
 
 | 어셈블리 | 위치 | 플랫폼 | 참조 | 담는 것 |
 |---|---|---|---|---|
-| `VD.Runtime` | `Assets/Scripts/` | 전체 | `UniTask`, `R3.Unity` (+ R3 코어 자동참조) | Core / Player / Enemy / UI 런타임 전부 |
+| `VD.Runtime` | `Assets/Scripts/` | 전체 | `UniTask`, `R3.Unity`, `Unity.InputSystem` (+ R3 코어 자동참조) | Core / Player / Enemy / UI 런타임 전부 |
 | `VD.Editor` | `Assets/Scripts/Editor/` | **Editor 전용** | `VD.Runtime` | 에디터 커스텀 툴(UI Toolkit) 전부 |
 
 폴더 골격 (`Assets/Scripts/`):
@@ -135,14 +135,17 @@ Scripts/
 {
     "name": "VD.Runtime",
     "rootNamespace": "VD",
-    "references": [ "UniTask", "R3.Unity" ],
+    "references": [ "UniTask", "R3.Unity", "Unity.InputSystem" ],
     "includePlatforms": [],          // 전체 플랫폼(빌드 포함)
     "overrideReferences": false,     // 자동참조 precompiled DLL(R3.dll 등) 유입 허용
     "autoReferenced": true
 }
 ```
 
-- `references`에 **`UniTask`, `R3.Unity`** 를 명시. (커스텀 asmdef라 자동참조에 기대지 않고 직접 적음.)
+- `references`에 **`UniTask`, `R3.Unity`, `Unity.InputSystem`** 을 명시. (커스텀 asmdef라 자동참조에 기대지 않고 직접 적음.)
+- **`Unity.InputSystem` 주의**: 이 패키지 어셈블리도 `autoReferenced:true` 지만, 그건 자동 생성
+  어셈블리(`Assembly-CSharp`)에만 자동 연결된다. **커스텀 asmdef인 `VD.Runtime`에는 이렇게 직접 적어야**
+  런타임 코드에서 `UnityEngine.InputSystem` 타입이 보인다. (안 적으면 M1-2 입력 코드가 `CS0246`.)
 - **R3 코어(`R3.dll`)** 는 NuGetForUnity가 넣은 precompiled DLL이라 asmdef `references`(=asmdef 전용)에
   넣을 수 없다. 대신 `overrideReferences: false` 로 두어 **자동참조 DLL이 그대로 유입**되게 했다.
   (검증 결과 `R3.Observable` 정상 해석 → 유입 확인.)
@@ -180,11 +183,13 @@ graph TD
     UniTask
     R3Unity["R3.Unity (asmdef 참조)"]
     R3core["R3.dll 코어 (NuGet · 자동참조)"]
+    InputSystem["Unity.InputSystem (asmdef 참조)"]
     VDRuntime["VD.Runtime<br/>Core / Player / Enemy / UI"]
     VDEditor["VD.Editor<br/>에디터 커스텀 툴 (Editor 전용)"]
 
     VDRuntime --> UniTask
     VDRuntime --> R3Unity
+    VDRuntime --> InputSystem
     VDRuntime -. 자동참조 .-> R3core
     VDEditor --> VDRuntime
     VDEditor --> UnityEditor
@@ -206,6 +211,7 @@ graph TD
 | 에디터 → 런타임 참조 | ✅ `VDEditorMarker.RuntimeRef == "VD.Runtime"` |
 | R3 코어 참조 | ✅ `typeof(Observable)` = `R3.Observable` |
 | UniTask 참조 | ✅ `typeof(UniTask)` = `Cysharp.Threading.Tasks.UniTask` |
+| Input System 참조 | ✅ `typeof(Keyboard)` = `UnityEngine.InputSystem.Keyboard` |
 | 컴파일 에러/경고 | ✅ 0 |
 
 → M0-4 DoD("빈 asmdef 2개로 컴파일 통과, Editor 어셈블리가 Runtime을 참조") **충족.**

@@ -29,7 +29,7 @@
 2. **[onepage-design.md](Docs/Designs/onepage-design.md)** — 기획 허브: 개요 + §0 문서 인덱스 + TODO
 3. **주제별 세부 문서** — onepage §0 인덱스에서 이동
    - 기획(`Docs/Designs/`): 업그레이드/무기(upgrade-pool, weapon-acquisition), 적/에디터툴(enemy-design), 조작(controls-design), UI(ui-design), 진행·난이도·점수(progression-design), 우선순위(scope-tiering)
-   - 개발·이슈(`Docs/Dev/`): [backlog.md](Docs/Dev/backlog.md)(구현 태스크·이슈 트래킹), [01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md)(asmdef 어셈블리 구조·이유) 등 기술 설계 문서
+   - 개발·이슈(`Docs/Dev/`): [backlog.md](Docs/Dev/backlog.md)(구현 태스크·이슈 트래킹), [01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md)(asmdef 어셈블리 구조·이유), [02_GameStateArchitecture.md](Docs/Dev/02_GameStateArchitecture.md)(게임 상태머신·이벤트 채널, M1-1) 등 기술 설계 문서
 
 > 세부 문서와 onepage가 어긋나면 **세부 문서가 최신**(onepage §3·§7·§8은 초안 잔재 가능). 발견 즉시 정합화.
 
@@ -48,7 +48,7 @@
 
 > 다음 작업은 **다른(새) 세션**에서 진행될 수 있음. 이 섹션이 인계 기준.
 
-**현재 상태**: 기획 완료(`Docs/Designs/` 세트). Unity 프로젝트·에셋 셋업 완료. **Backlog** → [Docs/Dev/backlog.md](Docs/Dev/backlog.md) (M0~M5). **M0 부트스트랩 전부 완료** — 어셈블리 골격·씬 3개·입력(New Input System)·리액티브 스택(R3/R3.Unity/UniTask) 확정. 게임 로직 코드는 아직 없음(참조 검증용 마커 스크립트뿐). **다음 = M1 코어 루프(새 세션 예정).**
+**현재 상태**: 기획 완료(`Docs/Designs/` 세트). Unity 프로젝트·에셋 셋업 완료. **Backlog** → [Docs/Dev/backlog.md](Docs/Dev/backlog.md) (M0~M5). **M0 부트스트랩 전부 완료** + **M1-1(게임 상태 골격) 완료** — 어셈블리 골격·씬 3개·입력(New Input System)·리액티브 스택(R3/R3.Unity/UniTask) 확정, `VD.Core`에 상태머신(`GameManager` 싱글톤)+이벤트 채널(`GameEvents`) 안착. **다음 = M1-2 플레이어 이동(상대 드래그).**
 
 **개발 전 순서** (전부 완료):
 1. ~~Unity 프로젝트 생성~~ ✅ (사용자)
@@ -60,14 +60,17 @@
 - **M0-2 (큐브 회전 스모크)** ✅ **완료(재작업)** — 물리(Rigidbody+angularVelocity) Z축 회전, 인스펙터(속도/크기/방향), `SmokeCube` 재사용. 사용자 육안 확인. `Assets/Scripts/Smoke/CubeSpinner.cs`. (1차 임의구현은 폐기 → 재작업, 사유는 backlog M0-2 참조.)
 - **M0-3 (입력 백엔드 & R3.Unity 판단)** ✅ **완료** — 사용자 결정: 입력 = **New Input System**(`com.unity.inputsystem` 1.20.0, `activeInputHandler:1` New 단독), R3.Unity = **설치**(`com.cysharp.r3` 1.3.1 git UPM). MCP로 설치·검증(컴파일 에러 0, 왕복 정상). 구체 입력 액션 오서링은 M1-2에서. 상세는 backlog M0-3 결론.
 - **M0-4 (프로젝트 골격)** ✅ **완료** — asmdef 2개 `VD.Runtime`/`VD.Editor`(네임스페이스 루트 `VD.*`), 폴더 `Scripts/{Core,Player,Enemy,UI,Editor}`, 씬 3개(Title/Game/Result). 리플렉션 검증·컴파일 0. 기술 문서 [Docs/Dev/01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md). 파일/네임스페이스 규칙은 해당 문서·backlog M0-4 참조.
-**➡️ 다음 작업: M1 코어 루프 (새 세션 인계)** — §1-9에 따라 **사용자 지시 후 착수**, 자동 금지. 시작점 = **M1-1(게임 상태 골격)** → M1-2(이동) … backlog M1 순서.
+- **M1-1 (게임 부트/상태 관리 골격)** ✅ **완료** — 상세 = [02_GameStateArchitecture.md](Docs/Dev/02_GameStateArchitecture.md). `VD.Core`에 `GameState`/`GameEvents`(별도 pub/sub 채널, R3)/`GameManager`(MonoBehaviour 싱글톤, 씬 한정, timeScale 제어)/`GameDebugDriver`(임시 키보드 검증). GameScene에 GameManager·카메라·라이트 배치. 검증: Boot→Playing 로그·timeScale 0↔1·컴파일 0. 사용자 결정: 전역=싱글톤, 이벤트=별도 채널.
+
+**➡️ 다음 작업: M1-2 플레이어 이동 (상대 드래그, XY 자유·Z 고정)** — §1-9에 따라 **사용자 지시 후 착수**, 자동 금지. backlog M1 순서. 이동 스킴은 controls-design §3, 입력은 New Input System(포인터/터치 델타).
 - **입력**: **New Input System API로만** 읽는다(레거시 `Input.*` 금지, `activeInputHandler:1`). `VD.Runtime`이 `Unity.InputSystem` 참조 완료. 이동 스킴 = 상대 드래그(controls-design §3), 구체 InputAction/EnhancedTouch 오서링은 M1-2. `Assets/InputSystem_Actions.inputactions`(데스크톱 템플릿)는 M1-2에서 우리 스킴으로 교체/삭제.
 - **코드 위치·규칙**: 런타임 = `VD.Runtime`(ns `VD.Core`/`VD.Player`/`VD.Enemy`/`VD.UI`), 에디터 = `VD.Editor`. 총알은 Player/Enemy 내부. 파일/네임스페이스/struct 규칙은 [Docs/Dev/01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md) + backlog M0-4.
 - **리액티브·비동기**: R3(`ReactiveProperty`/`Subject`) + R3.Unity(`AddTo(this)` 수명 연동) 사용 가능. 비동기는 UniTask.
 
 > ⚠️ **M1 인계 주의**
-> - 씬 3개(Title/Game/Result) **전부 빈 상태**(카메라·라이트 없음). **M1-1에서 GameScene 카메라/기체/스포너 셋업부터**. 현재 에디터 활성 씬 = GameScene.
-> - 마커 스크립트 `VDRuntimeMarker`(`Core/`)·`VDEditorMarker`(`Editor/`)는 **참조 검증용 임시** — 실코드 안착 시 삭제.
+> - **GameScene**: `GameManager`(+임시 `GameDebugDriver`)·Main Camera·Directional Light 배치됨(M1-1). 기체/스포너는 M1-2~. TitleScene/ResultScene은 아직 빈 상태. 현재 에디터 활성 씬 = GameScene.
+> - **마커**: `VDRuntimeMarker`는 M1-1에서 **삭제**(실코드가 참조 검증). `VDEditorMarker`(`Editor/`)만 **유지** — M2 에디터 툴 실코드 전까지 VD.Editor 검증용, 그때 삭제.
+> - **임시 `GameDebugDriver`**(`Core/`): 키보드 상태 전이 검증용(P/G/R). M1-2(입력)·M1-9(게임오버)에서 실코드로 대체 시 삭제.
 > - `SampleScene`/`SmokeCube`는 M0-2 테스트 잔재(빌드 제외). M1과 무관.
 > - **Unity 재부팅 시 루틴**: Unity 서버 Start → Claude에서 MCP 재연결(또는 세션 재시작). 창의 "Client Configure: Not Configured"는 무시(우리는 `.mcp.json` 수동 등록 사용).
 

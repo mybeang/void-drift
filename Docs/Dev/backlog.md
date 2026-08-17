@@ -107,11 +107,17 @@
 > 목적: scope-tiering "코어 루프" 전체. 이 마일스톤 끝 = **손으로 플레이되는 게임**(에디터 툴 없이 하드코딩 데이터로).
 > 관련: [controls-design.md](../Designs/controls-design.md), [progression-design.md](../Designs/progression-design.md), [ui-design.md](../Designs/ui-design.md)
 
-### M1-1 · 게임 부트/상태 관리 골격 🔴
+### M1-1 · 게임 부트/상태 관리 골격 🔴 `[x]`
 - **목적**: 씬 진입~플레이~게임오버 상태 흐름과 전역 서비스 접근점.
 - **작업**: 게임 상태(부팅/플레이/일시정지/게임오버) 관리자, 시간 스케일 제어(3choice 일시정지용), 간단한 서비스 접근(이벤트 버스). R3 `Subject`/`ReactiveProperty` 기반 이벤트 채널 제안(`GameEvents`).
 - **DoD**: 상태 전환 로그로 확인. `Time.timeScale=0` 일시정지/재개 동작.
 - **의존**: M0-4
+- **✅ 완료(2026-08-17, 사용자 결정 반영)**: 상세 = [02_GameStateArchitecture.md](02_GameStateArchitecture.md)
+  - **산출(`VD.Core`)**: `GameState`(enum Boot/Playing/Paused/GameOver) · `GameEvents`(별도 pub/sub 채널, R3 `ReactiveProperty<GameState>`를 `ReadOnlyReactiveProperty`로 노출, 갱신은 `internal SetState`로 GameManager만) · `GameManager`(MonoBehaviour **싱글톤**, 씬 한정 수명, 상태 전이+`Time.timeScale` 제어, `StartGame/Pause/Resume/GameOver` 가드 포함) · `GameDebugDriver`(**임시** 키보드 검증: P=일시정지/재개·G=게임오버·R=재진입).
+  - **사용자 결정**: 전역 접근 = MonoBehaviour 싱글톤 / 이벤트 버스 = 별도 `GameEvents` 채널. 상태 소유는 GameEvents, 전이·timeScale은 GameManager. M1-1은 순수 상태머신이라 비동기 미사용.
+  - **씬**: GameScene에 `GameManager`(+DebugDriver)·Main Camera·Directional Light 배치·저장.
+  - **검증**: 플레이 진입 `Boot→Playing` 로그, `Pause()`→timeScale 0 / `Resume()`→1, 가드 동작, 컴파일 에러 0. (Time.timeScale은 `OnDestroy`에서 1로 복구.)
+  - **정리**: M0-4 마커 중 `VDRuntimeMarker` **삭제**(실코드가 R3/InputSystem 링크 검증), `VDEditorMarker` **유지·재연결**(M2까지 VD.Editor 검증 유일 수단, 참조를 `GameManager`로 교체).
 
 ### M1-2 · 플레이어 이동 — 상대 드래그 (XY 자유, Z 고정) 🔴
 - **목적**: controls-design §3. 화면 임의 터치 시작점 기준 델타로 기체 XY 이동, Z 고정.
@@ -352,3 +358,4 @@
 | 2026-08-17 | M0-2 **재작업 완료(✅)** — 사용자 지시대로 물리(Rigidbody+angularVelocity) Z축 회전, 인스펙터(속도/크기/방향), SmokeCube 재사용. 사용자 육안 확인. context.md §1-9(기능단위 진행·사용자 주도 페이스) 추가. |
 | 2026-08-17 | M0-3 **완료(✅)** — 사용자 결정: 입력 = **New Input System**(`com.unity.inputsystem` 1.20.0, `activeInputHandler:1` New 단독), R3.Unity = **설치**(`com.cysharp.r3` 1.3.1 git UPM). MCP로 설치·검증(컴파일 에러 0, 왕복 정상). 실측 결과 시작 상태는 레거시(handler 0)+Input System 미설치였고 `.inputactions`는 템플릿 잔재였음. |
 | 2026-08-17 | M0-4 **완료(✅)** — asmdef 2개(`VD.Runtime`/`VD.Editor`, 네임스페이스 `VD.*`) + 폴더 골격(Core/Player/Enemy/UI/Editor) + 씬 3개(Title/Game/Result, build 0~2). 리플렉션 검증·컴파일 0. 기술 문서 [01_AssemblyDefinition.md](01_AssemblyDefinition.md) 신규 작성. 초안 `Combat`/`Progression` 폴더 폐기(총알=Player/Enemy 내부, 진행=Core). |
+| 2026-08-17 | M1-1 **완료(✅)** — 사용자 결정: 전역=MonoBehaviour 싱글톤 `GameManager`, 이벤트=별도 `GameEvents` 채널. `VD.Core`에 `GameState`/`GameEvents`/`GameManager`/`GameDebugDriver`(임시) 생성, GameScene 배치·검증(Boot→Playing 로그, timeScale 0↔1, 컴파일 0). 기술 문서 [02_GameStateArchitecture.md](02_GameStateArchitecture.md) 신규. 정리: `VDRuntimeMarker` 삭제, `VDEditorMarker` 유지·재연결. |

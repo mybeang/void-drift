@@ -7,8 +7,8 @@
 관련 파일
 - `Assets/Scripts/VD.Runtime.asmdef`
 - `Assets/Scripts/Editor/VD.Editor.asmdef`
-- `Assets/Scripts/Core/VDRuntimeMarker.cs` (참조 검증용 임시 마커)
-- `Assets/Scripts/Editor/VDEditorMarker.cs` (참조 검증용 임시 마커)
+- ~~`Assets/Scripts/Core/VDRuntimeMarker.cs`~~ (M1-1에서 삭제 — 실코드가 참조 검증)
+- `Assets/Scripts/Editor/VDEditorMarker.cs` (참조 검증용 임시 마커, M2까지 유지)
 
 ---
 
@@ -175,6 +175,12 @@ Scripts/
 - `Editor/VDEditorMarker.cs` — `using UnityEditor;`(에디터 어셈블리 검증) +
   `VDRuntimeMarker.Assembly` 참조(에디터 → 런타임 검증).
 
+> **갱신(M1-1)**: `VDRuntimeMarker`는 **삭제**됨 — R3 링크는 실코드 `GameEvents`(`using R3;`), Input System
+> 링크는 `GameDebugDriver`(`using UnityEngine.InputSystem;`)가 검증한다(둘 다 `VD.Core`). UniTask 참조는
+> asmdef에 선언은 유지되며 M1-3 실코드에서 exercise 예정. `VDEditorMarker`는 **유지**하되 참조를
+> 삭제된 마커 대신 실제 런타임 타입으로 교체: `typeof(GameManager).Assembly.GetName().Name`(= `"VD.Runtime"`).
+> 에디터 툴 실코드(M2)가 들어오면 이 마커도 삭제한다.
+
 ### 의존 관계
 
 ```mermaid
@@ -229,5 +235,5 @@ graph TD
   (에디터 툴만 쓰는 의존은 `VD.Editor` 쪽에 추가.)
 - **빈 폴더 주의**: `Player`/`Enemy`/`UI` 는 아직 스크립트가 없어 폴더 `.meta` 만 존재한다. Git은 빈 폴더를
   추적하지 않으므로, 실제 코드가 들어오기 전까지는 클론 환경에서 폴더가 비어 보일 수 있다(정상).
-- 마커 스크립트 2개는 **참조 검증 목적의 임시 파일**이다. 실제 코드가 자리 잡으면 삭제한다.
+- 마커 스크립트는 **참조 검증 목적의 임시 파일**이다. 실제 코드가 자리 잡으면 삭제한다. (M1-1: `VDRuntimeMarker` 삭제 완료. `VDEditorMarker`는 M2 에디터 툴 실코드 전까지 유지.)
 ```

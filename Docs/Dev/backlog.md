@@ -119,12 +119,20 @@
   - **검증**: 플레이 진입 `Boot→Playing` 로그, `Pause()`→timeScale 0 / `Resume()`→1, 가드 동작, 컴파일 에러 0. (Time.timeScale은 `OnDestroy`에서 1로 복구.)
   - **정리**: M0-4 마커 중 `VDRuntimeMarker` **삭제**(실코드가 R3/InputSystem 링크 검증), `VDEditorMarker` **유지·재연결**(M2까지 VD.Editor 검증 유일 수단, 참조를 `GameManager`로 교체).
 
-### M1-2 · 플레이어 이동 — 상대 드래그 (XY 자유, Z 고정) 🔴
+### M1-2 · 플레이어 이동 — 상대 드래그 (XY 자유, Z 고정) 🔴 `[x]`
 - **목적**: controls-design §3. 화면 임의 터치 시작점 기준 델타로 기체 XY 이동, Z 고정.
 - **작업**: 입력(포인터/터치) 델타 → 기체 XY 이동. 감도/데드존/델타스케일 파라미터화(수치는 Day5). 이동 범위 클램프(화면 밖 이탈 방지).
 - **DoD**: 에디터/디바이스에서 드래그로 기체가 자연스럽게 XY 이동, Z 불변. 손가락에 기체 안 가려짐(상대 방식).
 - **의존**: M1-1, M0-3
-- **문서**: controls-design.md
+- **문서**: controls-design.md, [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md)
+- **✅ 완료(2026-08-17, 사용자 결정 반영)**: 상세 = [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md)
+  - **산출**: `VD.Player.PlayerMovement`(이동 전담) + `Player` 프리팹(StarSparrow_1_LP_Red 복제, root=Rigidbody+PlayerMovement / 자식 `Model`=메시).
+  - **입력**: `Pointer.current` 델타 직접 읽기(상대 드래그). **해상도 무관 `dragGain`**(손가락 화면분율×게인=기체 이동, 현재 5). 액션 에셋 미사용 → 기본 템플릿 `InputSystem_Actions.inputactions` 삭제(전역 참조 해제).
+  - **이동**: 물리(Rigidbody) 속도 직접 매핑, XY 자유·Z 고정. 목표를 뷰포트 경계 안으로 **선-클램프**(경계 떨림 방지).
+  - **뱅킹**: 화면중심 오프셋 비례 pitch/yaw/roll을 **자식 `Model`(bankTarget) 로컬 회전**에만 적용(물리 루트 회전 완전 동결 → 물리-회전 충돌 없음). 코 안쪽=조준(`invertYaw` OFF, 그림 측면매핑과 반대는 의도).
+  - **카메라**: 고정 Perspective (0,0,-26) FOV55 near0.3 far300(사용자 튜닝 확정). 기체 폭 화면 ~40%.
+  - **검증**: 사용자 드래그 확인, 뱅킹 상단 pitch+25°(루트 0 유지), 경계 정지·속도0, 컴파일/런타임 에러 0.
+  - **미해결**: 이동 관성감 → [issues.md](issues.md) `I-1`(보류). / 조준 forward=Model 연동은 M1-3.
 
 ### M1-3 · 오토 사격 (기관총) + 투사체 🔴
 - **목적**: 입력 없이 정면 자동 발사(뱀서라이크 문법).
@@ -359,3 +367,4 @@
 | 2026-08-17 | M0-3 **완료(✅)** — 사용자 결정: 입력 = **New Input System**(`com.unity.inputsystem` 1.20.0, `activeInputHandler:1` New 단독), R3.Unity = **설치**(`com.cysharp.r3` 1.3.1 git UPM). MCP로 설치·검증(컴파일 에러 0, 왕복 정상). 실측 결과 시작 상태는 레거시(handler 0)+Input System 미설치였고 `.inputactions`는 템플릿 잔재였음. |
 | 2026-08-17 | M0-4 **완료(✅)** — asmdef 2개(`VD.Runtime`/`VD.Editor`, 네임스페이스 `VD.*`) + 폴더 골격(Core/Player/Enemy/UI/Editor) + 씬 3개(Title/Game/Result, build 0~2). 리플렉션 검증·컴파일 0. 기술 문서 [01_AssemblyDefinition.md](01_AssemblyDefinition.md) 신규 작성. 초안 `Combat`/`Progression` 폴더 폐기(총알=Player/Enemy 내부, 진행=Core). |
 | 2026-08-17 | M1-1 **완료(✅)** — 사용자 결정: 전역=MonoBehaviour 싱글톤 `GameManager`, 이벤트=별도 `GameEvents` 채널. `VD.Core`에 `GameState`/`GameEvents`/`GameManager`/`GameDebugDriver`(임시) 생성, GameScene 배치·검증(Boot→Playing 로그, timeScale 0↔1, 컴파일 0). 기술 문서 [02_GameStateArchitecture.md](02_GameStateArchitecture.md) 신규. 정리: `VDRuntimeMarker` 삭제, `VDEditorMarker` 유지·재연결. |
+| 2026-08-17 | M1-2 **완료(✅)** — `VD.Player.PlayerMovement`(이동 전담) + `Player` 프리팹(StarSparrow_1_LP_Red, root=Rigidbody+PlayerMovement / 자식 `Model`). 상대 드래그(`Pointer.current`)→속도 직접 매핑, 해상도 무관 `dragGain`(현재 5), 뱅킹=자식 `Model` 회전(물리 분리), 뷰포트 선-클램프, 고정 Perspective 카메라(0,0,-26/FOV55). 사용자 튜닝 반복(감도·거리·뱅킹·떨림 수정). 기본 InputActions 템플릿 삭제(전역 참조 해제). 기술 문서 [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md) 신규. 이슈 트래커 [issues.md](issues.md) 신설(`I-1` 이동 관성감 보류). |

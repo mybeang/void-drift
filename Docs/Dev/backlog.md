@@ -224,12 +224,20 @@
 - **의존**: M1-6, M1-8, M1-10(HUD/캔버스)
 - **문서**: progression-design.md, ui-design.md §3
 
-### M1-8 · 최소 3choice 강화 풀 (공용 스탯) 🔴
+### M1-8 · 최소 3choice 강화 풀 (공용 스탯) 🔴 `[x]` (풀·적용·롤 완료 — 팝업 UI·선택은 M1-7)
 - **목적**: scope-tiering Must "빌드 선택이 성립할 최소". 공격력/이동속도/최대체력 등 몇 종.
 - **작업**: 강화 항목 정의(효과 적용 방식: 스탯 배율/가산), 최소 3~5종 하드코딩 또는 소형 데이터. 3choice 롤 대상이 되게 연결.
-- **DoD**: 최소 3종 이상이 롤에 등장하고 각각 실제로 스탯을 바꿈.
+- **DoD**: 최소 3종 이상이 롤에 등장하고 각각 실제로 스탯을 바꿈. ✅ **충족**(2026-08-18, execute_code 검증).
 - **의존**: M1-2/M1-3(스탯 대상 존재)
 - **문서**: [upgrade-pool.md](../Designs/upgrade-pool.md) (풀세트는 M4)
+- **✅ 완료(2026-08-18, 사용자 결정 반영)**:
+  - **사용자 결정**: (1) 정의 = **하드코딩**(enum+로직, SO는 M2), (2) 효과 = **능력치별 상이**(일괄 아님), (3) 항목 3종 = **이동속도/최대체력/자석범위**. 공격력·연사 등은 **무기 스코프**라 무기 개발(M4) 후로 미룸(사용자 지적, upgrade-pool §3 정합).
+  - **산출**: `VD.Core.UpgradeType`(enum: MoveSpeed/MaxHp/MagnetRadius) + `VD.Player.UpgradeSystem`(GameScene 1개) — `GameEvents.LevelUp` 구독 → `Roll(3)`(Fisher–Yates, 중복없음) → **임시 자동적용**+`[TEMP]` 로그. 라우팅 mutator: `PlayerMovement.AddMoveSpeedMultiplier`(배율%)·`PlayerHealth.AddMaxHp`(가산+회복)·`OrbPool.AddMagnetRadius`(가산, 스폰 시 `Orb`에 보너스 주입). `Roll()`/`Apply()`는 **public → M1-7 팝업이 재사용**.
+  - **효과 방식(능력치별)**: 이동=배율 `dragGain*=(1+pct)`, 최대체력=가산 `maxHp+=n`(현재HP도 +n), 자석범위=가산 `magnetRadius + bonus`.
+  - **튜닝(Day5)**: `moveSpeedPct` 0.12 · `maxHpAdd` 20 · `magnetRadiusAdd` 2.
+  - **검증(execute_code)**: 롤에 3종 등장, MoveSpeed dragGain 5→5.6(×1.12)·MaxHp 100→120(+20)·MagnetRadius bonus+2, 에러 0.
+  - **⚠️ 임시/설계 노트**: 레벨업 시 **무작위 자동적용**(사용자 선택 아님) + `[TEMP]` 로그 → **M1-7 팝업**이 `Roll()` 3장 표시·`Apply(선택)`로 대체. 항목 3개라 롤 3장=항상 전부 등장(다양성은 항목 늘면, M3-4/M4-8).
+  - **관련 파일**: `Assets/Scripts/Core/{UpgradeType,OrbPool,Orb}.cs`, `Assets/Scripts/Player/{UpgradeSystem,PlayerMovement,PlayerHealth}.cs`. GameScene에 `UpgradeSystem`.
 
 ### M1-9 · HP / 데미지 / 게임오버 🔴 `[x]` (게임오버 전이·정지·점수 확정 — 결과 화면 UI는 M1-10/M2)
 - **목적**: 종료 조건. HP 0 → 게임오버 → 결과.
@@ -245,12 +253,19 @@
   - **⚠️ 임시요소**: `[TEMP]` 피격·게임오버 로그 — 결과 화면(ResultScene/오버레이)·HUD 붙을 때 정리. `Score`/`SurvivalTime`/`HpNormalized`는 **M1-10 HUD** 바인딩.
   - **관련 파일**: `Assets/Scripts/Core/{GameEvents,GameManager,ScoreSystem}.cs`, `Assets/Scripts/Enemy/Enemy.cs`, `Assets/Scripts/Player/PlayerHealth.cs`. GameScene에 `ScoreSystem`.
 
-### M1-10 · HUD (우측 상단) + 점수/생존시간 🔴
+### M1-10 · HUD (우측 상단) + 점수/생존시간 🔴 `[x]`
 - **목적**: ui-design. 생존시간/점수/HP 최소 표기(uGUI).
 - **작업**: uGUI 캔버스, 우측 상단 생존시간·점수, HP 표기. 점수=생존시간+처치점수. R3로 상태→UI 바인딩(설치 결론 반영).
-- **DoD**: 플레이 중 생존시간·점수·HP가 실시간 갱신.
+- **DoD**: 플레이 중 생존시간·점수·HP가 실시간 갱신. ✅ **충족**(2026-08-18, 스크린샷+런타임값 확인).
 - **의존**: M1-9
 - **문서**: ui-design.md §3, progression-design.md §3
+- **✅ 완료(2026-08-18, 사용자 결정 반영)**:
+  - **사용자 결정**: (1) HUD 구성 = **시간·점수·HP + 레벨·경험치바**(M1-6 값도 표시), (2) HP 표현 = **게이지 바**, (3) 텍스트 = **TextMeshPro**(에센셜 임포트). 레이아웃 = 우측 상단 스택(최소 투자, Day5 조정).
+  - **산출**: `VD.UI.HudView`(표시 전용) — `GameEvents` 구독→시간(mm:ss)/점수/레벨/HP바(`HpNormalized`)/경험치바(`XpNormalized`), R3 `AddTo` 수명 연동. GameScene에 **HUD Canvas**(ScreenSpaceOverlay + CanvasScaler 1920×1080 match0.5) + TMP 텍스트 3 + HP/XP 바(built-in UISprite, Image Filled Horizontal).
+  - **인프라**: `VD.Runtime` asmdef에 `UnityEngine.UI`·`Unity.TextMeshPro` 참조 추가. **TMP 에센셜 리소스 임포트**(`Assets/TextMesh Pro`, 최초 1회 — 폰트 LiberationSans SDF·TMP Settings).
+  - **검증**: 런타임 값 `time 00:58 / SCORE 248 / Lv 2 / hpFill 1.0 / xpFill 0.4` 실시간 갱신, 에러 0.
+  - **⚠️ 잔여**: 레이아웃·색·바 스타일 = 최소 기본(Day5 튜닝). HP 숫자 없음(바만, 사용자 선택). `[TEMP]` 로그 잔존.
+  - **관련 파일**: `Assets/Scripts/UI/HudView.cs`, `Assets/Scripts/VD.Runtime.asmdef`. GameScene에 `HUD Canvas`. TMP 에센셜 `Assets/TextMesh Pro`.
 
 > **M1 완료 판정(게이트)**: 에디터 툴/Addressables 없이도, 하드코딩 데이터로 **처음~게임오버까지 한 판이 돌아간다.**
 
@@ -457,6 +472,8 @@
 | 2026-08-18 | **M5-8 신설(🟢 Nice)** — 스폰 패턴/포메이션(편대·웨이브 등 공간적 배치). 랜덤 스폰은 M1-4, 패턴화는 후순위(Firebase M5-7급 시기). M4-6(시간축 프로파일)과 구분. 사용자 요청 등재. |
 | 2026-08-18 | **M1-4 사전 결정** — 적 프리팹 소스 = `FREE Low Poly Spaceships`(spaceship_1~7). M1-4 첫 적 = **spaceship_6 1종**, 나머지 볼륨업은 M3-3. 진행 = **단계 분할(1단계 스폰+직진 접근 이동)**, 이후 HP/피격/충돌데미지(M1-3 이관). 아키타입 잠정 매핑 기록(1=고체력 돌진/탄막·대형, 4=범용/돌진, 5=자폭, 2=탄막 등) → M3-3. 구현은 착수 지시 후. |
 | 2026-08-18 | M1-3 **3단계 완료 → M1-3 `[x]` 마감(a)** — 발사기 `PlayerShooter` + 투사체 `Projectile` + 상속형 풀(`VD.Core.PooledObjectPool<T>` 베이스 ← `ProjectilePool`). 튜닝(탄속·수명·발사속도) `PlayerShooter` 한 곳에 몰아 `Projectile.Launch`로 주입(사용자 결정). 임시 투사체 프리팹(Unlit) + GameScene `ProjectilePool`(prewarm 32). 사용자 육안 검증(총알 스트림·일시정지 정지). **데미지/히트는 적 필요 → M1-4 이관**(사용자 결정). 부수: Player 32-박스 콜라이더 → 단일 BoxCollider(root) 단순화(피격용, 수치·트리거는 M1-4/M1-9). 다음 = M1-4. |
+| 2026-08-18 | **M1-8 완료(`[x]`)** — 최소 3choice 강화 풀. 사용자 결정: 하드코딩(enum), 효과=**능력치별 상이**, 항목 3종=**이동/최대체력/자석범위**(공격력·연사는 무기 스코프→M4). `UpgradeType` enum + `UpgradeSystem`(LevelUp 구독→`Roll(3)` Fisher–Yates→임시 자동적용), mutator 라우팅(이동=배율%, 체력·자석=가산). `Roll()`/`Apply()` public(M1-7 재사용). 검증: dragGain5→5.6·maxHp100→120·자석+2, 에러 0. 레벨업 자동적용+`[TEMP]`는 M1-7 팝업이 대체. |
+| 2026-08-18 | **M1-10 완료(`[x]`)** — HUD(uGUI+TMP). 사용자 결정: 구성=**시간·점수·HP+레벨·경험치바**, HP=**게이지 바**, 텍스트=**TMP**(에센셜 임포트). `VD.UI.HudView`가 `GameEvents`(`SurvivalTime`/`Score`/`Level`/`HpNormalized`/`XpNormalized`) 구독→우상단 표시(R3 AddTo). GameScene에 HUD Canvas(스케일러 1920×1080)+TMP텍스트3+HP/XP바. `VD.Runtime` asmdef에 UI/TMP 참조 추가, TMP 에센셜(`Assets/TextMesh Pro`) 임포트. 검증: time00:58/SCORE248/Lv2/바 실시간, 에러 0. 레이아웃·색은 최소(Day5). |
 | 2026-08-18 | **M1-9 완료(`[x]`)** — HP/게임오버/점수. 사용자 결정: 게임오버=**GameScene 정지형**(HP0→GameOver+`timeScale 0`+결과값 보관), 점수=**생존시간+처치점수**. `GameEvents`에 `EnemyKilled`/`HpNormalized`/`Score`/`SurvivalTime` 추가, 신규 `ScoreSystem`(시간+처치 집계), `Enemy` 처치점수 발행, `PlayerHealth` HP0→`GameOver()`. `GameManager.GameOver()` timeScale 1→0. 검증(execute_code): 생존53.1s+처치180=점수233, GameOver→ts0 프리즈, 에러 0. `[TEMP]` 로그·결과화면(ResultScene/HUD)은 M1-10/M2. 05 문서에 §종료/점수 추가. (M1-7/M1-10 위해 순서상 M1-9 선행.) |
 | 2026-08-18 | **M1-6 완료(`[x]`)** — 경험치/레벨업. 사용자 결정: 상태=**GameEvents 확장**, 오브→XP=**이벤트 발행/구독**, 임계값=**지수형** `base×growth^(n-1)`. `GameEvents`에 `OrbCollected`/`Level`/`XpNormalized`/`LevelUp` 추가(발행·갱신 internal), 신규 `ExperienceSystem`(누적·임계·레벨업), `Orb`는 습득 시 `PublishOrbCollected(xpValue)`. 검증: 5개→Lv2·다음 6.5, 에러 0. `[TEMP] 레벨업` 로그는 M1-7서 대체, `Level`/`XpNormalized`는 M1-10 HUD. 기술 문서 [05_ProgressionAndEvents.md](05_ProgressionAndEvents.md) + 재사용 풀 [04_ObjectPooling.md](04_ObjectPooling.md) 신규 작성. |
 | 2026-08-18 | **M1-5 완료(`[x]`)** — 오브 드랍·자석·습득. 단계 분할: (1)적 실사망 위치 드랍(`Enemy.SetDropHandler`/`EnemySpawner.DropOrb`, 화면 밖 despawn 제외) + `Orb`/`OrbPool : PooledObjectPool<Orb>`(VD.Core) + GameScene `OrbPool`(prewarm 16); (2)자석 — 반경 밖 전방(-Z) 일정속도 드리프트(못 만나면 지나쳐 despawn), 반경 내 캡처(래치)→가속 끌림, 타깃=태그"Player"로 `OrbPool` 캐시·주입(Core→Player 결합 회피, Player 프리팹 태그 부여); (3)거리 기반 습득(`pickupRadius`)→`[TEMP]` 로그+반납. 비주얼=Hovl Crystal effect green 복제(`Assets/Prefabs/Orbs/`). 각 단계 사용자 육안 확인, 컴파일/런타임 에러 0. **경험치 이벤트 발행만 M1-6 이관**(M1-5는 로그만). 속도·반경 튜닝은 나중(Day5). |

@@ -41,6 +41,9 @@ namespace VD.Player
         Vector2 _accumulatedDelta;   // Update에서 누적, FixedUpdate에서 소비
         float _depth;                // 카메라 → 기체 평면 거리(뷰포트 변환 z)
 
+        /// <summary>이동속도(드래그 게인) 배율 강화 — M1-8. pct=0.12 → +12%(누적).</summary>
+        public void AddMoveSpeedMultiplier(float pct) => dragGain *= (1f + pct);
+
         void Awake()
         {
             _rb = GetComponent<Rigidbody>();

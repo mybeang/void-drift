@@ -31,6 +31,15 @@ namespace VD.Player
             GameManager.Instance?.Events?.SetHpNormalized(1f);
         }
 
+        /// <summary>최대 체력 가산 강화 — M1-8. 늘린 만큼 현재 HP도 회복하고 HP% 갱신.</summary>
+        public void AddMaxHp(float amount)
+        {
+            if (_dead) return;
+            maxHp += amount;
+            _hp = Mathf.Min(_hp + amount, maxHp);
+            GameManager.Instance?.Events?.SetHpNormalized(_hp / maxHp);
+        }
+
         void OnTriggerEnter(Collider other)
         {
             if (_dead) return;

@@ -11,6 +11,7 @@ namespace VD.Core
     public sealed class OrbPool : PooledObjectPool<Orb>
     {
         Transform _player;
+        float _magnetBonus;   // 자석범위 강화 누적(M1-8) — 스폰 시 오브에 주입
 
         protected override void Awake()
         {
@@ -21,7 +22,10 @@ namespace VD.Core
 
         protected override void OnGet(Orb item)
         {
-            item.OnSpawned(_player, Return);
+            item.OnSpawned(_player, Return, _magnetBonus);
         }
+
+        /// <summary>자석 반경 가산 강화 — M1-8. 이후 스폰되는 오브에 반영(가산 누적).</summary>
+        public void AddMagnetRadius(float amount) => _magnetBonus += amount;
     }
 }

@@ -34,13 +34,15 @@ namespace VD.Core
 
         Transform _target;
         Action<Orb> _return;
+        float _magnetBonus;   // 자석범위 강화 보너스(OrbPool 주입, M1-8)
         bool _captured;
 
-        /// <summary>풀 Get 시 호출 — 타깃(플레이어)·반납 콜백 배선 + 캡처 상태 리셋.</summary>
-        public void OnSpawned(Transform target, Action<Orb> returnToPool)
+        /// <summary>풀 Get 시 호출 — 타깃(플레이어)·반납 콜백·자석 보너스 배선 + 캡처 상태 리셋.</summary>
+        public void OnSpawned(Transform target, Action<Orb> returnToPool, float magnetBonus)
         {
             _target = target;
             _return = returnToPool;
+            _magnetBonus = magnetBonus;
             _captured = false;
         }
 
@@ -48,10 +50,11 @@ namespace VD.Core
         {
             if (_target != null)
             {
+                float effRadius = magnetRadius + _magnetBonus;   // 자석범위 강화 반영(M1-8)
                 Vector3 toPlayer = _target.position - transform.position;
                 float dist = toPlayer.magnitude;
 
-                if (!_captured && dist <= magnetRadius) _captured = true;   // 한 번 잡히면 래치
+                if (!_captured && dist <= effRadius) _captured = true;   // 한 번 잡히면 래치
 
                 if (_captured)
                 {
@@ -63,7 +66,7 @@ namespace VD.Core
                     }
 
                     // 가속 끌림: 경계(dist=반경)=driftSpeed → 접촉(dist→0)=magnetMaxSpeed. 오버슛 방지로 dist 클램프.
-                    float t = Mathf.Clamp01(dist / magnetRadius);
+                    float t = Mathf.Clamp01(dist / effRadius);
                     float speed = Mathf.Lerp(magnetMaxSpeed, driftSpeed, t);
                     Vector3 dir = dist > 0.0001f ? toPlayer / dist : Vector3.zero;
                     transform.position += dir * Mathf.Min(speed * Time.deltaTime, dist);

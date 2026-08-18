@@ -8,7 +8,7 @@
 - `Assets/Scripts/Core/GameState.cs` — 상태 enum
 - `Assets/Scripts/Core/GameEvents.cs` — 전역 pub/sub 채널(R3)
 - `Assets/Scripts/Core/GameManager.cs` — 상태 관리자(MonoBehaviour 싱글톤)
-- `Assets/Scripts/Core/GameDebugDriver.cs` — **[임시]** 키보드 수동 검증용
+- `Assets/Scripts/Core/GameDebugDriver.cs` — **[디버그·에디터 전용]** 키보드 상태전이(유지, `#if UNITY_EDITOR` 가드)
 
 ---
 
@@ -94,9 +94,10 @@ GameManager.Instance.Events.State
 
 ## 임시 요소 / 후속 정리
 
-- **`GameDebugDriver`**: New Input System(`Keyboard`)로 상태 전이를 수동 트리거. `P`=Pause/Resume 토글,
-  `G`=GameOver, `R`=(GameOver 후) StartGame. **실제 입력은 M1-2, 게임오버 트리거는 M1-9**에서 대체 →
-  그때 이 파일 삭제.
+- **`GameDebugDriver`**(디버그·에디터 전용): New Input System(`Keyboard`)로 상태 전이를 수동 트리거. `P`=Pause/Resume 토글,
+  `G`=GameOver, `R`=(GameOver 후) StartGame. 실제 입력·게임오버 트리거는 M1-2·M1-9에서 대체됐으나,
+  **ResultScene(M2) 전까지 게임오버 후 재시작 등 테스트 편의로 유지 결정(2026-08-19).** `Update` 본문·`InputSystem` using을
+  `#if UNITY_EDITOR`로 가드 → 빌드에선 무동작(inert). **삭제하지 말 것.**
 - **M0-4 마커**: `VDRuntimeMarker`는 M1-1에서 **삭제**(R3 링크는 `GameEvents`, InputSystem 링크는
   `GameDebugDriver`가 실코드로 검증). `VDEditorMarker`는 **유지**(에디터 툴 실코드가 M2까지 없어
   VD.Editor 빌드격리+에디터→런타임 참조를 검증할 유일 수단, 참조 대상만 `GameManager`로 교체). → M2에서 삭제.

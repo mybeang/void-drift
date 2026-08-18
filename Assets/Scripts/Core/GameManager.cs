@@ -61,12 +61,13 @@ namespace VD.Core
             Time.timeScale = 1f;
         }
 
-        /// <summary>→ GameOver. 결과 처리(ResultScene 전환 등)는 M1-9에서 연결.</summary>
+        /// <summary>→ GameOver. GameScene 정지형(M1-9): timeScale 0으로 스폰·사격·이동 정지. 결과값은 GameEvents에 보관.
+        /// ResultScene 전환·결과 UI는 이후(M1-10/M2). 중복 전이 무시.</summary>
         public void GameOver()
         {
             if (State == GameState.GameOver) return;
             SetState(GameState.GameOver);
-            Time.timeScale = 1f;
+            Time.timeScale = 0f;   // 정지형 — 화면 프리즈
         }
 
         void SetState(GameState next)

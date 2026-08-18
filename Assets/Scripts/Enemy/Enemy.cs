@@ -16,6 +16,8 @@ namespace VD.Enemy
         [SerializeField] float maxHp = 30f;
         [Tooltip("플레이어 접촉 시 주는 데미지. 수치는 Day5(→ M2-2 SO)")]
         [SerializeField] float contactDamage = 10f;
+        [Tooltip("실사망(처치) 시 주는 점수. 수치는 Day5(→ M2-2 SO 적 테이블)")]
+        [SerializeField] int killScore = 10;
 
         /// <summary>플레이어 접촉 데미지(PlayerHealth가 읽음).</summary>
         public float ContactDamage => contactDamage;
@@ -67,9 +69,10 @@ namespace VD.Enemy
 
         void Die()
         {
-            Debug.Log("[TEMP] 적 사망 → 오브 드랍 + 풀 반납", this);   // TODO: 임시 로그, 검증 후 제거
-            // 실사망 위치에 오브 드랍(M1-5). 화면 밖 Despawn은 드랍하지 않는다. 파괴 VFX(M4-9)는 이후.
+            Debug.Log("[TEMP] 적 사망 → 오브 드랍 + 처치점수 + 풀 반납", this);   // TODO: 임시 로그, 검증 후 제거
+            // 실사망 위치에 오브 드랍(M1-5) + 처치 점수 발행(M1-9). 화면 밖 Despawn은 둘 다 안 함. 파괴 VFX(M4-9)는 이후.
             _dropOnDeath?.Invoke(transform.position);
+            GameManager.Instance?.Events?.PublishEnemyKilled(killScore);
             Despawn();
         }
 

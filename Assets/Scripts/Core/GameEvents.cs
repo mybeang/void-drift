@@ -46,6 +46,33 @@ namespace VD.Core
         /// <summary>레벨업 발행 — ExperienceSystem에서만.</summary>
         internal void RaiseLevelUp(int newLevel) => _levelUp.OnNext(newLevel);
 
+        // ── 종료/점수 — M1-9 ─────────────────────────────────────────
+        // 처치(입력): Enemy가 실사망 시 발행 → ScoreSystem이 구독·합산.
+        // HP%/점수/생존시간(출력 상태): PlayerHealth·ScoreSystem이 갱신 → HUD(M1-10)·결과 구독.
+
+        readonly Subject<int> _enemyKilled = new();
+        readonly ReactiveProperty<float> _hpNormalized = new(1f);
+        readonly ReactiveProperty<int> _score = new(0);
+        readonly ReactiveProperty<float> _survivalTime = new(0f);
+
+        /// <summary>적 처치 스트림(처치 점수). Enemy가 <see cref="PublishEnemyKilled"/>로 발행.</summary>
+        public Observable<int> EnemyKilled => _enemyKilled;
+        /// <summary>플레이어 HP 0~1(HUD 게이지용). 갱신은 PlayerHealth(internal SetHpNormalized)만.</summary>
+        public ReadOnlyReactiveProperty<float> HpNormalized => _hpNormalized;
+        /// <summary>현재 점수(생존시간+처치). 갱신은 ScoreSystem만.</summary>
+        public ReadOnlyReactiveProperty<int> Score => _score;
+        /// <summary>생존시간(초). 갱신은 ScoreSystem만.</summary>
+        public ReadOnlyReactiveProperty<float> SurvivalTime => _survivalTime;
+
+        /// <summary>적 처치 발행 — VD.Runtime 내부(Enemy)에서 호출.</summary>
+        internal void PublishEnemyKilled(int score) => _enemyKilled.OnNext(score);
+        /// <summary>HP 진행도 갱신 — PlayerHealth에서만.</summary>
+        internal void SetHpNormalized(float normalized) => _hpNormalized.Value = normalized;
+        /// <summary>점수 갱신 — ScoreSystem에서만.</summary>
+        internal void SetScore(int score) => _score.Value = score;
+        /// <summary>생존시간 갱신 — ScoreSystem에서만.</summary>
+        internal void SetSurvivalTime(float seconds) => _survivalTime.Value = seconds;
+
         public void Dispose()
         {
             _state.Dispose();
@@ -53,6 +80,10 @@ namespace VD.Core
             _level.Dispose();
             _xpNormalized.Dispose();
             _levelUp.Dispose();
+            _enemyKilled.Dispose();
+            _hpNormalized.Dispose();
+            _score.Dispose();
+            _survivalTime.Dispose();
         }
     }
 }

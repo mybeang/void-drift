@@ -231,12 +231,19 @@
 - **의존**: M1-2/M1-3(스탯 대상 존재)
 - **문서**: [upgrade-pool.md](../Designs/upgrade-pool.md) (풀세트는 M4)
 
-### M1-9 · HP / 데미지 / 게임오버 🔴
+### M1-9 · HP / 데미지 / 게임오버 🔴 `[x]` (게임오버 전이·정지·점수 확정 — 결과 화면 UI는 M1-10/M2)
 - **목적**: 종료 조건. HP 0 → 게임오버 → 결과.
 - **작업**: 플레이어 HP, 피격 처리, HP 0 시 게임오버 상태 전환 + 결과값(생존시간/점수) 확정.
-- **DoD**: 피격 누적으로 HP 0 되면 게임오버 화면/상태로 전환, 최종 점수 표시.
+- **DoD**: 피격 누적으로 HP 0 되면 게임오버 화면/상태로 전환, 최종 점수 표시. ✅ **충족**(2026-08-18, 사용자 확인) — 상태 전환·점수 확정·임시 로그. **결과 "화면"(ResultScene/HUD 표시)은 M1-10/M2**(정지형 프리즈 + 결과값 보관까지가 이번 범위).
 - **의존**: M1-1, M1-4
-- **문서**: progression-design.md §3
+- **문서**: progression-design.md §3, **[05_ProgressionAndEvents.md](05_ProgressionAndEvents.md) §종료/점수**
+- **✅ 완료(2026-08-18, 사용자 결정 반영)**:
+  - **사용자 결정**: (1) 게임오버 = **GameScene 정지형**(HP0 → GameOver 상태 + `timeScale 0` 프리즈 + 결과값 보관+임시 로그, ResultScene 전환·결과 UI는 이후), (2) 점수 = **생존시간 + 처치점수**(처치 이벤트 배선, 처치당 점수 하드코딩 → M2-2 SO).
+  - **산출**: `GameEvents` 확장 — `EnemyKilled`(입력 `Observable<int>`) · `HpNormalized`·`Score`·`SurvivalTime`(출력 `ReadOnlyReactiveProperty`, HUD/결과용, 발행·갱신 internal). `GameManager.GameOver()` → `timeScale 0`(정지형). 신규 **`ScoreSystem`**(GameScene 1개) — Playing 동안 생존시간 누적 + `EnemyKilled` 합산, `Score=round(생존×rate)+처치점수`, 게임오버 시 최종 로그. `Enemy` 실사망 시 `PublishEnemyKilled(killScore)`(기본 10). `PlayerHealth` — HP% 게시 + HP0 시 `GameManager.GameOver()`.
+  - **튜닝(Day5 잠정)**: `ScoreSystem.timeScoreRate` 1(초당 점수) · `Enemy.killScore` 10.
+  - **검증(execute_code)**: 생존 53.1s + 처치 180(18×10) = **점수 233**, `GameOver()`→`state=GameOver`·`timeScale=0`, 게임오버 로그 출력, 에러 0. (스모크는 원점 고정이라 실피격 HP0은 사용자 육안 확인 대상 — HP감소는 M1-4서 검증됨, GameOver 분기는 강제 호출로 검증.)
+  - **⚠️ 임시요소**: `[TEMP]` 피격·게임오버 로그 — 결과 화면(ResultScene/오버레이)·HUD 붙을 때 정리. `Score`/`SurvivalTime`/`HpNormalized`는 **M1-10 HUD** 바인딩.
+  - **관련 파일**: `Assets/Scripts/Core/{GameEvents,GameManager,ScoreSystem}.cs`, `Assets/Scripts/Enemy/Enemy.cs`, `Assets/Scripts/Player/PlayerHealth.cs`. GameScene에 `ScoreSystem`.
 
 ### M1-10 · HUD (우측 상단) + 점수/생존시간 🔴
 - **목적**: ui-design. 생존시간/점수/HP 최소 표기(uGUI).
@@ -450,5 +457,6 @@
 | 2026-08-18 | **M5-8 신설(🟢 Nice)** — 스폰 패턴/포메이션(편대·웨이브 등 공간적 배치). 랜덤 스폰은 M1-4, 패턴화는 후순위(Firebase M5-7급 시기). M4-6(시간축 프로파일)과 구분. 사용자 요청 등재. |
 | 2026-08-18 | **M1-4 사전 결정** — 적 프리팹 소스 = `FREE Low Poly Spaceships`(spaceship_1~7). M1-4 첫 적 = **spaceship_6 1종**, 나머지 볼륨업은 M3-3. 진행 = **단계 분할(1단계 스폰+직진 접근 이동)**, 이후 HP/피격/충돌데미지(M1-3 이관). 아키타입 잠정 매핑 기록(1=고체력 돌진/탄막·대형, 4=범용/돌진, 5=자폭, 2=탄막 등) → M3-3. 구현은 착수 지시 후. |
 | 2026-08-18 | M1-3 **3단계 완료 → M1-3 `[x]` 마감(a)** — 발사기 `PlayerShooter` + 투사체 `Projectile` + 상속형 풀(`VD.Core.PooledObjectPool<T>` 베이스 ← `ProjectilePool`). 튜닝(탄속·수명·발사속도) `PlayerShooter` 한 곳에 몰아 `Projectile.Launch`로 주입(사용자 결정). 임시 투사체 프리팹(Unlit) + GameScene `ProjectilePool`(prewarm 32). 사용자 육안 검증(총알 스트림·일시정지 정지). **데미지/히트는 적 필요 → M1-4 이관**(사용자 결정). 부수: Player 32-박스 콜라이더 → 단일 BoxCollider(root) 단순화(피격용, 수치·트리거는 M1-4/M1-9). 다음 = M1-4. |
+| 2026-08-18 | **M1-9 완료(`[x]`)** — HP/게임오버/점수. 사용자 결정: 게임오버=**GameScene 정지형**(HP0→GameOver+`timeScale 0`+결과값 보관), 점수=**생존시간+처치점수**. `GameEvents`에 `EnemyKilled`/`HpNormalized`/`Score`/`SurvivalTime` 추가, 신규 `ScoreSystem`(시간+처치 집계), `Enemy` 처치점수 발행, `PlayerHealth` HP0→`GameOver()`. `GameManager.GameOver()` timeScale 1→0. 검증(execute_code): 생존53.1s+처치180=점수233, GameOver→ts0 프리즈, 에러 0. `[TEMP]` 로그·결과화면(ResultScene/HUD)은 M1-10/M2. 05 문서에 §종료/점수 추가. (M1-7/M1-10 위해 순서상 M1-9 선행.) |
 | 2026-08-18 | **M1-6 완료(`[x]`)** — 경험치/레벨업. 사용자 결정: 상태=**GameEvents 확장**, 오브→XP=**이벤트 발행/구독**, 임계값=**지수형** `base×growth^(n-1)`. `GameEvents`에 `OrbCollected`/`Level`/`XpNormalized`/`LevelUp` 추가(발행·갱신 internal), 신규 `ExperienceSystem`(누적·임계·레벨업), `Orb`는 습득 시 `PublishOrbCollected(xpValue)`. 검증: 5개→Lv2·다음 6.5, 에러 0. `[TEMP] 레벨업` 로그는 M1-7서 대체, `Level`/`XpNormalized`는 M1-10 HUD. 기술 문서 [05_ProgressionAndEvents.md](05_ProgressionAndEvents.md) + 재사용 풀 [04_ObjectPooling.md](04_ObjectPooling.md) 신규 작성. |
 | 2026-08-18 | **M1-5 완료(`[x]`)** — 오브 드랍·자석·습득. 단계 분할: (1)적 실사망 위치 드랍(`Enemy.SetDropHandler`/`EnemySpawner.DropOrb`, 화면 밖 despawn 제외) + `Orb`/`OrbPool : PooledObjectPool<Orb>`(VD.Core) + GameScene `OrbPool`(prewarm 16); (2)자석 — 반경 밖 전방(-Z) 일정속도 드리프트(못 만나면 지나쳐 despawn), 반경 내 캡처(래치)→가속 끌림, 타깃=태그"Player"로 `OrbPool` 캐시·주입(Core→Player 결합 회피, Player 프리팹 태그 부여); (3)거리 기반 습득(`pickupRadius`)→`[TEMP]` 로그+반납. 비주얼=Hovl Crystal effect green 복제(`Assets/Prefabs/Orbs/`). 각 단계 사용자 육안 확인, 컴파일/런타임 에러 0. **경험치 이벤트 발행만 M1-6 이관**(M1-5는 로그만). 속도·반경 튜닝은 나중(Day5). |

@@ -29,7 +29,7 @@
 2. **[onepage-design.md](Docs/Designs/onepage-design.md)** — 기획 허브: 개요 + §0 문서 인덱스 + TODO
 3. **주제별 세부 문서** — onepage §0 인덱스에서 이동
    - 기획(`Docs/Designs/`): 업그레이드/무기(upgrade-pool, weapon-acquisition), 적/에디터툴(enemy-design), 조작(controls-design), UI(ui-design), 진행·난이도·점수(progression-design), 우선순위(scope-tiering)
-   - 개발·이슈(`Docs/Dev/`): [backlog.md](Docs/Dev/backlog.md)(구현 태스크·DoD), [issues.md](Docs/Dev/issues.md)(알려진 문제·보류·버그 트래커), [01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md)(asmdef 어셈블리 구조·이유), [02_GameStateArchitecture.md](Docs/Dev/02_GameStateArchitecture.md)(게임 상태머신·이벤트 채널, M1-1), [03_PlayerMovementAndCamera.md](Docs/Dev/03_PlayerMovementAndCamera.md)(플레이어 이동·뱅킹·카메라 리그, M1-2), [04_ObjectPooling.md](Docs/Dev/04_ObjectPooling.md)(재사용 풀 베이스 `PooledObjectPool<T>`, M1-3~M1-5), [05_ProgressionAndEvents.md](Docs/Dev/05_ProgressionAndEvents.md)(경험치/레벨업 + GameEvents 진행 채널, M1-6) 등 기술 설계 문서
+   - 개발·이슈(`Docs/Dev/`): [backlog.md](Docs/Dev/backlog.md)(**허브** — 개요·스냅샷·크로스컷·진행로그) + **마일스톤별 상세 `backlog-M0..M5.md`**(각 상단 `⚡ 특이사항` 헤더만 읽어도 크로스 마일스톤 파악 — 특정 마일스톤 작업 시 그 파일 하나면 충분), [issues.md](Docs/Dev/issues.md)(알려진 문제·보류·버그 트래커), [01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md)(asmdef 어셈블리 구조·이유), [02_GameStateArchitecture.md](Docs/Dev/02_GameStateArchitecture.md)(게임 상태머신·이벤트 채널, M1-1), [03_PlayerMovementAndCamera.md](Docs/Dev/03_PlayerMovementAndCamera.md)(플레이어 이동·뱅킹·카메라 리그, M1-2), [04_ObjectPooling.md](Docs/Dev/04_ObjectPooling.md)(재사용 풀 베이스 `PooledObjectPool<T>`, M1-3~M1-5), [05_ProgressionAndEvents.md](Docs/Dev/05_ProgressionAndEvents.md)(경험치/레벨업 + GameEvents 진행 채널, M1-6) 등 기술 설계 문서
 
 > 세부 문서와 onepage가 어긋나면 **세부 문서가 최신**(onepage §3·§7·§8은 초안 잔재 가능). 발견 즉시 정합화.
 
@@ -85,7 +85,7 @@
 
 **⚠️ 설치 상태 실측(2026-08-17)**: UniTask ✅ / R3 코어 1.3.1 ✅(NuGet) / R3.Unity 통합 ✅설치(`com.cysharp.r3` 1.3.1) / Addressables ❌미설치(M2에서) / MCP ✅설치완료 / Input System ✅New 단독(`com.unity.inputsystem` 1.20.0, handler 1). 상세는 backlog §0.
 
-**Backlog 유지 원칙**: [scope-tiering.md](Docs/Designs/scope-tiering.md)는 티어 수준, backlog는 구현 태스크 단위(DoD 포함). **갱신은 §1-8에 따라 사용자 확인 후.**
+**Backlog 유지 원칙**: [scope-tiering.md](Docs/Designs/scope-tiering.md)는 티어 수준, backlog는 구현 태스크 단위(DoD 포함). **마일스톤별 파일 분리(2026-08-19)** — 허브 `backlog.md` + `backlog-M0..M5.md`. 완료/결정 반영 시 **해당 마일스톤 파일 + 상단 `⚡ 특이사항` 헤더 + 허브 진행로그**를 함께 갱신해 정합 유지. **갱신은 §1-8에 따라 사용자 확인 후.**
 
 ## 5. 유지보수
 

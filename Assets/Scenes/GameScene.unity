@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 860a66ca4259b384f9ec01b687f71c3c, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -256,6 +256,52 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &1447578880
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1447578882}
+  - component: {fileID: 1447578881}
+  m_Layer: 0
+  m_Name: ProjectilePool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1447578881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447578880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd485265cbb7d9647b3158abcec18f1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VD.Runtime::VD.Player.ProjectilePool
+  prefab: {fileID: 5052098279180531563, guid: bf26c170917301a4692f095d67b07822, type: 3}
+  prewarmCount: 32
+--- !u!4 &1447578882
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447578880}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1935060162
 GameObject:
   m_ObjectHideFlags: 0
@@ -448,6 +494,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1614672375954344650, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: m_Size.x
+      value: 3.264823
+      objectReference: {fileID: 0}
+    - target: {fileID: 1614672375954344650, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: m_Size.z
+      value: 7.084773
+      objectReference: {fileID: 0}
+    - target: {fileID: 1614672375954344650, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: m_Center.x
+      value: 0.016749322
+      objectReference: {fileID: 0}
+    - target: {fileID: 1614672375954344650, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: m_Center.z
+      value: -1.0423865
+      objectReference: {fileID: 0}
     - target: {fileID: 4798779706923505197, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: m_Name
       value: Player
@@ -505,3 +567,4 @@ SceneRoots:
   - {fileID: 757994632}
   - {fileID: 1935060165}
   - {fileID: 2590695747922612404}
+  - {fileID: 1447578882}

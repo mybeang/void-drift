@@ -48,7 +48,7 @@
 
 > 다음 작업은 **다른(새) 세션**에서 진행될 수 있음. 이 섹션이 인계 기준.
 
-**현재 상태**: 기획 완료(`Docs/Designs/` 세트). Unity 프로젝트·에셋 셋업 완료. **Backlog** → [Docs/Dev/backlog.md](Docs/Dev/backlog.md) (M0~M5). **M0 부트스트랩 전부 완료** + **M1-1(게임 상태 골격) 완료** — 어셈블리 골격·씬 3개·입력(New Input System)·리액티브 스택(R3/R3.Unity/UniTask) 확정, `VD.Core`에 상태머신(`GameManager` 싱글톤)+이벤트 채널(`GameEvents`) 안착. **M1-2(플레이어 이동) 완료** — 상대 드래그·물리 이동·뱅킹·고정 카메라 리그·`Player` 프리팹. **다음 = M1-3 오토 사격.**
+**현재 상태**: 기획 완료(`Docs/Designs/` 세트). Unity 프로젝트·에셋 셋업 완료. **Backlog** → [Docs/Dev/backlog.md](Docs/Dev/backlog.md) (M0~M5). **M0 부트스트랩 전부 완료** + **M1-1(게임 상태 골격) 완료** — 어셈블리 골격·씬 3개·입력(New Input System)·리액티브 스택(R3/R3.Unity/UniTask) 확정, `VD.Core`에 상태머신(`GameManager` 싱글톤)+이벤트 채널(`GameEvents`) 안착. **M1-2(플레이어 이동) 완료** — 상대 드래그·물리 이동·뱅킹·고정 카메라 리그·`Player` 프리팹. **M1-3(오토 사격) 완료** — 조준(`PlayerAim`/FirePoint)+발사(`PlayerShooter`·`Projectile`)+상속형 풀(`PooledObjectPool<T>`←`ProjectilePool`). 데미지/히트는 M1-4 이관. **다음 = M1-4 적 기본 엔티티 & 스폰.**
 
 **개발 전 순서** (전부 완료):
 1. ~~Unity 프로젝트 생성~~ ✅ (사용자)
@@ -63,13 +63,13 @@
 - **M1-1 (게임 부트/상태 관리 골격)** ✅ **완료** — 상세 = [02_GameStateArchitecture.md](Docs/Dev/02_GameStateArchitecture.md). `VD.Core`에 `GameState`/`GameEvents`(별도 pub/sub 채널, R3)/`GameManager`(MonoBehaviour 싱글톤, 씬 한정, timeScale 제어)/`GameDebugDriver`(임시 키보드 검증). GameScene에 GameManager·카메라·라이트 배치. 검증: Boot→Playing 로그·timeScale 0↔1·컴파일 0. 사용자 결정: 전역=싱글톤, 이벤트=별도 채널.
 - **M1-2 (플레이어 이동)** ✅ **완료** — 상세 = [03_PlayerMovementAndCamera.md](Docs/Dev/03_PlayerMovementAndCamera.md). `VD.Player.PlayerMovement`(이동 전담): 상대 드래그→Rigidbody 속도 직접 매핑(해상도 무관 `dragGain`, 현재 5), 뱅킹(자식 `Model` 비주얼 회전, 코 안쪽=조준, `invertYaw` OFF), 뷰포트 선-클램프. `Player` 프리팹(StarSparrow_1_LP_Red 복제, root=Rigidbody+PlayerMovement / child `Model`=메시). 카메라 = 고정 Perspective (0,0,-26) FOV55. 입력 = `Pointer.current` 직접. **알려진 이슈**: 관성감 → [issues.md](Docs/Dev/issues.md) I-1(보류).
 
-**➡️ 다음 작업: M1-3 오토 사격 — 진행중 `[~]` (새 세션 인계)** — §1-9에 따라 진행. **구조 결정**: 이동/연출/발사 분리, 발사 방향 = **뱅킹 조준**(정면 아님)이되 **흔들리는 Model이 아니라 오프셋에서 즉시 계산한 "깨끗한 조준 방향"을 `FirePoint`에 적용**. **1단계 완료**: 뱅킹을 `PlayerBanking`(Model)으로 분리, `PlayerMovement`=이동만. **다음**: FirePoint 추가+조준 정렬(2단계) → 발사 간격/투사체/풀(`SimplePool`)/데미지(`IDamageable`)(3단계). 상세·단계별 인계 = **backlog M1-3 진행상태**.
+**➡️ 다음 작업: M1-4 적 기본 엔티티 & 스폰(하드코딩) — 대기 `[ ]` (새 세션 인계)** — §1-9에 따라 진행. **M1-3에서 이관된 것**(backlog M1-4 참조): ① 데미지 전달 `IDamageable` + 투사체 충돌 감지(발사 파이프라인만 M1-3 완료, 히트/데미지는 적 필요), ② 원뿔 내 적 타겟 스냅(기관총·레일건이 조준 원뿔 안 적 조준, 무타겟이면 `FirePoint.forward` 축 직사), ③ 스폰은 `PooledObjectPool<T>` 상속형 **EnemyPool** 권장. **M1-3 완료분**: 조준(`PlayerAim`/FirePoint) + 발사(`PlayerShooter`·`Projectile`·상속형 풀 `ProjectilePool`), 탄속·발사속도 튜닝은 `PlayerShooter` 한 곳. Player 콜라이더는 단일 `BoxCollider`(피격용, 수치·트리거는 M1-4/M1-9). 상세 = **backlog M1-3/M1-4**.
 - **입력**: **New Input System API로만** 읽는다(레거시 `Input.*` 금지, `activeInputHandler:1`). `VD.Runtime`이 `Unity.InputSystem` 참조 완료. 이동은 `Pointer.current` 델타 직접 읽기(상대 드래그). **액션 에셋 미사용** — Unity6 기본 템플릿 `InputSystem_Actions.inputactions`는 M1-2에서 **삭제**(에셋 + `EditorBuildSettings` 전역 참조 해제). 이후 액션 에셋이 필요해지면 그때 도입.
 - **코드 위치·규칙**: 런타임 = `VD.Runtime`(ns `VD.Core`/`VD.Player`/`VD.Enemy`/`VD.UI`), 에디터 = `VD.Editor`. 총알은 Player/Enemy 내부. 파일/네임스페이스/struct 규칙은 [Docs/Dev/01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md) + backlog M0-4.
 - **리액티브·비동기**: R3(`ReactiveProperty`/`Subject`) + R3.Unity(`AddTo(this)` 수명 연동) 사용 가능. 비동기는 UniTask.
 
 > ⚠️ **M1 인계 주의**
-> - **GameScene**: `GameManager`(+임시 `GameDebugDriver`)·`Player`(프리팹 인스턴스)·Main Camera(고정 Perspective, (0,0,-26))·Directional Light 배치됨. 스포너는 M1-4~. TitleScene/ResultScene은 아직 빈 상태. 현재 에디터 활성 씬 = GameScene.
+> - **GameScene**: `GameManager`(+임시 `GameDebugDriver`)·`Player`(프리팹 인스턴스)·`ProjectilePool`(투사체 풀, prewarm 32)·Main Camera(고정 Perspective, (0,0,-26))·Directional Light 배치됨. 적 스포너는 M1-4~. TitleScene/ResultScene은 아직 빈 상태. 현재 에디터 활성 씬 = GameScene.
 > - **마커**: `VDRuntimeMarker`는 M1-1에서 **삭제**(실코드가 참조 검증). `VDEditorMarker`(`Editor/`)만 **유지** — M2 에디터 툴 실코드 전까지 VD.Editor 검증용, 그때 삭제.
 > - **임시 `GameDebugDriver`**(`Core/`): 키보드 상태 전이 검증용(P/G/R). M1-2(입력)·M1-9(게임오버)에서 실코드로 대체 시 삭제.
 > - `SampleScene`/`SmokeCube`는 M0-2 테스트 잔재(빌드 제외). M1과 무관.

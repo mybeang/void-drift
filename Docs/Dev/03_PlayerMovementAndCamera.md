@@ -38,13 +38,17 @@
 ## 프리팹 구조 (물리 ↔ 비주얼 분리)
 
 ```
-Player (root)              ← Rigidbody(useGravity off, FreezePositionZ|FreezeRotation) + PlayerMovement
-└── Model                  ← MeshFilter + MeshRenderer (StarSparrow_1_LP_Red 메시)  = bankTarget
+Player (root)   ← Rigidbody(useGravity off, FreezePositionZ|FreezeRotation) + PlayerMovement + PlayerShooter + BoxCollider(피격용, 단일)
+├── FirePoint   ← PlayerAim (조준 축, 오프셋→각도 즉시 정렬)         ← M1-3 2단계
+└── Model       ← MeshFilter + MeshRenderer (StarSparrow_1_LP_Red) + PlayerBanking (뱅킹 연출)
 ```
 
-- **물리 루트(Player)**: 위치만 물리로 이동, 회전은 완전 동결(절대 회전하지 않음).
-- **자식 `Model`**: 뱅킹 회전을 여기 로컬 회전으로만 적용 → **물리-회전 충돌 없음**.
-- `PlayerMovement.bankTarget` = `Model`. (비우면 자기 자신으로 폴백)
+> 위는 **M1-3 완료 시점** 구조. (M1-2 때는 `Model`만 있었고 뱅킹은 `PlayerMovement`가 `bankTarget`로 참조했으나,
+> M1-3에서 뱅킹=`PlayerBanking`(Model 자체 부착)·조준=`PlayerAim`(FirePoint)·발사=`PlayerShooter`(root)로 분리됨.)
+
+- **물리 루트(Player)**: 위치만 물리로 이동, 회전은 완전 동결(절대 회전하지 않음). `BoxCollider`는 피격 판정용(32-박스 그룹을 단일 박스로 단순화, 트리거·수치는 M1-4/M1-9).
+- **자식 `Model`**: 뱅킹 회전을 여기 로컬 회전으로만 적용(`PlayerBanking`) → **물리-회전 충돌 없음**.
+- **자식 `FirePoint`**: 발사 원점·방향. `PlayerAim`이 조준 축을 즉시 정렬, `PlayerShooter`가 여기서 발사.
 - 기체 방향: 모델 nose = +Z. 카메라가 뒤(-Z)에서 +Z를 보므로 기본은 **후면**이 보인다.
 
 > **왜 자식 분리인가**: 뱅킹을 Dynamic Rigidbody의 `transform.rotation`에 직접 쓰면 빠른 이동 시 물리와
@@ -69,14 +73,25 @@ Player (root)              ← Rigidbody(useGravity off, FreezePositionZ|FreezeR
 
 ---
 
-## M1-3 인계 (조준) — 갱신(2026-08-18)
+## M1-3 (조준·발사) — 갱신(2026-08-18, **M1-3 완료**)
 
-- **구조 리팩터 진행중**: 뱅킹을 `PlayerMovement`에서 분리해 **`PlayerBanking`**(Model에 부착)이 담당(1단계 완료).
+> **M1-3 `[x]` 완료** — 발사 파이프라인(발사기·투사체·상속형 풀)까지. 데미지/히트만 M1-4 이관. 발사 로직 상세는
+> [backlog.md](backlog.md) M1-3 3단계. 아래는 조준(2단계) 구조 인계.
+
+
+- **1단계 완료**: 뱅킹을 `PlayerMovement`에서 분리해 **`PlayerBanking`**(Model에 부착)이 담당.
   `PlayerMovement`는 **이동만**. 위 "프리팹 구조"의 `bankTarget` 서술은 M1-2 시점 기록이며, 현재 Model에는
   `PlayerBanking`이 붙어 스스로 뱅킹한다.
-- **발사 조준(결정)**: 흔들리는 `Model.forward`가 **아니라**, 오프셋에서 **즉시 계산한 "깨끗한 조준 방향"**을 root 자식
-  **`FirePoint`**에 적용해 거기서 발사(뱅킹 조준=원뿔, 안정). 조준각 공식은 `PlayerBanking`과 동일하되 lerp 없이 즉시.
-  → 단계별 상세는 [backlog.md](backlog.md) M1-3 진행상태.
+- **2단계 완료**: root 직속 자식 **`FirePoint`**(localPos 0, forward +Z) 생성 + 신규 **`PlayerAim`**(FirePoint 부착).
+  흔들리는 `Model.forward`가 **아니라**, 오프셋에서 **즉시(보간 없음) 계산한 "깨끗한 조준 방향"**을 `FirePoint.localRotation`에
+  적용한다. 공식은 `PlayerBanking`과 **동일**하되 **roll 생략**(forward 불변), **독립 필드**(maxPitch/maxYaw 기본 28/28 —
+  조준 원뿔을 뱅킹 연출과 별도 튜닝). 임시 검증용 조준 축 기즈모(`drawAimGizmo`) 포함. root가 회전 동결이라 FirePoint는
+  Model 뱅킹과 같은 부모 프레임 → 조준각과 뱅킹 목표각이 정합(단 FirePoint는 흔들림 없는 순수 방향).
+- **조준 원뿔 중심축 = 뱅킹 방향**(= `FirePoint.forward`). 오프셋 0이면 +Z, 드래그하면 그쪽으로 축이 기욺.
+- **원뿔 내 적 타겟 스냅(기관총·레일건)은 M1-4로 이관** — 적 엔티티가 있어야 실동작·검증. 무타겟이면 축(`FirePoint.forward`)
+  직사, 원뿔에 적 있으면 그 적으로 조준. 유도탄은 축·원뿔과 무관한 별도 호밍(M4-1).
+- **3단계 완료**: 발사 로직 = `PlayerShooter`(root, `Playing`에서 `fireInterval`마다 `FirePoint` 방향 발사) + `Projectile`(직진+수명, self-return) + 상속형 풀(`VD.Core.PooledObjectPool<T>` ← `ProjectilePool`). 탄속·수명·발사속도 튜닝은 `PlayerShooter` 한 곳(발사 시 `Projectile.Launch` 주입). 투사체 진행 = `FirePoint.forward`. **데미지/충돌은 M1-4**.
+  → 발사·풀 상세는 [backlog.md](backlog.md) M1-3 3단계.
 
 ## 입력 정리 메모
 

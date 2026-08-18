@@ -134,16 +134,19 @@
   - **검증**: 사용자 드래그 확인, 뱅킹 상단 pitch+25°(루트 0 유지), 경계 정지·속도0, 컴파일/런타임 에러 0.
   - **미해결**: 이동 관성감 → [issues.md](issues.md) `I-1`(보류). / 조준 forward=Model 연동은 M1-3.
 
-### M1-3 · 오토 사격 (기관총) + 투사체 🔴 `[~]` (구조 1단계 완료 · 새 세션 인계)
+### M1-3 · 오토 사격 (기관총) + 투사체 🔴 `[x]` (완료 — 발사 파이프라인; 데미지/히트는 M1-4 이관)
 - **목적**: 입력 없이 자동 발사(뱀서라이크 문법).
 - **작업**: 발사기(발사 간격 파라미터), 투사체 이동/수명/충돌, 오브젝트 풀링(투사체·적·오브 공용 풀 유틸 제안 `SimplePool`). 데미지 전달 인터페이스(`IDamageable`).
 - **DoD**: 플레이 시 일정 간격 발사, 투사체가 적 히트 시 데미지. 풀 재사용으로 GC 스파이크 없음.
+  - **판정(2026-08-18)**: 일정 간격 발사·투사체·풀 재사용 = **충족**(사용자 육안 확인). "**적 히트 시 데미지**"는 적 엔티티가 없어 검증 불가 → **M1-4로 이관**(사용자 결정 (a)). M1-3은 **발사 파이프라인** 기준으로 완료 처리.
 - **의존**: M1-1
-- **비고**: `IDamageable`·`SimplePool` 등 심볼은 제안. 실제 구현 시 확정.
-- **⚙️ 진행 상태 & 인계 (2026-08-18)** — 구조 리팩터부터 착수, 발사 로직은 미구현.
+- **비고**: `SimplePool`→실제는 상속형 `PooledObjectPool<T>`로 확정. `IDamageable`은 M1-4에서 확정.
+- **⚙️ 진행 상태 & 인계 (2026-08-18)** — 3단계까지 완료. 데미지/히트만 M1-4 이관.
   - **확정 결정(사용자)**:
     - 구조를 **이동 / 연출 / 발사 분리**. 기존 `Model`(메시)은 **연출** 쪽.
     - **발사 방향 = 뱅킹 조준**(정면 직진 아님). 이유: 적이 멀리 한 점(소실점)에서 옴. **단, 흔들리는 Model 회전이 아니라 오프셋에서 즉시 계산한 "깨끗한 조준 방향"을 `FirePoint`에 적용** → 조준(원뿔)+안정 동시. Model 뱅킹은 그 조준을 부드럽게 따라가는 시각 연출일 뿐.
+    - **조준 "원뿔"의 중심축 = 뱅킹 방향**(= `FirePoint.forward`, `PlayerAim`이 냄). 오프셋 0이면 +Z, 드래그하면 그쪽으로 축이 기욺. (2026-08-18 확인 — "원뿔의 중심은 z축"은 오프셋 0 기준을 임의 용어로 말한 것, 정식은 뱅킹 방향.)
+    - **원뿔 내 적 타겟 스냅(기관총·레일건)은 M1-4로 이관.** 적이 있어야 실동작·검증 가능하므로 여기선 축 직사만. 무타겟이면 축(`FirePoint.forward`)으로 직사, 원뿔 안에 적 있으면 그 적으로 조준 스냅 — 이 층은 적 엔티티(M1-4) 붙은 뒤 추가. **유도탄은 축·원뿔과 무관한 별도 호밍(M4-1).**
     - 기체 시각 관성/무게감은 **지금 연출 그대로 유지**(폴리싱 때 손봄, [issues.md](issues.md) I-1).
   - **목표 구조**:
     ```
@@ -152,13 +155,15 @@
     └── Model       ← Mesh + PlayerBanking (연출: 부드러운 뱅킹)
     ```
   - **✅ 1단계 완료**: 뱅킹을 `PlayerMovement`에서 신규 **`PlayerBanking`**(Model에 부착)으로 분리. `PlayerMovement`=이동만. 동작 동일(컴파일 0, 사용자 플레이 확인). 프리팹 반영.
-  - **▶ 2단계(다음)**: `FirePoint`(root 자식) 생성 + **깨끗한 조준 계산 컴포넌트**(오프셋→각도 즉시, lerp 없음)로 FirePoint 정렬. 조준각 공식은 `PlayerBanking`과 동일하되 **즉시 적용**(발사 안정).
-  - **▶ 3단계**: 발사 로직 — 발사 간격, 투사체(이동/수명/충돌), 풀(`SimplePool` 제안), 데미지(`IDamageable` 제안). 투사체 진행 방향 = `FirePoint.forward`.
-  - **관련 파일**: `Assets/Scripts/Player/{PlayerMovement,PlayerBanking}.cs`. 프리팹 `Assets/Prefabs/Player.prefab`(root=Rigidbody+PlayerMovement / 자식 Model=Mesh+PlayerBanking). 카메라 리그·이동 상세 = [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md).
+  - **✅ 2단계 완료(2026-08-18)**: `FirePoint`(root 직속 자식, localPos 0·forward +Z) 생성 + 신규 **`PlayerAim`**(FirePoint 부착)이 오프셋→pitch/yaw를 `LateUpdate`에서 **즉시(보간 없음)** `FirePoint.localRotation`에 적용. 공식은 `PlayerBanking`과 동일하되 **roll 생략**(forward 불변)·**독립 필드**(maxPitch/maxYaw 기본 28/28, 조준 원뿔을 뱅킹 연출과 별도 튜닝 가능). 임시 검증 기즈모(`drawAimGizmo`, 조준 축 레이) 포함 — 발사 로직 안착 후 정리. 컴파일 0, 사용자 육안 확인. 프리팹 반영.
+  - **✅ 3단계 완료(2026-08-18)**: 발사 로직 — 발사기 `PlayerShooter`(root, `Playing`에서 `fireInterval`마다 `FirePoint` 방향 발사) + 투사체 `Projectile`(자기 forward 직진 + 수명 만료 시 self-return, 콜라이더 없음) + 풀. **풀은 상속형**: `VD.Core.PooledObjectPool<T>`(추상 MonoBehaviour 베이스, prewarm/Get/Return + `Create`/`OnGet`/`OnReturn` 훅) ← `VD.Player.ProjectilePool : PooledObjectPool<Projectile>`(Get 시 반납 콜백 배선). 이후 EnemyPool(M1-4)·OrbPool(M1-5)이 같은 베이스 상속. **튜닝 한 곳**(사용자 결정): 탄속·수명·발사속도를 `PlayerShooter` 인스펙터에 몰아 발사 시 투사체에 주입(`Projectile.Launch`). 투사체 비주얼 = 임시 프리미티브(`Projectile.prefab`, Unlit 노랑-주황). GameScene에 `ProjectilePool` 오브젝트(prewarm 32). 검증: 조준 축으로 총알 스트림·일시정지(P) 시 정지·컴파일 0, **사용자 육안 확인**. 데미지/충돌은 M1-4.
+  - **부수 정리(2026-08-18)**: Player 프리팹의 32-박스 `Collider` 그룹을 **단일 `BoxCollider`(root)로 단순화**(날개 제외·앞쪽 트림·유저 관대 = 작게). 피격 판정용이라 M1-4/M1-9에서 트리거 여부·수치 확정. (사용자가 인스펙터에서 최종 미세조정.)
+  - **관련 파일**: `Assets/Scripts/Player/{PlayerMovement,PlayerBanking,PlayerAim,PlayerShooter,Projectile,ProjectilePool}.cs`, `Assets/Scripts/Core/PooledObjectPool.cs`. 프리팹 `Assets/Prefabs/Player.prefab`(root=Rigidbody+PlayerMovement+PlayerShooter+BoxCollider / 자식 `FirePoint`=PlayerAim, `Model`=Mesh+PlayerBanking), `Assets/Prefabs/Projectile.prefab`. GameScene에 `ProjectilePool`. 카메라 리그·이동 상세 = [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md).
 
 ### M1-4 · 적 기본 엔티티 & 스폰(하드코딩) 🔴
 - **목적**: 툴 이전 단계. 코드로 직접 적 1~2종을 스폰해 루프 성립.
 - **작업**: 적 컴포넌트(체력/접근 이동/피격→사망), 코스 안쪽에서 플레이어 쪽으로 접근, 간단 스포너(시간/간격 하드코딩). 충돌 시 플레이어 데미지.
+- **⤷ M1-3에서 이관**: (1) **데미지 전달 `IDamageable` + 투사체 충돌 감지**(M1-3은 발사 파이프라인만, 히트/데미지는 적이 있어야 검증). 투사체 진행 방향 = `FirePoint.forward`. (2) **원뿔 내 적 타겟 스냅**(기관총·레일건이 조준 원뿔 안 적으로 조준, 무타겟이면 축 직사). (3) 스폰은 `PooledObjectPool<T>` 상속형 **EnemyPool** 사용 권장(M1-3에서 베이스 확정).
 - **DoD**: 적이 계속 스폰·접근하고, 사격으로 파괴되며, 플레이어와 충돌 시 HP 감소.
 - **의존**: M1-3
 
@@ -383,3 +388,5 @@
 | 2026-08-17 | M0-4 **완료(✅)** — asmdef 2개(`VD.Runtime`/`VD.Editor`, 네임스페이스 `VD.*`) + 폴더 골격(Core/Player/Enemy/UI/Editor) + 씬 3개(Title/Game/Result, build 0~2). 리플렉션 검증·컴파일 0. 기술 문서 [01_AssemblyDefinition.md](01_AssemblyDefinition.md) 신규 작성. 초안 `Combat`/`Progression` 폴더 폐기(총알=Player/Enemy 내부, 진행=Core). |
 | 2026-08-17 | M1-1 **완료(✅)** — 사용자 결정: 전역=MonoBehaviour 싱글톤 `GameManager`, 이벤트=별도 `GameEvents` 채널. `VD.Core`에 `GameState`/`GameEvents`/`GameManager`/`GameDebugDriver`(임시) 생성, GameScene 배치·검증(Boot→Playing 로그, timeScale 0↔1, 컴파일 0). 기술 문서 [02_GameStateArchitecture.md](02_GameStateArchitecture.md) 신규. 정리: `VDRuntimeMarker` 삭제, `VDEditorMarker` 유지·재연결. |
 | 2026-08-17 | M1-2 **완료(✅)** — `VD.Player.PlayerMovement`(이동 전담) + `Player` 프리팹(StarSparrow_1_LP_Red, root=Rigidbody+PlayerMovement / 자식 `Model`). 상대 드래그(`Pointer.current`)→속도 직접 매핑, 해상도 무관 `dragGain`(현재 5), 뱅킹=자식 `Model` 회전(물리 분리), 뷰포트 선-클램프, 고정 Perspective 카메라(0,0,-26/FOV55). 사용자 튜닝 반복(감도·거리·뱅킹·떨림 수정). 기본 InputActions 템플릿 삭제(전역 참조 해제). 기술 문서 [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md) 신규. 이슈 트래커 [issues.md](issues.md) 신설(`I-1` 이동 관성감 보류). |
+| 2026-08-18 | M1-3 **2단계 완료(진행중 `[~]`)** — 신규 `VD.Player.PlayerAim`(FirePoint 부착): 오프셋→pitch/yaw 즉시 정렬(`PlayerBanking` 동일 공식, roll 생략, 독립 필드 28/28), 임시 조준 축 기즈모 포함. 프리팹에 `FirePoint`(root 직속, localPos 0) 추가. 컴파일 0·사용자 육안 확인. 결정: **조준 원뿔 중심축 = 뱅킹 방향(`PlayerAim`)**, **원뿔 내 적 타겟 스냅(기관총·레일건)은 M1-4로 이관**(무타겟이면 축 직사), 유도탄은 별도 호밍(M4). 다음 = 3단계 발사 로직. |
+| 2026-08-18 | M1-3 **3단계 완료 → M1-3 `[x]` 마감(a)** — 발사기 `PlayerShooter` + 투사체 `Projectile` + 상속형 풀(`VD.Core.PooledObjectPool<T>` 베이스 ← `ProjectilePool`). 튜닝(탄속·수명·발사속도) `PlayerShooter` 한 곳에 몰아 `Projectile.Launch`로 주입(사용자 결정). 임시 투사체 프리팹(Unlit) + GameScene `ProjectilePool`(prewarm 32). 사용자 육안 검증(총알 스트림·일시정지 정지). **데미지/히트는 적 필요 → M1-4 이관**(사용자 결정). 부수: Player 32-박스 콜라이더 → 단일 BoxCollider(root) 단순화(피격용, 수치·트리거는 M1-4/M1-9). 다음 = M1-4. |

@@ -203,12 +203,19 @@
   - **튜닝(Orb 프리팹 인스펙터, Day5 잠정)**: `driftSpeed` 6 · `magnetRadius` 8 · `magnetMaxSpeed` 40 · `pickupRadius` 0.6 · `despawnZ` −50. 사용자: "나중에 튜닝".
   - **관련 파일**: `Assets/Scripts/Core/{Orb,OrbPool}.cs`, `Assets/Scripts/Enemy/{Enemy,EnemySpawner}.cs`(드랍 훅·배선). 프리팹 `Assets/Prefabs/Orbs/{Orb,Orb Crystal green,Orb Crystal blue,Orb Crystal red}.prefab`, `Assets/Prefabs/Player.prefab`(태그). GameScene에 `OrbPool`.
 
-### M1-6 · 경험치 / 레벨업 (점증형 임계값) 🔴
+### M1-6 · 경험치 / 레벨업 (점증형 임계값) 🔴 `[x]`
 - **목적**: progression §1. 오브 누적 → 임계값 도달 → 레벨업.
 - **작업**: 경험치 누적, **레벨별 점증 임계값 곡선**(수치 Day5), 레벨업 시 이벤트(→ 3choice 트리거). R3 `ReactiveProperty<int>`(레벨)·`ReactiveProperty<float>`(경험치%) 제안 — HUD 바인딩 대비.
-- **DoD**: 오브 습득이 게이지 채우고, 임계값마다 레벨업 이벤트 발생(레벨 오를수록 더 많이 필요).
+- **DoD**: 오브 습득이 게이지 채우고, 임계값마다 레벨업 이벤트 발생(레벨 오를수록 더 많이 필요). ✅ **충족**(2026-08-18, 사용자 확인).
 - **의존**: M1-5
-- **문서**: progression-design.md §1
+- **문서**: progression-design.md §1, **[05_ProgressionAndEvents.md](05_ProgressionAndEvents.md)**(기술 상세)
+- **✅ 완료(2026-08-18, 사용자 결정 반영)** — 상세 = [05_ProgressionAndEvents.md](05_ProgressionAndEvents.md)
+  - **사용자 결정**: (1) 상태 배치 = **GameEvents 확장**(별도 시스템 아님, 02 예고 확장 지점), (2) 오브→경험치 = **GameEvents 이벤트 발행→구독**(pub/sub), (3) 임계값 = **지수형** `base×growth^(n-1)`.
+  - **산출(`VD.Core`)**: `GameEvents` 확장 — `OrbCollected`(입력 `Observable<int>`) · `Level`(`ReadOnlyReactiveProperty<int>`) · `XpNormalized`(`ReadOnlyReactiveProperty<float>` 0~1, HUD 게이지) · `LevelUp`(`Observable<int>`, 3choice용). 발행/갱신 메서드는 `internal`(`PublishOrbCollected`/`SetLevel`/`SetXpNormalized`/`RaiseLevelUp`). 신규 **`ExperienceSystem`**(GameScene 1개) — `OrbCollected` 구독·누적, 지수 임계값 도달 시 초과분 이월+레벨업 발행. `Orb`는 습득 시 `[TEMP]` 로그 대신 `PublishOrbCollected(xpValue)`(xpValue 기본 1).
+  - **튜닝(Day5 잠정, ExperienceSystem 인스펙터)**: `baseThreshold` 5 · `growth` 1.3. `Orb.xpValue` 1(→ M2-2 SO).
+  - **검증**: 오브 5개→Lv2·다음 임계 6.5(=5×1.3), 컴파일/런타임 에러 0, 사용자 확인.
+  - **⚠️ 임시요소**: `[TEMP] 레벨업` 로그 — **M1-7(3choice)** 가 `LevelUp` 구독해 팝업 띄우면 대체. `Level`/`XpNormalized`는 **M1-10 HUD** 바인딩.
+  - **관련 파일**: `Assets/Scripts/Core/{GameEvents,ExperienceSystem,Orb}.cs`. GameScene에 `ExperienceSystem`.
 
 ### M1-7 · 3choice 강화 선택 (일시정지 팝업) 🔴
 - **목적**: progression §1. 레벨업 시 게임 일시정지 + 3택 카드 + 선택 적용 + 재개.
@@ -443,4 +450,5 @@
 | 2026-08-18 | **M5-8 신설(🟢 Nice)** — 스폰 패턴/포메이션(편대·웨이브 등 공간적 배치). 랜덤 스폰은 M1-4, 패턴화는 후순위(Firebase M5-7급 시기). M4-6(시간축 프로파일)과 구분. 사용자 요청 등재. |
 | 2026-08-18 | **M1-4 사전 결정** — 적 프리팹 소스 = `FREE Low Poly Spaceships`(spaceship_1~7). M1-4 첫 적 = **spaceship_6 1종**, 나머지 볼륨업은 M3-3. 진행 = **단계 분할(1단계 스폰+직진 접근 이동)**, 이후 HP/피격/충돌데미지(M1-3 이관). 아키타입 잠정 매핑 기록(1=고체력 돌진/탄막·대형, 4=범용/돌진, 5=자폭, 2=탄막 등) → M3-3. 구현은 착수 지시 후. |
 | 2026-08-18 | M1-3 **3단계 완료 → M1-3 `[x]` 마감(a)** — 발사기 `PlayerShooter` + 투사체 `Projectile` + 상속형 풀(`VD.Core.PooledObjectPool<T>` 베이스 ← `ProjectilePool`). 튜닝(탄속·수명·발사속도) `PlayerShooter` 한 곳에 몰아 `Projectile.Launch`로 주입(사용자 결정). 임시 투사체 프리팹(Unlit) + GameScene `ProjectilePool`(prewarm 32). 사용자 육안 검증(총알 스트림·일시정지 정지). **데미지/히트는 적 필요 → M1-4 이관**(사용자 결정). 부수: Player 32-박스 콜라이더 → 단일 BoxCollider(root) 단순화(피격용, 수치·트리거는 M1-4/M1-9). 다음 = M1-4. |
+| 2026-08-18 | **M1-6 완료(`[x]`)** — 경험치/레벨업. 사용자 결정: 상태=**GameEvents 확장**, 오브→XP=**이벤트 발행/구독**, 임계값=**지수형** `base×growth^(n-1)`. `GameEvents`에 `OrbCollected`/`Level`/`XpNormalized`/`LevelUp` 추가(발행·갱신 internal), 신규 `ExperienceSystem`(누적·임계·레벨업), `Orb`는 습득 시 `PublishOrbCollected(xpValue)`. 검증: 5개→Lv2·다음 6.5, 에러 0. `[TEMP] 레벨업` 로그는 M1-7서 대체, `Level`/`XpNormalized`는 M1-10 HUD. 기술 문서 [05_ProgressionAndEvents.md](05_ProgressionAndEvents.md) + 재사용 풀 [04_ObjectPooling.md](04_ObjectPooling.md) 신규 작성. |
 | 2026-08-18 | **M1-5 완료(`[x]`)** — 오브 드랍·자석·습득. 단계 분할: (1)적 실사망 위치 드랍(`Enemy.SetDropHandler`/`EnemySpawner.DropOrb`, 화면 밖 despawn 제외) + `Orb`/`OrbPool : PooledObjectPool<Orb>`(VD.Core) + GameScene `OrbPool`(prewarm 16); (2)자석 — 반경 밖 전방(-Z) 일정속도 드리프트(못 만나면 지나쳐 despawn), 반경 내 캡처(래치)→가속 끌림, 타깃=태그"Player"로 `OrbPool` 캐시·주입(Core→Player 결합 회피, Player 프리팹 태그 부여); (3)거리 기반 습득(`pickupRadius`)→`[TEMP]` 로그+반납. 비주얼=Hovl Crystal effect green 복제(`Assets/Prefabs/Orbs/`). 각 단계 사용자 육안 확인, 컴파일/런타임 에러 0. **경험치 이벤트 발행만 M1-6 이관**(M1-5는 로그만). 속도·반경 튜닝은 나중(Day5). |

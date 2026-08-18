@@ -79,8 +79,9 @@ GameManager.Instance.Events.State
 - `Events.State`는 `ReadOnlyReactiveProperty<GameState>` — 구독 시 **현재값 즉시 방출**.
 - 상태 변경 권한은 `GameManager`(내부 `internal SetState`)만. 외부는 읽기·구독만 가능.
 
-> **게임플레이 이벤트**(처치/레벨업/오브 등)는 지금 넣지 않는다(과설계 회피). 각 백로그(M1-5·M1-6…)에서
-> 필요해질 때 `GameEvents`에 R3 `Subject`/`Observable`로 추가한다. `GameEvents`가 그 확장 지점이다.
+> **게임플레이 이벤트**(처치/레벨업/오브 등)는 M1-1에선 넣지 않았다(과설계 회피). 각 백로그에서
+> 필요해질 때 `GameEvents`에 R3 `Subject`/`Observable`로 추가한다 — `GameEvents`가 그 확장 지점이다.
+> **M1-6에서 진행(경험치/레벨/레벨업) 이벤트가 실제로 추가됨 → [05_ProgressionAndEvents.md](05_ProgressionAndEvents.md).**
 
 ---
 

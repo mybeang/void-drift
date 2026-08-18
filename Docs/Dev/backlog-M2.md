@@ -2,7 +2,7 @@
 > 상위 허브: [backlog.md](backlog.md) | 인접: [backlog-M1.md](backlog-M1.md) ← **M2** → [backlog-M3.md](backlog-M3.md)
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
-- **상태**: 🔴 **미착수(다음 진행 대상)**. **포폴 공고 1순위 어필** = UI Toolkit 에디터 커스텀 툴.
+- **상태**: 🟡 **진행중** — **M2-1 완료(`[x]`, 2026-08-19)**, 다음 = M2-2. **포폴 공고 1순위 어필** = UI Toolkit 에디터 커스텀 툴.
 - **범위(Must)**: enemy-design 3층 중 **1층(유효성 경고) + SO DB + Addressables + 스폰 연결**까지. 2·3층 심화(아키타입 프로파일·스폰 타임라인) → **M4-6**.
 - **전제(이전 M에서 옴)**:
   - M0-4 asmdef `VD.Editor`(에디터 전용, Runtime 참조) 존재. **`Data` 폴더·ScriptableObject는 여기(M2)서 신설.**
@@ -22,12 +22,20 @@
 
 ---
 
-### M2-1 · Addressables 설치 & Enemy Group/Label 구성 🔴
+### M2-1 · Addressables 설치 & Enemy Group/Label 구성 🔴 `[x]` (2026-08-19)
 - **목적**: enemy-design §6. 적 프리팹을 Addressables로 관리 + 라벨로 거친 분류.
-- **작업**: Addressables 패키지 설치, `Enemy` Group 생성, 임포트한 우주선 에셋으로 적 프리팹 후보 등록, 라벨 `archetype:탄막/돌진/자폭`·`range:원거리/근거리` 부여.
-- **DoD**: Enemy Group에 프리팹 N개 등록·라벨링, 라벨 기준 로드 스모크 테스트 1회 성공(UniTask로 비동기 로드).
+- **작업**: Addressables 패키지 설치, `Enemy` Group 생성, 임포트한 우주선 에셋으로 적 프리팹 후보 등록, 라벨 `archetype:탄막/돌진/자폭/복합`·`range:원거리/근거리/복합` 부여.
+- **DoD**: Enemy Group에 프리팹 N개 등록·라벨링, 라벨 기준 로드 스모크 테스트 1회 성공(UniTask로 비동기 로드). ✅ **충족**.
 - **의존**: M0-4
 - **문서**: enemy-design.md §6
+- **✅ 완료(2026-08-19, 세부 분할 a~d)**:
+  - **a** `com.unity.addressables` **4.0.1** 설치(+의존성, 컴파일 0).
+  - **b** spaceship_1~7을 **비주얼 프리팹으로 복제**(`AssetDatabase.CopyAsset`, 새 GUID) → `Assets/Prefabs/Enemies/`. 이름 = 아키타입 기준(`Enemy_Heavy_1`/`Enemy_Barrage_2·3·7`/`Enemy_Charger_4·6`/`Enemy_Bomber_5`). **이름은 식별 편의일 뿐 역할 고정 아님**(모델↔AI 분리, enemy-design §2). Imports 원본과 링크 끊김(수정 안전).
+  - **c** `Enemy` Addressable 그룹 생성, 7개 등록(주소=프리팹명), **archetype 멀티라벨**(모델별 적합 집합, 사용자 지정) + **파생 range 라벨**(탄막→원거리·돌진/자폭→근거리·복합→복합) 부여. 멀티라벨·범위는 §2/§6 정합.
+    - Heavy_1=[탄막,돌진,복합] · Barrage_2·3=[탄막,돌진] · Charger_4·6=[돌진,자폭] · Bomber_5=[탄막,돌진,자폭] · Barrage_7=[탄막,자폭].
+  - **d** Play 모드에서 `[RuntimeInitializeOnLoadMethod]` + **UniTask 비동기 로드** — `archetype:탄막` 라벨로 **5개**(Heavy_1·Barrage_2·3·7·Bomber_5) 로드 확인. (에디트 모드는 콜백 미pump라 Play로 검증.)
+  - 임시 셋업/스모크 스크립트는 실행 후 삭제(육안 로그만 남김).
+  - **⚠️ 인계**: M1-4 `Enemy.prefab`은 아직 Imports `spaceship_6` 중첩 → **M2-5에서 `Enemy_Charger_6`으로 재배선**. VD.Editor asmdef는 아직 Addressables 미참조(M2-3 툴에서 참조 추가 예정).
 
 ### M2-2 · 적 데이터 SO 스키마 (조합 원천 데이터) 🔴
 - **목적**: enemy-design §2·§6. 에디터가 편집하는 디자인 원천 데이터 정의.

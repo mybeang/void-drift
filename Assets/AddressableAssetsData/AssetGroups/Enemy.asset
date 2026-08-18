@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Enemy
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Enemy
+  m_GUID: ca2f76dab9dea5943b148606ff5ee816
+  m_SerializeEntries:
+  - m_GUID: 0d76bd6ffaac6c444b8ca8efc4dda38e
+    m_Address: Enemy_Barrage_7
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - "archetype:\uC790\uD3ED"
+    - "archetype:\uD0C4\uB9C9"
+    - "range:\uADFC\uAC70\uB9AC"
+    - "range:\uC6D0\uAC70\uB9AC"
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3573afb1138428247bb9e078fef4aee4
+    m_Address: Enemy_Bomber_5
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - "archetype:\uB3CC\uC9C4"
+    - "archetype:\uC790\uD3ED"
+    - "archetype:\uD0C4\uB9C9"
+    - "range:\uADFC\uAC70\uB9AC"
+    - "range:\uC6D0\uAC70\uB9AC"
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 700781f82af9ca944b8deb4f200ad36b
+    m_Address: Enemy_Charger_4
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - "archetype:\uB3CC\uC9C4"
+    - "archetype:\uC790\uD3ED"
+    - "range:\uADFC\uAC70\uB9AC"
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a7a72d70ca99cb0489b8bd8bbef5d676
+    m_Address: Enemy_Barrage_2
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - "archetype:\uB3CC\uC9C4"
+    - "archetype:\uD0C4\uB9C9"
+    - "range:\uADFC\uAC70\uB9AC"
+    - "range:\uC6D0\uAC70\uB9AC"
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf9cf29e3843684429990563cb01aea7
+    m_Address: Enemy_Charger_6
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - "archetype:\uB3CC\uC9C4"
+    - "archetype:\uC790\uD3ED"
+    - "range:\uADFC\uAC70\uB9AC"
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d33dfc1a3eccb1d4392f9e33907b226d
+    m_Address: Enemy_Heavy_1
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - "archetype:\uB3CC\uC9C4"
+    - "archetype:\uBCF5\uD569"
+    - "archetype:\uD0C4\uB9C9"
+    - "range:\uADFC\uAC70\uB9AC"
+    - "range:\uBCF5\uD569"
+    - "range:\uC6D0\uAC70\uB9AC"
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f85ce79ab67937242847437fa2203113
+    m_Address: Enemy_Barrage_3
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - "archetype:\uB3CC\uC9C4"
+    - "archetype:\uD0C4\uB9C9"
+    - "range:\uADFC\uAC70\uB9AC"
+    - "range:\uC6D0\uAC70\uB9AC"
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 1bc72ec68e709f646b4b125ff3d02bea, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 818396752dadb8b488530ade960d46e8, type: 2}
+    - {fileID: 11400000, guid: 5dd28f66aca737f44a1a35c2633634c1, type: 2}
+    m_SchemaDisplayOrder:
+    - Enemy_BundledAssetGroupSchema
+    - Enemy_ContentUpdateGroupSchema
+  m_IncludeInBuild: 1
+  m_IncludeInBuildMigrated: 1

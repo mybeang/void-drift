@@ -41,7 +41,7 @@
 |---|---|---|---|---|---|
 | **M0** | 부트스트랩 & 스모크 테스트 | 🔴 | ✅ 완료 | [backlog-M0.md](backlog-M0.md) | MCP 연결 + 큐브 Z고정 회전 검증 + 프로젝트 골격 |
 | **M1** | 코어 루프 (플레이 가능한 최소 게임) | 🔴 | ✅ 완료 | [backlog-M1.md](backlog-M1.md) | 이동·오토사격·적·오브·레벨업·3choice·게임오버·HUD |
-| **M2** | 에디터 커스텀 툴 (핵심 어필) | 🔴 | 🔴 진행 대상 | [backlog-M2.md](backlog-M2.md) | SO DB + 적 조합 오서링 + 유효성 경고 + Addressables + 스폰 연결 |
+| **M2** | 에디터 커스텀 툴 (핵심 어필) | 🔴 | 🟡 진행중(M2-1✅) | [backlog-M2.md](backlog-M2.md) | SO DB + 적 조합 오서링 + 유효성 경고 + Addressables + 스폰 연결 |
 | **M3** | 적 다양성 & 3choice 풀 (Must 완성) | 🔴 | 🔴 미착수 | [backlog-M3.md](backlog-M3.md) | 이동/공격 AI 모듈, 아키타입, 최소 강화 풀 |
 | **M4** | 확장 (Should) | 🟡 | 🟡 미착수 | [backlog-M4.md](backlog-M4.md) | 무기 3종·레벨, 실드, 난이도 페이즈, 에디터 툴 2~3층, VFX, 하이스코어 |
 | **M5** | 빌드 & 폴리싱 (Must 빌드 + Nice) | 🔴/🟢 | 🔴 미착수 | [backlog-M5.md](backlog-M5.md) | 모바일 가로 Android 빌드 + 데모영상 + (Nice)사운드/특수기능/Firebase |
@@ -83,3 +83,5 @@
 | 2026-08-19 | **M1-4 마감(`[x]`)** — DoD(스폰·직진 접근·사격 파괴·충돌 HP감소·레이어 분리) 충족 상태로 마감. 잔존이던 원뿔 각도/사거리 = 사용자 튜닝(제외), `[TEMP]` 로그·기즈모 = 로그 유지 방침으로 정리 취소. |
 | 2026-08-19 | **M1-7 완료(`[x]`)** — 3choice 강화 선택(일시정지 팝업). `VD.UI.LevelUpPopup`(`LevelUp`→`GameManager.Pause()`→`Roll(3)` 3카드→클릭 `Apply`→`Resume()`, 다중 레벨업 큐 순차) + `VD.Core.UpgradeDisplay`(struct) + `UpgradeSystem.Describe`(효과 수치 실제 필드 렌더). M1-8 임시 자동적용 제거. 한글 폰트=**SUIT SDF**. 검증(Play) 정상. **⇒ M1 코어루프 완성.** |
 | 2026-08-19 | **문서 구조 개편** — backlog를 마일스톤별 파일(`backlog-M0..M5.md`)로 분리, 각 상단 `⚡ 특이사항` 헤더 추가(크로스 마일스톤 요약). 허브(이 파일)는 개요·스냅샷·크로스컷·진행로그만 유지. `GameDebugDriver`를 `#if UNITY_EDITOR` 가드로 유지 결정. |
+| 2026-08-19 | **enemy-design refine** — 아키타입 **복합** 추가(3→4종), **아키타입이 range 자동결정**(탄막=원거리·돌진/자폭=근거리·복합=복합), 모델(비주얼)은 아키타입 고정 안 됨 → `archetype:` **멀티라벨**(적합 집합), 라벨 밖 선택 시 경고(차단X). §2·§6·§8 갱신. |
+| 2026-08-19 | **M2-1 완료(`[x]`)** — Addressables. 세부 분할: (a) `com.unity.addressables` 4.0.1 설치; (b) spaceship_1~7 → `Assets/Prefabs/Enemies/`에 비주얼 프리팹 복제(새 GUID, 아키타입 기준 이름); (c) `Enemy` 그룹 등록 + archetype 멀티라벨(모델별 적합 집합, 사용자 지정)+파생 range 라벨; (d) Play 모드 UniTask 비동기 로드 스모크 = `archetype:탄막` 5개 로드 확인. 임시 스크립트 삭제, 에러 0. 다음 = M2-2. |

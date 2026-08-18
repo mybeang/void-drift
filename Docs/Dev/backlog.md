@@ -217,12 +217,18 @@
   - **⚠️ 임시요소**: `[TEMP] 레벨업` 로그 — **M1-7(3choice)** 가 `LevelUp` 구독해 팝업 띄우면 대체. `Level`/`XpNormalized`는 **M1-10 HUD** 바인딩.
   - **관련 파일**: `Assets/Scripts/Core/{GameEvents,ExperienceSystem,Orb}.cs`. GameScene에 `ExperienceSystem`.
 
-### M1-7 · 3choice 강화 선택 (일시정지 팝업) 🔴
+### M1-7 · 3choice 강화 선택 (일시정지 팝업) 🔴 `[x]` (2026-08-19 검증 완료)
 - **목적**: progression §1. 레벨업 시 게임 일시정지 + 3택 카드 + 선택 적용 + 재개.
 - **작업**: 레벨업 이벤트 수신 → `Time.timeScale=0` → 후보 3개 롤(중복 방지) → uGUI 카드 팝업 → 선택 시 강화 적용 → 재개. 강화 데이터는 M1-8 최소 풀 사용.
-- **DoD**: 레벨업 시 프리즈되고 3장 뜸, 하나 고르면 효과 적용 후 게임 재개.
+- **DoD**: 레벨업 시 프리즈되고 3장 뜸, 하나 고르면 효과 적용 후 게임 재개. ✅ **충족**(2026-08-19, Play 검증).
 - **의존**: M1-6, M1-8, M1-10(HUD/캔버스)
 - **문서**: progression-design.md, ui-design.md §3
+- **✅ 완료(2026-08-19)**:
+  - **산출**: `VD.UI.LevelUpPopup`(`GameEvents.LevelUp` 구독 → `GameManager.Pause()`(timeScale 0) → `UpgradeSystem.Roll(3)` 3장 카드 표시 → 카드 클릭 시 `UpgradeSystem.Apply(선택)` → `GameManager.Resume()`, **다중 레벨업 큐 순차**), `VD.Core.UpgradeDisplay`(readonly struct — 카드 표시용), `UpgradeSystem.Describe(UpgradeType)`(제목/설명/**효과 수치를 실제 필드에서 렌더** → UI 하드코딩 회피). M1-8의 **임시 자동적용 제거** — 이제 팝업이 선택·적용을 구동.
+  - **씬**: GameScene에 `LevelUp Canvas`(sortOrder 100) + 딤 Panel + 3 Card(Button+TMP) + `EventSystem`(`InputSystemUIInputModule`).
+  - **한글 폰트**: 런타임 TMP 텍스트에 **SUIT SDF**(`Assets/Imports/Fonts/SUIT-Regular SDF`·`SUIT-Heavy SDF`) 적용 — 기본 `LiberationSans SDF`엔 한글 글리프 없어 깨지던 문제 해소. (배선 세부 점검은 보류, 문제 시 대응.)
+  - **검증**: 레벨업→프리즈·3카드→클릭 시 스탯 변경·재개·큐 순차 정상, 한글 렌더 정상.
+  - **⚠️ 임시요소 유지**: `[TEMP]` 로그는 **정리하지 않고 유지**(육안 확인용, 사용자 방침 — 앞으로도 동일).
 
 ### M1-8 · 최소 3choice 강화 풀 (공용 스탯) 🔴 `[x]` (풀·적용·롤 완료 — 팝업 UI·선택은 M1-7)
 - **목적**: scope-tiering Must "빌드 선택이 성립할 최소". 공격력/이동속도/최대체력 등 몇 종.
@@ -477,3 +483,4 @@
 | 2026-08-18 | **M1-9 완료(`[x]`)** — HP/게임오버/점수. 사용자 결정: 게임오버=**GameScene 정지형**(HP0→GameOver+`timeScale 0`+결과값 보관), 점수=**생존시간+처치점수**. `GameEvents`에 `EnemyKilled`/`HpNormalized`/`Score`/`SurvivalTime` 추가, 신규 `ScoreSystem`(시간+처치 집계), `Enemy` 처치점수 발행, `PlayerHealth` HP0→`GameOver()`. `GameManager.GameOver()` timeScale 1→0. 검증(execute_code): 생존53.1s+처치180=점수233, GameOver→ts0 프리즈, 에러 0. `[TEMP]` 로그·결과화면(ResultScene/HUD)은 M1-10/M2. 05 문서에 §종료/점수 추가. (M1-7/M1-10 위해 순서상 M1-9 선행.) |
 | 2026-08-18 | **M1-6 완료(`[x]`)** — 경험치/레벨업. 사용자 결정: 상태=**GameEvents 확장**, 오브→XP=**이벤트 발행/구독**, 임계값=**지수형** `base×growth^(n-1)`. `GameEvents`에 `OrbCollected`/`Level`/`XpNormalized`/`LevelUp` 추가(발행·갱신 internal), 신규 `ExperienceSystem`(누적·임계·레벨업), `Orb`는 습득 시 `PublishOrbCollected(xpValue)`. 검증: 5개→Lv2·다음 6.5, 에러 0. `[TEMP] 레벨업` 로그는 M1-7서 대체, `Level`/`XpNormalized`는 M1-10 HUD. 기술 문서 [05_ProgressionAndEvents.md](05_ProgressionAndEvents.md) + 재사용 풀 [04_ObjectPooling.md](04_ObjectPooling.md) 신규 작성. |
 | 2026-08-18 | **M1-5 완료(`[x]`)** — 오브 드랍·자석·습득. 단계 분할: (1)적 실사망 위치 드랍(`Enemy.SetDropHandler`/`EnemySpawner.DropOrb`, 화면 밖 despawn 제외) + `Orb`/`OrbPool : PooledObjectPool<Orb>`(VD.Core) + GameScene `OrbPool`(prewarm 16); (2)자석 — 반경 밖 전방(-Z) 일정속도 드리프트(못 만나면 지나쳐 despawn), 반경 내 캡처(래치)→가속 끌림, 타깃=태그"Player"로 `OrbPool` 캐시·주입(Core→Player 결합 회피, Player 프리팹 태그 부여); (3)거리 기반 습득(`pickupRadius`)→`[TEMP]` 로그+반납. 비주얼=Hovl Crystal effect green 복제(`Assets/Prefabs/Orbs/`). 각 단계 사용자 육안 확인, 컴파일/런타임 에러 0. **경험치 이벤트 발행만 M1-6 이관**(M1-5는 로그만). 속도·반경 튜닝은 나중(Day5). |
+| 2026-08-19 | **M1-7 완료(`[x]`)** — 3choice 강화 선택(일시정지 팝업). `VD.UI.LevelUpPopup`(`GameEvents.LevelUp`→`GameManager.Pause()`(ts0)→`UpgradeSystem.Roll(3)` 3카드→클릭 `Apply(선택)`→`GameManager.Resume()`, **다중 레벨업 큐 순차**) + `VD.Core.UpgradeDisplay`(readonly struct) + `UpgradeSystem.Describe`(효과 수치 실제 필드 렌더=UI 하드코딩 회피). M1-8 임시 자동적용 제거. GameScene `LevelUp Canvas`(sortOrder100)+딤+3카드+`EventSystem`(InputSystemUIInputModule). **한글 폰트 = SUIT SDF** 적용(기본 LiberationSans 한글 깨짐 해소). 검증(Play): 레벨업→프리즈·3카드→클릭 스탯변경·재개·큐 순차·한글 렌더 정상. stray-close는 실버그 아님(반응 없을 때 수동 닫음). **`[TEMP]` 로그는 유지**(육안 확인용, 앞으로도 동일 방침). ⇒ **M1 코어루프 완성.** |

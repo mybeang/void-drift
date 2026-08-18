@@ -160,18 +160,48 @@
   - **부수 정리(2026-08-18)**: Player 프리팹의 32-박스 `Collider` 그룹을 **단일 `BoxCollider`(root)로 단순화**(날개 제외·앞쪽 트림·유저 관대 = 작게). 피격 판정용이라 M1-4/M1-9에서 트리거 여부·수치 확정. (사용자가 인스펙터에서 최종 미세조정.)
   - **관련 파일**: `Assets/Scripts/Player/{PlayerMovement,PlayerBanking,PlayerAim,PlayerShooter,Projectile,ProjectilePool}.cs`, `Assets/Scripts/Core/PooledObjectPool.cs`. 프리팹 `Assets/Prefabs/Player.prefab`(root=Rigidbody+PlayerMovement+PlayerShooter+BoxCollider / 자식 `FirePoint`=PlayerAim, `Model`=Mesh+PlayerBanking), `Assets/Prefabs/Projectile.prefab`. GameScene에 `ProjectilePool`. 카메라 리그·이동 상세 = [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md).
 
-### M1-4 · 적 기본 엔티티 & 스폰(하드코딩) 🔴
+### M1-4 · 적 기본 엔티티 & 스폰(하드코딩) 🔴 `[~]` (DoD 충족 — 스폰·이동·사격파괴·충돌데미지·레이어분리; 잔존 = 원뿔 튜닝·임시요소 정리, 게임오버는 M1-9)
 - **목적**: 툴 이전 단계. 코드로 직접 적 1~2종을 스폰해 루프 성립.
 - **작업**: 적 컴포넌트(체력/접근 이동/피격→사망), 코스 안쪽에서 플레이어 쪽으로 접근, 간단 스포너(시간/간격 하드코딩). 충돌 시 플레이어 데미지.
-- **⤷ M1-3에서 이관**: (1) **데미지 전달 `IDamageable` + 투사체 충돌 감지**(M1-3은 발사 파이프라인만, 히트/데미지는 적이 있어야 검증). 투사체 진행 방향 = `FirePoint.forward`. (2) **원뿔 내 적 타겟 스냅**(기관총·레일건이 조준 원뿔 안 적으로 조준, 무타겟이면 축 직사). (3) 스폰은 `PooledObjectPool<T>` 상속형 **EnemyPool** 사용 권장(M1-3에서 베이스 확정).
+- **⤷ M1-3에서 이관 (처리 현황)**: (1) ✅ **데미지 전달 `IDamageable` + 투사체 충돌 감지** 완료(트리거 콜라이더). (2) ✅ **원뿔 내 적 타겟 스냅** 완료(매 발 nearest-in-cone, 무타겟이면 `FirePoint.forward` 축 직사). (3) ✅ 스폰 `EnemyPool`(`PooledObjectPool<T>` 상속) 완료. — 모두 2026-08-18 처리.
 - **DoD**: 적이 계속 스폰·접근하고, 사격으로 파괴되며, 플레이어와 충돌 시 HP 감소.
 - **의존**: M1-3
+- **⚙️ 결정 & 진행 (2026-08-18, 사용자)**:
+  - **적 프리팹 소스 = `FREE Low Poly Spaceships`**(`Assets/Imports/FREE Low Poly Spaceships/Prefabs/spaceship_1~7`, 단일 메시 프리팹). Player는 StarSparrow, **적은 이 세트**로 분리.
+  - **M1-4 첫 적 = `spaceship_6` 1종만.** 나머지 아키타입 볼륨업은 M3-3. (아키타입 매핑 잠정 = M3-3 참조.)
+  - **진행 = 단계 분할**(M1-3처럼). **1단계 = 스폰 + 직진 접근 이동**만 먼저(코스 안쪽 먼 +Z에서 플레이어 쪽/화면 아래로 직진). 이후 단계에서 **HP/피격→사망 + 충돌 데미지 + 투사체 히트(`IDamageable`)** = 위 M1-3 이관분.
+  - **스폰 위치 = 랜덤 위치만.** 편대/웨이브 등 **공간 포메이션 패턴은 M5-8로 이관·등재**(볼륨 큼, Nice 후순위 — 2026-08-18 사용자 결정).
+  - **✅ 1단계(스폰 + 직진 접근 이동) 완료(2026-08-18, 사용자 확인)** — `Enemy`(-Z 직진, despawn self-return) + `EnemyPool : PooledObjectPool<Enemy>` + `EnemySpawner`(랜덤 위치 스폰, 튜닝 한 곳). `Enemy.prefab`(root=Enemy+BoxCollider trigger / Model=spaceship_6, 임시 스케일 6). GameScene에 `EnemySpawner`(+EnemyPool, prewarm 16). 스폰 거리/폭·카메라 거리(−26→−36)는 **사용자 인스펙터 튜닝**(값은 씬 인스턴스, 프레이밍 계속 조정 중이라 문서에 수치 미고정). **다음 단계 = HP/피격→사망 + 충돌 데미지 + 투사체 히트(`IDamageable`)** (M1-3 이관분).
+  - **적 이동 속도 = 현재 단일 고정.** 적/아키타입별 **가변 속도는 볼륨업(M3)으로 이관**(2026-08-18 사용자 결정) — 하나로 고정하지 않음. (M2-2 SO 스탯·M3-3 아키타입에서 데이터화.)
+  - **✅ 2단계(적 피격 → HP 감소 → 사망 + 타겟 스냅) 완료(2026-08-18, 사용자 확인)**:
+    - 신규 **`VD.Core.IDamageable`**(최소 `TakeDamage(float)`, `Core/Interface/`). `Enemy`가 구현 — `maxHp`(30, 스폰 시 리셋), 피격 HP 감소, HP≤0 사망→풀 반납(오브 드랍 M1-5·파괴 VFX M4-9는 이후).
+    - **투사체 히트 = 트리거 콜라이더**(사용자 결정): `Projectile.prefab`에 kinematic Rigidbody + isTrigger 콜라이더, `Projectile.OnTriggerEnter`→부모의 `IDamageable`만 데미지·즉시 풀 반납(`_spent` 중복가드). 데미지 튜닝 = **`PlayerShooter.projectileDamage`**(10, 발사 시 주입).
+    - **원뿔 타겟 스냅**: `PlayerShooter`가 **매 발** `Physics.OverlapSphereNonAlloc`로 조준 축(`FirePoint.forward`) 원뿔(반각 `aimConeHalfAngle` 25°·사거리 `aimRange` 90) 내 **가장 가까운** 대상을 골라 그쪽으로 발사(락/캐싱 없음). 원뿔 밖·무타겟이면 축 직사. (`targetMask`는 3단계에서 Enemy 레이어로 정리.)
+    - **⚠️ 임시요소 잔존(정리 예정)**: `[TEMP]` 히트/피격/사망 로그(`Projectile`·`Enemy`), 조준 원뿔 기즈모(`PlayerShooter.drawAimGizmo`). **원뿔 각도/사거리 튜닝은 나중에 자연스럽게**, 그때 임시요소 정리(사용자 결정 2026-08-18).
+  - **적 구조(구현됨)**: `Enemy.prefab` = root(Enemy + BoxCollider trigger) / 자식 Model(spaceship_6, 임시 스케일 6). 스폰 = 상속형 `EnemyPool`.
+  - **✅ 3단계(플레이어 충돌 데미지 + 레이어 분리) 완료(2026-08-18, 사용자 확인)**:
+    - 신규 **`PlayerHealth`**(Player root, `maxHp` 100). **`IDamageable` 미구현**(아군 오사 방지 — 플레이어가 damageable이면 발사 순간 자기 총알에 맞음). 스스로 `OnTriggerEnter`로 **적(`Enemy`) 접촉 감지 → HP 감소**. 접촉 데미지 = `Enemy.contactDamage`(10, `ContactDamage` getter). 적은 접촉 후 계속 진행(램/자폭 사망은 M3 아키타입). HP 0 게임오버 전이·HP UI·결과화면은 **M1-9/M1-10**(사용자 결정: 이번은 HP 감소만).
+    - **레이어 분리(물리 매트릭스, 사용자 결정)**: `Player`(8)·`Enemy`(9)·`PlayerBullet`(10) 생성. 매트릭스 = Player×Enemy ON·Enemy×PlayerBullet ON·**Player×PlayerBullet OFF**(자살 물리 차단)·PlayerBullet self OFF·Enemy self OFF. 프리팹 3개+씬 Player에 레이어 할당, `PlayerShooter.targetMask`=Enemy. 기존 컴포넌트 필터는 안전용 유지.
+  - **✅ DoD 충족**: 스폰·접근 ✓ / 사격 파괴 ✓ / 충돌 시 HP 감소 ✓. **잔존(폴리싱)** = 원뿔 각도·사거리 튜닝 + `[TEMP]` 로그·기즈모 제거(원뿔 튜닝 시), 게임오버/HP UI = M1-9/M1-10.
+  - **관련 파일**: `Assets/Scripts/Enemy/{Enemy,EnemyPool,EnemySpawner}.cs`, `Assets/Scripts/Core/Interface/IDamageable.cs`, `Assets/Scripts/Player/{PlayerShooter,Projectile,PlayerHealth}.cs`. 프리팹 `Assets/Prefabs/{Enemy,Projectile}.prefab` + `Player.prefab`(PlayerHealth). 레이어 Player/Enemy/PlayerBullet(물리 매트릭스). GameScene에 `EnemySpawner`(+EnemyPool).
 
-### M1-5 · 오브 드랍 & 자석 습득 🔴
+### M1-5 · 오브 드랍 & 자석 습득 🔴 `[x]` (드랍·자석·습득 완료 — 경험치 이벤트 발행만 M1-6 이관)
 - **목적**: 적 파괴 → 자원(오브=경험치) 드랍 → 습득.
 - **작업**: 적 사망 시 오브 스폰, 일정 반경 내 플레이어로 끌려오는 자석 로직, 접촉 시 습득 이벤트.
 - **DoD**: 파괴 시 오브 드랍, 근접 시 빨려와 습득되고 경험치 이벤트 발행.
+  - **판정(2026-08-18)**: 드랍·자석 끌림·근접 습득 = **충족**(사용자 육안 확인). "**경험치 이벤트 발행**"은 누적/레벨업 시스템이 있어야 의미 → **M1-6로 이관**(사용자 결정: M1-5는 로그만). 습득 지점에 `[TEMP]` 로그를 두고 M1-6에서 실이벤트로 대체. M1-5는 **드랍→자석→습득 파이프라인** 기준 완료. (M1-3→M1-4 이관 선례와 동일 방식.)
 - **의존**: M1-4
+- **⚙️ 결정 & 진행 (2026-08-18, 사용자)** — 단계 분할(M1-3/M1-4 방식), 각 단계 사용자 육안 확인 후 진행.
+  - **오브 비주얼(사용자 준비)**: `Assets/Imports/Hovl Studio/Magic effects pack/Prefabs/Environment/Crystal effect green/blue/red`(파티클 VFX 크리스탈)를 **MCP 복제**(새 GUID)해 `Assets/Prefabs/Orbs/Orb Crystal {green,blue,red}.prefab` 생성. **일단 green 사용**. 오브 게임플레이 프리팹 `Assets/Prefabs/Orbs/Orb.prefab` = root(`Orb`) / 자식 `Model`(green 크리스탈).
+  - **구조 배치**: `Orb`/`OrbPool`은 **`VD.Core`** (진행 로직=Core 흡수, M0-4 결정). `OrbPool : PooledObjectPool<Orb>`(기존 상속 베이스 재사용, M1-3의 ProjectilePool·M1-4의 EnemyPool과 동일 패턴).
+  - **✅ 1단계(드랍 + 오브 존재)**: 적 **실사망**(`Enemy.Die`)에만 드랍 훅 — `Enemy`에 `Action<Vector3>` 드랍 콜백 주입(`SetDropHandler`), 화면 밖 `Despawn`은 드랍 안 함. `EnemySpawner`가 `OrbPool` 자동탐색(`FindAnyObjectByType`) 후 스폰 적에 `DropOrb`(사망 위치에 `orbPool.Get()`) 배선. GameScene에 `OrbPool`(prewarm 16). 사용자 확인.
+  - **✅ 2단계(자석)** — 거동 **사용자 결정**:
+    - **반경 밖** = 전방(월드 -Z, 플레이어 쪽)으로 **일정 속도 드리프트**. 플레이어가 경로 근처(반경 내)에 없으면 **그대로 지나쳐** 뒤로 빠져 despawn(풀 반납, 못 먹음). (호밍 아님 — "일정 이내 아니면 그냥 지나쳐야 한다" 정정 반영.)
+    - **반경 안** = 플레이어가 `magnetRadius` 이내로 들어오면 **캡처(래치)** → 플레이어로 **가속 끌림**(경계=driftSpeed → 접촉=magnetMaxSpeed, 오버슛 클램프). 한 번 캡처되면 놓치지 않음.
+    - 타깃(플레이어)은 `OrbPool`이 **태그 "Player"** 로 1회 탐색·캐시 후 `Orb.OnSpawned(target, Return)`로 주입(**Core→Player 타입 결합 회피**). Player 프리팹에 builtin 태그 "Player" 부여.
+  - **✅ 3단계(습득)** — **거리 기반**(사용자 결정, 콜라이더/레이어 불필요): 캡처된 오브가 `pickupRadius` 이내 도달 시 습득 → **`[TEMP]` 로그 + 풀 반납**. 경험치 이벤트 배선은 M1-6.
+  - **튜닝(Orb 프리팹 인스펙터, Day5 잠정)**: `driftSpeed` 6 · `magnetRadius` 8 · `magnetMaxSpeed` 40 · `pickupRadius` 0.6 · `despawnZ` −50. 사용자: "나중에 튜닝".
+  - **관련 파일**: `Assets/Scripts/Core/{Orb,OrbPool}.cs`, `Assets/Scripts/Enemy/{Enemy,EnemySpawner}.cs`(드랍 훅·배선). 프리팹 `Assets/Prefabs/Orbs/{Orb,Orb Crystal green,Orb Crystal blue,Orb Crystal red}.prefab`, `Assets/Prefabs/Player.prefab`(태그). GameScene에 `OrbPool`.
 
 ### M1-6 · 경험치 / 레벨업 (점증형 임계값) 🔴
 - **목적**: progression §1. 오브 누적 → 임계값 도달 → 레벨업.
@@ -280,6 +310,17 @@
 - **DoD**: 세 아키타입이 시각·행동으로 구분되어 등장.
 - **의존**: M3-1, M3-2
 - **문서**: enemy-design.md §2
+- **비주얼→아키타입 매핑 (잠정, 2026-08-18 사용자)** — 소스 = `FREE Low Poly Spaceships`:
+  | 프리팹 | 아키타입(잠정) | 비고 |
+  |---|---|---|
+  | `spaceship_1` | 고체력 돌진/탄막 | **대형·모함급**(스케일 큼) |
+  | `spaceship_2` | 탄막형 | 링(원형) 실루엣 |
+  | `spaceship_3` | 탄막/범용 | |
+  | `spaceship_4` | 범용/돌진 | |
+  | `spaceship_5` | 자폭형 | 얇은 다트(고속 저체력) |
+  | `spaceship_6` | 돌진/범용 | **M1-4 첫 적으로 선행 사용** |
+  | `spaceship_7` | 탄막/특수 | 원반형 |
+  > 잠정 매핑 — M3-3에서 실제 AI·스탯 붙이며 확정. `spaceship_6`은 M1-4에서 먼저 등장(이동만 → 이후 확장).
 
 ### M3-4 · 3choice 풀 정리 (Must 범위 확정) 🔴
 - **목적**: M1-8을 데이터화·정리(공용 스탯 강화 확정 세트).
@@ -368,6 +409,13 @@
 ### M5-7 · Firebase 리더보드 🟢
 - **작업**: progression §3. 온라인 리더보드. **의존**: M4-10 · **문서**: progression-design.md §3
 
+### M5-8 · 스폰 패턴 / 포메이션 (편대·웨이브 형태) 🟢
+- **목적**: 적이 **랜덤 위치로만** 나오지 않고, 편대/웨이브 등 **공간적 패턴(모양)** 으로도 등장해 연출·난이도 다양화.
+- **작업**: 스폰 시 개별 랜덤 위치(M1-4 기본) 외에 **공간 포메이션**(라인/V/원호/웨이브 등) 패턴 정의·롤. 스폰 위치 배치 로직 + 패턴 선택.
+- **DoD**: 랜덤 스폰과 함께 최소 1~2종 포메이션 패턴으로 적이 등장.
+- **의존**: M1-4 (기본 스폰) · **문서**: enemy-design.md, progression-design.md
+- **비고**: 볼륨 큼 → **Nice 티어**(Firebase 리더보드 M5-7과 비슷한 후순위, 2026-08-18 사용자 요청 등재). ⚠️ **M4-6(에디터 툴 3층 스폰 타임라인)과 구분**: M4-6은 *시간축* 프로파일/밀도/가중치 큐레이션, 이 항목은 *공간적* 배치(포메이션 모양). 연계는 가능하나 별개.
+
 ---
 
 ## 크로스컷 / 미해결 (Day5 밸런싱 이관 수치 포함)
@@ -389,4 +437,10 @@
 | 2026-08-17 | M1-1 **완료(✅)** — 사용자 결정: 전역=MonoBehaviour 싱글톤 `GameManager`, 이벤트=별도 `GameEvents` 채널. `VD.Core`에 `GameState`/`GameEvents`/`GameManager`/`GameDebugDriver`(임시) 생성, GameScene 배치·검증(Boot→Playing 로그, timeScale 0↔1, 컴파일 0). 기술 문서 [02_GameStateArchitecture.md](02_GameStateArchitecture.md) 신규. 정리: `VDRuntimeMarker` 삭제, `VDEditorMarker` 유지·재연결. |
 | 2026-08-17 | M1-2 **완료(✅)** — `VD.Player.PlayerMovement`(이동 전담) + `Player` 프리팹(StarSparrow_1_LP_Red, root=Rigidbody+PlayerMovement / 자식 `Model`). 상대 드래그(`Pointer.current`)→속도 직접 매핑, 해상도 무관 `dragGain`(현재 5), 뱅킹=자식 `Model` 회전(물리 분리), 뷰포트 선-클램프, 고정 Perspective 카메라(0,0,-26/FOV55). 사용자 튜닝 반복(감도·거리·뱅킹·떨림 수정). 기본 InputActions 템플릿 삭제(전역 참조 해제). 기술 문서 [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md) 신규. 이슈 트래커 [issues.md](issues.md) 신설(`I-1` 이동 관성감 보류). |
 | 2026-08-18 | M1-3 **2단계 완료(진행중 `[~]`)** — 신규 `VD.Player.PlayerAim`(FirePoint 부착): 오프셋→pitch/yaw 즉시 정렬(`PlayerBanking` 동일 공식, roll 생략, 독립 필드 28/28), 임시 조준 축 기즈모 포함. 프리팹에 `FirePoint`(root 직속, localPos 0) 추가. 컴파일 0·사용자 육안 확인. 결정: **조준 원뿔 중심축 = 뱅킹 방향(`PlayerAim`)**, **원뿔 내 적 타겟 스냅(기관총·레일건)은 M1-4로 이관**(무타겟이면 축 직사), 유도탄은 별도 호밍(M4). 다음 = 3단계 발사 로직. |
+| 2026-08-18 | **M1-4 3단계 완료 → DoD 충족(`[~]` 폴리싱만 잔존)** — 플레이어 충돌 데미지: 신규 `PlayerHealth`(Player root, maxHp 100, IDamageable 미구현=아군오사 방지, OnTriggerEnter로 적 접촉→HP 감소), `Enemy.contactDamage`(10). **레이어 분리**: Player(8)/Enemy(9)/PlayerBullet(10) + 물리 매트릭스(Player×Enemy·Enemy×PlayerBullet만 ON, 자살·동종 OFF), 프리팹·씬 할당, `PlayerShooter.targetMask`=Enemy. 사용자 확인. 게임오버=HP감소만(전이 M1-9). 잔존=원뿔 튜닝·`[TEMP]` 정리. |
+| 2026-08-18 | **M1-4 2단계 완료(`[~]`)** — 적 피격·사망: `VD.Core.IDamageable`(최소 TakeDamage) 신설, `Enemy` 구현(maxHp 30, HP≤0 풀 반납). 투사체 히트 = **트리거 콜라이더**(Projectile에 kinematic RB+트리거, OnTriggerEnter). 데미지 튜닝=`PlayerShooter.projectileDamage`(10). **원뿔 타겟 스냅**(매 발 nearest-in-cone, `aimConeHalfAngle`/`aimRange`, 락 아님) + 조준 원뿔 기즈모. 사용자 육안+로그 확인. 임시 `[TEMP]` 로그·기즈모·원뿔 튜닝은 나중에 정리. 남은 것 = 플레이어 충돌 데미지(M1-9). |
+| 2026-08-18 | **M1-4 1단계 완료(`[~]`)** — 적 `Enemy`(-Z 직진 접근)·`EnemyPool`(상속형)·`EnemySpawner`(랜덤 위치 스폰). `Enemy.prefab`=spaceship_6(임시 스케일 6, root BoxCollider trigger). GameScene 배치. 사용자 확인. 스폰 거리/폭·카메라(−36)는 사용자 튜닝(프레이밍 조정 중). 결정: **적 속도 가변화 = 볼륨업(M3) 이관**(단일 고정 안 함). 다음 = HP/피격/충돌 데미지/투사체 히트. |
+| 2026-08-18 | **M5-8 신설(🟢 Nice)** — 스폰 패턴/포메이션(편대·웨이브 등 공간적 배치). 랜덤 스폰은 M1-4, 패턴화는 후순위(Firebase M5-7급 시기). M4-6(시간축 프로파일)과 구분. 사용자 요청 등재. |
+| 2026-08-18 | **M1-4 사전 결정** — 적 프리팹 소스 = `FREE Low Poly Spaceships`(spaceship_1~7). M1-4 첫 적 = **spaceship_6 1종**, 나머지 볼륨업은 M3-3. 진행 = **단계 분할(1단계 스폰+직진 접근 이동)**, 이후 HP/피격/충돌데미지(M1-3 이관). 아키타입 잠정 매핑 기록(1=고체력 돌진/탄막·대형, 4=범용/돌진, 5=자폭, 2=탄막 등) → M3-3. 구현은 착수 지시 후. |
 | 2026-08-18 | M1-3 **3단계 완료 → M1-3 `[x]` 마감(a)** — 발사기 `PlayerShooter` + 투사체 `Projectile` + 상속형 풀(`VD.Core.PooledObjectPool<T>` 베이스 ← `ProjectilePool`). 튜닝(탄속·수명·발사속도) `PlayerShooter` 한 곳에 몰아 `Projectile.Launch`로 주입(사용자 결정). 임시 투사체 프리팹(Unlit) + GameScene `ProjectilePool`(prewarm 32). 사용자 육안 검증(총알 스트림·일시정지 정지). **데미지/히트는 적 필요 → M1-4 이관**(사용자 결정). 부수: Player 32-박스 콜라이더 → 단일 BoxCollider(root) 단순화(피격용, 수치·트리거는 M1-4/M1-9). 다음 = M1-4. |
+| 2026-08-18 | **M1-5 완료(`[x]`)** — 오브 드랍·자석·습득. 단계 분할: (1)적 실사망 위치 드랍(`Enemy.SetDropHandler`/`EnemySpawner.DropOrb`, 화면 밖 despawn 제외) + `Orb`/`OrbPool : PooledObjectPool<Orb>`(VD.Core) + GameScene `OrbPool`(prewarm 16); (2)자석 — 반경 밖 전방(-Z) 일정속도 드리프트(못 만나면 지나쳐 despawn), 반경 내 캡처(래치)→가속 끌림, 타깃=태그"Player"로 `OrbPool` 캐시·주입(Core→Player 결합 회피, Player 프리팹 태그 부여); (3)거리 기반 습득(`pickupRadius`)→`[TEMP]` 로그+반납. 비주얼=Hovl Crystal effect green 복제(`Assets/Prefabs/Orbs/`). 각 단계 사용자 육안 확인, 컴파일/런타임 에러 0. **경험치 이벤트 발행만 M1-6 이관**(M1-5는 로그만). 속도·반경 튜닝은 나중(Day5). |

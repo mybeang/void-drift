@@ -13,9 +13,10 @@ GameObject:
   - component: {fileID: 417143133992694274}
   - component: {fileID: 4716115734946056527}
   - component: {fileID: 1614672375954344650}
-  m_Layer: 0
+  - component: {fileID: 2280451389863029075}
+  m_Layer: 8
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -99,6 +100,13 @@ MonoBehaviour:
   fireInterval: 0.5
   projectileSpeed: 80
   projectileLifetime: 3
+  projectileDamage: 10
+  aimConeHalfAngle: 25
+  aimRange: 90
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 512
+  drawAimGizmo: 1
 --- !u!65 &1614672375954344650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -118,8 +126,21 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.4, y: 1.4, z: 7}
-  m_Center: {x: 0, y: 0, z: -1}
+  m_Size: {x: 3.264823, y: 1.4, z: 7.084773}
+  m_Center: {x: 0.016749322, y: 0, z: -1.0423865}
+--- !u!114 &2280451389863029075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4798779706923505197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4142458973e493e4482adc82bbff83f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VD.Runtime::VD.Player.PlayerHealth
+  maxHp: 100
 --- !u!1 &6008007881668648276
 GameObject:
   m_ObjectHideFlags: 0
@@ -132,7 +153,7 @@ GameObject:
   - component: {fileID: 6534024889465832184}
   - component: {fileID: 8582095146889508511}
   - component: {fileID: 6139488197758090424}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -241,7 +262,7 @@ GameObject:
   m_Component:
   - component: {fileID: 390835791811086734}
   - component: {fileID: 9014577371961486511}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: FirePoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}

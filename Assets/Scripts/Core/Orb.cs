@@ -10,7 +10,7 @@ namespace VD.Core
     /// <list type="bullet">
     /// <item><b>반경 밖</b> — 전방(월드 -Z, 플레이어 쪽)으로 <b>일정 속도로 흘러 지나침</b>. 플레이어가 근처(반경 내)에 없으면 뒤로 빠져 despawn(못 먹음).</item>
     /// <item><b>반경 내</b> — 플레이어가 <see cref="magnetRadius"/> 이내로 들어오면 <b>캡처</b>되어 플레이어로 <b>가속 끌림</b>(가까울수록 빠름). 한 번 캡처되면 래치(놓치지 않음).</item>
-    /// <item><b>습득</b> — 캡처된 오브가 <see cref="pickupRadius"/> 이내로 도달하면 습득(현재는 로그만, 경험치 이벤트는 M1-6) 후 풀 반납.</item>
+    /// <item><b>습득</b> — 캡처된 오브가 <see cref="pickupRadius"/> 이내로 도달하면 <see cref="GameEvents.PublishOrbCollected"/>로 경험치 발행(M1-6) 후 풀 반납.</item>
     /// </list>
     /// 수치는 Day5 튜닝(→ 자석범위/가치는 M2-2 SO·M4-8).</para>
     /// </summary>
@@ -29,6 +29,8 @@ namespace VD.Core
         [SerializeField] float magnetMaxSpeed = 40f;
         [Tooltip("플레이어에 이 거리 이내로 도달하면 습득(거리 기반). magnetRadius보다 작게. 수치 Day5")]
         [SerializeField] float pickupRadius = 0.6f;
+        [Tooltip("습득 시 주는 경험치. 지금은 고정 1(→ M2-2 SO로 데이터화). 수치 Day5")]
+        [SerializeField] int xpValue = 1;
 
         Transform _target;
         Action<Orb> _return;
@@ -53,9 +55,9 @@ namespace VD.Core
 
                 if (_captured)
                 {
-                    if (dist <= pickupRadius)   // 습득(거리 기반) → 로그 + 풀 반납. 경험치 이벤트는 M1-6.
+                    if (dist <= pickupRadius)   // 습득(거리 기반) → 경험치 이벤트 발행 + 풀 반납 (M1-6)
                     {
-                        Debug.Log("[TEMP] 오브 습득 → 풀 반납 (경험치 이벤트는 M1-6)", this);
+                        GameManager.Instance?.Events?.PublishOrbCollected(xpValue);
                         _return?.Invoke(this);
                         return;
                     }

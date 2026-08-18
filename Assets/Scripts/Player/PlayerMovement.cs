@@ -5,13 +5,10 @@ using VD.Core;
 namespace VD.Player
 {
     /// <summary>
-    /// 플레이어 기체 이동 전담. 오로지 이동(+이동에 종속된 뱅킹 연출)만 담당한다.
+    /// 플레이어 기체 "이동" 전담. 오로지 위치 이동만 담당한다(뱅킹 연출은 <see cref="PlayerBanking"/>로 분리).
     /// - 입력: New Input System 포인터/터치 델타(상대 드래그, 해상도 무관). 레거시 Input.* 미사용.
     /// - 이동: 물리(Rigidbody) 속도 직접 매핑. XY 자유, Z 고정.
     ///         이동 목표를 뷰포트 경계 안으로 <b>선-클램프</b>해 바깥으로 미는 속도가 생기지 않게 함(경계 떨림 방지).
-    /// - 뱅킹: 화면 중심 오프셋 비례 pitch/yaw/roll. <b>물리 루트가 아니라 자식 비주얼(bankTarget)의 로컬 회전</b>만
-    ///         돌린다 → 물리 바디 회전은 완전 동결(FreezeRotation), 물리가 회전에 개입하지 않음.
-    ///         bankTarget.forward = 대략적 조준 방향(오토사격 M1-3이 사용).
     /// - 경계: 카메라 뷰포트 기준 자동(해상도/기기 무관).
     /// 게임 상태가 Playing이 아니면 이동·입력 누적을 멈춘다(일시정지 정합).
     /// </summary>
@@ -21,9 +18,6 @@ namespace VD.Player
         [Header("참조")]
         [Tooltip("비우면 Camera.main 사용")]
         [SerializeField] Camera targetCamera;
-        [Tooltip("뱅킹 회전을 적용할 비주얼(자식 Transform). 비우면 자기 자신.\n" +
-                 "물리 루트와 분리해야 물리-회전 충돌(빠른 이동 시 미세 회전)이 사라짐.")]
-        [SerializeField] Transform bankTarget;
 
         [Header("이동 (상대 드래그 → 속도 직접 매핑, 해상도 무관)")]
         [Tooltip("게인: 손가락이 화면의 x% 만큼 움직이면 기체는 화면의 (x×게인)% 만큼 이동.\n" +
@@ -43,36 +37,21 @@ namespace VD.Player
         [Tooltip("화면 가장자리에서 안쪽으로 남길 여백(뷰포트 비율)")]
         [SerializeField] Vector2 viewportMargin = new Vector2(0.06f, 0.06f);
 
-        [Header("뱅킹 (오프셋 비례 기울기, 직접 보간)")]
-        [Tooltip("세로 오프셋 최대 시 pitch(도). 위로 갈수록 아래면이 보이도록 nose-down")]
-        [SerializeField] float maxPitch = 28f;
-        [Tooltip("가로 오프셋 최대 시 yaw(도). 코가 중심을 향하도록(조준) nose-in")]
-        [SerializeField] float maxYaw = 28f;
-        [Tooltip("가로 이동 시 롤(도) 연출. 0이면 롤 없음")]
-        [SerializeField] float maxRoll = 12f;
-        [Tooltip("뱅킹 회전 보간 속도(클수록 빠르게 목표각 도달)")]
-        [SerializeField] float bankLerpSpeed = 8f;
-        [SerializeField] bool invertPitch = false;
-        [SerializeField] bool invertYaw = false;
-
         Rigidbody _rb;
         Vector2 _accumulatedDelta;   // Update에서 누적, FixedUpdate에서 소비
         float _depth;                // 카메라 → 기체 평면 거리(뷰포트 변환 z)
-        Quaternion _baseLocalRotation; // 뱅킹 기준(자식 비주얼의 초기 로컬 회전)
 
         void Awake()
         {
             _rb = GetComponent<Rigidbody>();
             _rb.useGravity = false;
-            // 위치 Z 고정 + 회전은 물리에서 완전 동결(회전은 bankTarget 자식에서 직접 처리).
+            // 위치 Z 고정 + 회전은 물리에서 완전 동결(회전은 연출/조준 쪽에서 처리).
             _rb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
             if (targetCamera == null) targetCamera = Camera.main;
-            if (bankTarget == null) bankTarget = transform;
         }
 
         void Start()
         {
-            _baseLocalRotation = bankTarget.localRotation;
             if (targetCamera != null)
             {
                 _depth = Mathf.Abs(transform.position.z - targetCamera.transform.position.z);
@@ -128,29 +107,6 @@ namespace VD.Player
             Vector3 vel = disp / Time.fixedDeltaTime;
             if (maxSpeed > 0f) vel = Vector3.ClampMagnitude(vel, maxSpeed);
             _rb.linearVelocity = new Vector3(vel.x, vel.y, 0f);
-        }
-
-        void LateUpdate()
-        {
-            if (targetCamera == null) return;
-
-            // 화면 중심(0.5) 대비 정규화 오프셋(-1~+1). 경계에서 ±1 근처.
-            Vector3 vp = targetCamera.WorldToViewportPoint(transform.position);
-            float denomX = Mathf.Max(0.0001f, 0.5f - viewportMargin.x);
-            float denomY = Mathf.Max(0.0001f, 0.5f - viewportMargin.y);
-            float offX = Mathf.Clamp((vp.x - 0.5f) / denomX, -1f, 1f);
-            float offY = Mathf.Clamp((vp.y - 0.5f) / denomY, -1f, 1f);
-
-            // 위(+offY) → nose-down(Euler X +) → 아래면이 카메라로.
-            float pitch = maxPitch * offY * (invertPitch ? -1f : 1f);
-            // 오른쪽(+offX) → 코가 중심(왼쪽)으로 → 조준 방향이 안쪽. 필요 시 invertYaw로 반전.
-            float yaw = maxYaw * -offX * (invertYaw ? -1f : 1f);
-            float roll = maxRoll * -offX;
-
-            // 물리 루트가 아닌 자식 비주얼의 로컬 회전만 보간 → 물리-회전 충돌 없음.
-            Quaternion target = _baseLocalRotation * Quaternion.Euler(pitch, yaw, roll);
-            float t = 1f - Mathf.Exp(-bankLerpSpeed * Time.deltaTime);
-            bankTarget.localRotation = Quaternion.Slerp(bankTarget.localRotation, target, t);
         }
 
         void MoveToSpawn()

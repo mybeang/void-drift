@@ -69,10 +69,14 @@ Player (root)              ← Rigidbody(useGravity off, FreezePositionZ|FreezeR
 
 ---
 
-## M1-3 인계 (조준)
+## M1-3 인계 (조준) — 갱신(2026-08-18)
 
-- 오토사격 조준 방향 = **`Player/Model`(=bankTarget)의 `forward`**. 루트는 항상 +Z(회전 동결)이므로 루트 forward가
-  아니라 **뱅킹이 반영된 Model.forward**를 써야 "기체가 바라보는 원뿔"로 발사된다.
+- **구조 리팩터 진행중**: 뱅킹을 `PlayerMovement`에서 분리해 **`PlayerBanking`**(Model에 부착)이 담당(1단계 완료).
+  `PlayerMovement`는 **이동만**. 위 "프리팹 구조"의 `bankTarget` 서술은 M1-2 시점 기록이며, 현재 Model에는
+  `PlayerBanking`이 붙어 스스로 뱅킹한다.
+- **발사 조준(결정)**: 흔들리는 `Model.forward`가 **아니라**, 오프셋에서 **즉시 계산한 "깨끗한 조준 방향"**을 root 자식
+  **`FirePoint`**에 적용해 거기서 발사(뱅킹 조준=원뿔, 안정). 조준각 공식은 `PlayerBanking`과 동일하되 lerp 없이 즉시.
+  → 단계별 상세는 [backlog.md](backlog.md) M1-3 진행상태.
 
 ## 입력 정리 메모
 

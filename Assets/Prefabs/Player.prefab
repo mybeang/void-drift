@@ -1082,18 +1082,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: VD.Runtime::VD.Player.PlayerMovement
   targetCamera: {fileID: 0}
-  bankTarget: {fileID: 4702749117833622993}
   dragGain: 5
   deadZoneScreenFraction: 0.002
   maxSpeed: 0
   spawnViewportPoint: {x: 0.5, y: 0.42}
   viewportMargin: {x: 0.06, y: 0.06}
-  maxPitch: 28
-  maxYaw: 28
-  maxRoll: 12
-  bankLerpSpeed: 8
-  invertPitch: 0
-  invertYaw: 0
 --- !u!1 &6008007881668648276
 GameObject:
   m_ObjectHideFlags: 0
@@ -1105,6 +1098,7 @@ GameObject:
   - component: {fileID: 4702749117833622993}
   - component: {fileID: 6534024889465832184}
   - component: {fileID: 8582095146889508511}
+  - component: {fileID: 6139488197758090424}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -1184,6 +1178,26 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &6139488197758090424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6008007881668648276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f6ae6d86513ca945be70955242387a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VD.Runtime::VD.Player.PlayerBanking
+  targetCamera: {fileID: 0}
+  maxPitch: 28
+  maxYaw: 28
+  maxRoll: 12
+  bankLerpSpeed: 8
+  invertPitch: 0
+  invertYaw: 0
+  edgeInset: {x: 0.06, y: 0.06}
 --- !u!1 &6078343242147559616
 GameObject:
   m_ObjectHideFlags: 0

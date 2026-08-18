@@ -134,12 +134,27 @@
   - **검증**: 사용자 드래그 확인, 뱅킹 상단 pitch+25°(루트 0 유지), 경계 정지·속도0, 컴파일/런타임 에러 0.
   - **미해결**: 이동 관성감 → [issues.md](issues.md) `I-1`(보류). / 조준 forward=Model 연동은 M1-3.
 
-### M1-3 · 오토 사격 (기관총) + 투사체 🔴
-- **목적**: 입력 없이 정면 자동 발사(뱀서라이크 문법).
+### M1-3 · 오토 사격 (기관총) + 투사체 🔴 `[~]` (구조 1단계 완료 · 새 세션 인계)
+- **목적**: 입력 없이 자동 발사(뱀서라이크 문법).
 - **작업**: 발사기(발사 간격 파라미터), 투사체 이동/수명/충돌, 오브젝트 풀링(투사체·적·오브 공용 풀 유틸 제안 `SimplePool`). 데미지 전달 인터페이스(`IDamageable`).
-- **DoD**: 플레이 시 정면으로 일정 간격 발사, 투사체가 적 히트 시 데미지. 풀 재사용으로 GC 스파이크 없음.
+- **DoD**: 플레이 시 일정 간격 발사, 투사체가 적 히트 시 데미지. 풀 재사용으로 GC 스파이크 없음.
 - **의존**: M1-1
-- **비고**: `IDamageable` 등 심볼은 제안. 실제 구현 시 확정.
+- **비고**: `IDamageable`·`SimplePool` 등 심볼은 제안. 실제 구현 시 확정.
+- **⚙️ 진행 상태 & 인계 (2026-08-18)** — 구조 리팩터부터 착수, 발사 로직은 미구현.
+  - **확정 결정(사용자)**:
+    - 구조를 **이동 / 연출 / 발사 분리**. 기존 `Model`(메시)은 **연출** 쪽.
+    - **발사 방향 = 뱅킹 조준**(정면 직진 아님). 이유: 적이 멀리 한 점(소실점)에서 옴. **단, 흔들리는 Model 회전이 아니라 오프셋에서 즉시 계산한 "깨끗한 조준 방향"을 `FirePoint`에 적용** → 조준(원뿔)+안정 동시. Model 뱅킹은 그 조준을 부드럽게 따라가는 시각 연출일 뿐.
+    - 기체 시각 관성/무게감은 **지금 연출 그대로 유지**(폴리싱 때 손봄, [issues.md](issues.md) I-1).
+  - **목표 구조**:
+    ```
+    Player (root)   ← PlayerMovement (이동만)
+    ├── FirePoint   ← 깨끗한 조준 방향 정렬. 발사 원점(2·3단계)
+    └── Model       ← Mesh + PlayerBanking (연출: 부드러운 뱅킹)
+    ```
+  - **✅ 1단계 완료**: 뱅킹을 `PlayerMovement`에서 신규 **`PlayerBanking`**(Model에 부착)으로 분리. `PlayerMovement`=이동만. 동작 동일(컴파일 0, 사용자 플레이 확인). 프리팹 반영.
+  - **▶ 2단계(다음)**: `FirePoint`(root 자식) 생성 + **깨끗한 조준 계산 컴포넌트**(오프셋→각도 즉시, lerp 없음)로 FirePoint 정렬. 조준각 공식은 `PlayerBanking`과 동일하되 **즉시 적용**(발사 안정).
+  - **▶ 3단계**: 발사 로직 — 발사 간격, 투사체(이동/수명/충돌), 풀(`SimplePool` 제안), 데미지(`IDamageable` 제안). 투사체 진행 방향 = `FirePoint.forward`.
+  - **관련 파일**: `Assets/Scripts/Player/{PlayerMovement,PlayerBanking}.cs`. 프리팹 `Assets/Prefabs/Player.prefab`(root=Rigidbody+PlayerMovement / 자식 Model=Mesh+PlayerBanking). 카메라 리그·이동 상세 = [03_PlayerMovementAndCamera.md](03_PlayerMovementAndCamera.md).
 
 ### M1-4 · 적 기본 엔티티 & 스폰(하드코딩) 🔴
 - **목적**: 툴 이전 단계. 코드로 직접 적 1~2종을 스폰해 루프 성립.

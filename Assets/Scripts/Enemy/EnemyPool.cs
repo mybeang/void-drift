@@ -12,5 +12,11 @@ namespace VD.Enemy
         {
             item.OnSpawned(Return);
         }
+
+        /// <summary>반납 teardown — 주입된 비주얼 인스턴스 제거(M2-5c). 셸은 순수 상태로 풀 복귀.</summary>
+        protected override void OnReturn(Enemy item)
+        {
+            item.ClearVisual();
+        }
     }
 }

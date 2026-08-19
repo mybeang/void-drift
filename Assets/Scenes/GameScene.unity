@@ -2998,6 +2998,7 @@ GameObject:
   - component: {fileID: 1239163163}
   - component: {fileID: 1239163162}
   - component: {fileID: 1239163161}
+  - component: {fileID: 1239163164}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -3019,8 +3020,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: VD.Runtime::VD.Enemy.EnemySpawner
   pool: {fileID: 1239163162}
   orbPool: {fileID: 0}
+  difficulty: {fileID: 1239163164}
+  spawnTable:
+  - def: {fileID: 11400000, guid: 6d11fde40f7556543bcab1be552cee54, type: 2}
+    weight: 3
+  - def: {fileID: 11400000, guid: f765d955b99ea0b4695e26f6bdddb493, type: 2}
+    weight: 2
+  - def: {fileID: 11400000, guid: c6b119543768cf948bd28395a5065aed, type: 2}
+    weight: 1
   spawnInterval: 1
-  enemySpeed: 12
   spawnZ: 120
   despawnZ: -50
   spawnXRange: {x: -24, y: 24}
@@ -3054,6 +3062,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1239163164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1239163160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4adf1eb6471c20f429c8c0faf4ddcd75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VD.Runtime::VD.Core.DifficultyProvider
 --- !u!1 &1261259647
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,7 +2,7 @@
 > 상위 허브: [backlog.md](backlog.md) | 인접: [backlog-M1.md](backlog-M1.md) ← **M2** → [backlog-M3.md](backlog-M3.md)
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
-- **상태**: 🟡 **진행중** — M2-1·M2-2·M2-3·**M2-4 완료**(`[x]`, a~e). **다음 = M2-5**(툴 데이터→런타임 스폰; 의존 M3-1·M3-2 AI 모듈). **포폴 공고 1순위 어필** = UI Toolkit 에디터 커스텀 툴. (M2-2~2-4 통합 기술문서 `06`은 **미작성 폐기** — 내용이 이 backlog에 상세 누적돼 별도 로그 불필요, 정식 기술문서는 후속 정리. 2026-08-20 결정.)
+- **상태**: 🟢 **M2 완료** — M2-1~M2-5 전부 `[x]`(2026-08-20). **툴로 오서링한 적이 실제 게임에 스폰**(비주얼+스탯)되고 모순 조합엔 경고 → **포폴 핵심 데모 성립**(게이트 충족). **다음 = M3**(AI 모듈 — moveAI/attackAI 실동작). **포폴 공고 1순위 어필** = UI Toolkit 에디터 커스텀 툴. **기술문서 = [06_EnemyPipeline.md](06_EnemyPipeline.md)**(스키마·오서링·유효성·런타임 조립 통합, M2 종료 시점 작성). ※ 앞서 진행로그 톤으로 쓴 초안 06은 폐기하고 아키텍처 중심으로 재작성.
 - **범위(Must)**: enemy-design 3층 중 **1층(유효성 경고) + SO DB + Addressables + 스폰 연결**까지. 2·3층 심화(아키타입 프로파일·스폰 타임라인) → **M4-6**.
 - **전제(이전 M에서 옴)**:
   - M0-4 asmdef `VD.Editor`(에디터 전용, Runtime 참조) 존재. **`Data` 폴더·ScriptableObject는 여기(M2)서 신설.**
@@ -84,7 +84,7 @@
   - **별창 vs 탭 허브 = 2번째 에디터 만들 때 결정**(베이스가 둘 다 싸게 함).
   - **통합 튜닝 창(비전) = 별도 후속** — orb xp·player state·필요 경험치 등 스칼라(단, **물리/사거리 원뿔 반경 등 구현·물리용 값은 제외**)를 한 창에서 일괄 편집. **전제: 코드에 박힌 스칼라(`ExperienceSystem` 임계값·`PlayerHealth` HP 등)를 먼저 SO로 데이터화** → 그래서 M2-3에 못 얹는 별건. orb xp는 이미 `OrbDefinition.xpValue`라 즉시 물림. (Day5 튜닝/M4쯤.)
   - **Archetype.Barrage → `Shooter`(사격형) 개명 (2026-08-19, 사용자)**: `AttackAIType.Barrage`(탄막 공격)와 코드 이름 충돌 회피. 에셋은 int 인덱스라 데이터 무변경(인덱스 0 유지, `RangeLabelOf(Shooter)="원거리"`). ⚠️ **미정합 잔존(개념/라벨층)**: enemy-design.md 개념어 '탄막형' + Addressables `archetype:탄막` 라벨 + 프리팹명 `Enemy_Barrage_*`는 아직 '탄막' — 이 층까지 '사격'으로 맞출지는 후속 결정(라벨 5개 재부여 수반).
-- **문서**: enemy-design.md §5. **▶ 통합 기술문서(`06_EnemyAuthoringTool.md`) = 미작성 폐기** — 한 번 작성했으나 backlog 진행로그 톤이라, 내용이 이 backlog-M2에 이미 상세 누적된 것으로 대체(2026-08-20 결정, 06 삭제). 정식 기술문서(아키텍처·데이터·API 중심)는 후속에 별도 정리.
+- **문서**: enemy-design.md §5, **[06_EnemyPipeline.md](06_EnemyPipeline.md)**(M2 전체 통합 기술문서 — 아키텍처·데이터·API 중심, M2 종료 시 작성). ※ 초안 `06_EnemyAuthoringTool.md`는 진행로그 톤이라 폐기하고 재작성.
 
 ### M2-4 · 유효성 경고 (교전거리 모순) 🟢 `[x]` (2026-08-20 완료, a~e)
 - **✅ 완료(a~e)**: R1·R2 순수 로직 = `VD.Core.EnemyValidation.Validate(EnemyDefinition)`→`List<EnemyWarning>`(메시지+하이라이트 필드; 메타 `TendencyOf`/`RangeOf`). R3(라벨 교차) = `VD.Editor.EnemyTableEditorView.AppendLabelWarning`(비주얼 Addressables `archetype:` 라벨 조회 = **에디터 전용 API라 Editor층 불가피**; `ArchetypeLabel` 딕셔너리로 기대 라벨 ↔ 엔트리 라벨 집합 대조). 표시 = 상세 상단 경고박스(`RenderWarningBox`) + 모순 필드 red 테두리(`ApplyFieldHighlights`, `.so-field-error`) + 목록 행 ⚠(`AddWarnColumn`+`RefreshRows`), moveAI/attackAI/archetype/visual 변경 시 실시간(`RefreshValidation`). **e 검증(창 실측, 사용자 육안)**: R1(Suicide+Hover)·R2(Charger+Barrage·Shooter+Contact)·R3(라벨 밖 archetype) 경고 표시 / 유효 조합 깨끗 / 경고 있어도 저장 계속(비차단) / 유효 복귀 시 즉시 해제 / 컴파일·콘솔 에러 0. **⇒ DoD 충족.** (R3 라벨 사실: `Enemy_Charger_6`={돌진,자폭}·`Enemy_Barrage_2`={돌진,탄막}.)
@@ -104,13 +104,21 @@
   - **d** §6 라벨 교차검증(R3) — 비주얼 프리팹 Addressables `archetype:` 라벨 조회(**에디터 전용 API → VD.Editor**), 집합 밖이면 경고.
   - **e** 왕복+비차단 검증 — 모순 조합(Suicide+Hover, Charger+Barrage 등) 경고 확인, 유효는 깨끗, 저장 계속됨 → DoD.
 - **결정(2026-08-19, 사용자)**: 코어=VD.Core(R1·R2; **R3는 Addressables 에디터 API라 VD.Editor 불가피**) · R3 포함 · UX=경고박스+필드 red+행 ⚠.
-- **문서**: enemy-design.md §4·§6. (통합 기술문서 `06`은 미작성 폐기 — M2-3 문서란 참조.)
+- **문서**: enemy-design.md §4·§6, [06_EnemyPipeline.md](06_EnemyPipeline.md) §3.
 
-### M2-5 · 최소 스폰 연결 (툴 데이터 → 런타임 스폰) 🔴
+### M2-5 · 최소 스폰 연결 (툴 데이터 → 런타임 스폰) 🟢 `[x]` (2026-08-20 완료, a~f)
+- **✅ 완료(a~f, 조립형/빌더 디자인)**: 공통 로직 셸 + **주입 조립**(비주얼·스탯). 상세 = [06_EnemyPipeline.md](06_EnemyPipeline.md).
+  - **a** `Enemy.prefab` → 로직 셸(박힌 spaceship_6 비주얼 제거, root=Collider+`Enemy`).
+  - **b** 스탯 데이터화 — 하드코딩 3필드 제거 → `EnemyStats stats`(폴백) + `ApplyStats` 주입, 속도도 stats. `EnemySpawner.enemySpeed` 폐기, `Launch(despawnZ)`.
+  - **c** `EnemyVisualCache`(Addressables 유니크 로드·재사용) + `Enemy.AttachVisual`/`ClearVisual`(셸 자식 부착/반납 제거), `EnemyPool.OnReturn` teardown.
+  - **d** `StatScaler`(base×배율=effective, 체력/속도/데미지만; killScore 제외) + `DifficultyProvider`(배율 **1.0 스텁**, 실배율=M4-5).
+  - **e** `EnemyBuilder`(조립 seam: 비주얼+effective 스탯; AI 자리=M3) + `EnemySpawner` DB `SpawnEntry[]`(def+weight) **가중 랜덤** + 프리로드(`Warmup`).
+  - **f** 배선(3 SO+weight[3/2/1]·`DifficultyProvider`) + **Play 검증**: 22체 스폰 전부 비주얼 부착, 3종 모델(12/6/4≈가중), 스탯 SO별 반영(80/6/15·30/8/5·15/12/20), 에러 0. 사용자 육안 정상.
+- **결정(2026-08-20, 사용자)**: SO DB=**스포너 인스펙터 `SpawnEntry[]`(가중치 있음)**·비주얼만 Addressables. **스코프=비주얼+스탯만**(AI=M3, 이동 직진 유지). 스탯 3층 분리(base 테이블 RO / 배율 진행측 / effective 런타임). 배율 소스도 **에디터 툴화 아이디어**는 [backlog-M4.md](backlog-M4.md) M4-5에 등재.
+- **잔여(스코프 밖, 이후)**: moveAI/attackAI 실동작=M3-1/M3-2 · 드랍오브 데이터화(`dropOrb.visual`/`xpValue` 주입)=이후 · 비주얼 스케일/회전 모델별 정합=Day5 튜닝 · 실난이도 배율=M4-5.
 - **목적**: scope-tiering Must "최소 스폰 연결". 툴로 만든 적이 실제로 게임에 등장.
-- **작업**: 런타임 스포너가 SO DB(+Addressables 로드)에서 적을 읽어 스폰하도록 M1-4의 하드코딩 스포너 교체. 최소한 "SO 목록에서 랜덤/가중 스폰".
-- **DoD**: 에디터 툴에서 만든 적 조합이 플레이 중 실제로 스폰·동작(비주얼+AI+스탯 반영).
-- **의존**: M2-4, M3-1·M3-2(AI 모듈), M1-4
-- **문서**: enemy-design.md
+- **DoD**: 에디터 툴에서 만든 적 조합이 플레이 중 실제로 스폰·동작(비주얼+스탯 반영; AI는 M3). **✅ 충족.**
+- **의존**: M2-4, M1-4 (AI 실동작만 M3-1·M3-2 — 스코프 분리)
+- **문서**: enemy-design.md, [06_EnemyPipeline.md](06_EnemyPipeline.md)
 
 > **M2 완료 판정(게이트)**: "**툴로 오서링한 적이 실제 게임에 등장**하고, 모순 조합엔 경고가 뜬다." → 포폴 핵심 데모 성립.

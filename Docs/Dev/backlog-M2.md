@@ -2,7 +2,7 @@
 > 상위 허브: [backlog.md](backlog.md) | 인접: [backlog-M1.md](backlog-M1.md) ← **M2** → [backlog-M3.md](backlog-M3.md)
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
-- **상태**: 🟡 **진행중** — M2-1·M2-2·M2-3 완료(`[x]`). **M2-4(유효성 경고) 진행중**(`[~]`, **a~d 완료** — 코어 R1·R2(`EnemyValidation`, VD.Core)·경고박스·필드 red/행 ⚠·R3 라벨교차; **남음 = e**(왕복·비차단 검증), 이후 `06_EnemyAuthoringTool.md` 작성). **포폴 공고 1순위 어필** = UI Toolkit 에디터 커스텀 툴.
+- **상태**: 🟡 **진행중** — M2-1·M2-2·M2-3·**M2-4 완료**(`[x]`, a~e). **다음 = M2-5**(툴 데이터→런타임 스폰; 의존 M3-1·M3-2 AI 모듈). **포폴 공고 1순위 어필** = UI Toolkit 에디터 커스텀 툴. (M2-2~2-4 통합 기술문서 `06`은 **미작성 폐기** — 내용이 이 backlog에 상세 누적돼 별도 로그 불필요, 정식 기술문서는 후속 정리. 2026-08-20 결정.)
 - **범위(Must)**: enemy-design 3층 중 **1층(유효성 경고) + SO DB + Addressables + 스폰 연결**까지. 2·3층 심화(아키타입 프로파일·스폰 타임라인) → **M4-6**.
 - **전제(이전 M에서 옴)**:
   - M0-4 asmdef `VD.Editor`(에디터 전용, Runtime 참조) 존재. **`Data` 폴더·ScriptableObject는 여기(M2)서 신설.**
@@ -77,16 +77,17 @@
   - **e** 상세 편집+저장 — 행 선택→`PropertyField` 편집(비주얼/AI/스탯/dropOrb), dirty+SaveAssets. DoD 수정→에셋 반영.
   - **f** 신규/삭제 — 창에서 `EnemyDefinition` 생성(명명)·삭제.
   - **g** 레이아웃/UX + 왕복 검증 → **M2-3 DoD 충족**.
-- **설계 결정·근거 (2026-08-19, 사용자 — 기술 문서 `06`에 반영할 것)**:
+- **설계 결정·근거 (2026-08-19, 사용자 — backlog에 상세 반영됨, 06 미작성)**:
   - **편집 UI = `PropertyField` 직행**(단계적 (i)InspectorElement 생략): 스키마(M2-2) 완성돼 애매함 없음, 뒤 단계(M2-4/2-5/M3)는 데이터를 **소비**만 → 가볍게 먼저 갈 이유 없음(버릴 코드 회피).
   - **목록 = `MultiColumnListView`**: §5 "조합 테이블"의 정공법(컬럼·정렬).
   - **확장성 = "한 창에 다 몰기"가 아니라, 재사용 베이스로 도메인별 에디터(적/플레이어/…)를 별창 또는 탭으로 저렴하게 찍어내기.** 관심사 분리(§1-5) 유지. **동기(사용자)**: 오브젝트를 일일이 찾아다니며 데이터 변경하던 고생 제거.
   - **별창 vs 탭 허브 = 2번째 에디터 만들 때 결정**(베이스가 둘 다 싸게 함).
   - **통합 튜닝 창(비전) = 별도 후속** — orb xp·player state·필요 경험치 등 스칼라(단, **물리/사거리 원뿔 반경 등 구현·물리용 값은 제외**)를 한 창에서 일괄 편집. **전제: 코드에 박힌 스칼라(`ExperienceSystem` 임계값·`PlayerHealth` HP 등)를 먼저 SO로 데이터화** → 그래서 M2-3에 못 얹는 별건. orb xp는 이미 `OrbDefinition.xpValue`라 즉시 물림. (Day5 튜닝/M4쯤.)
   - **Archetype.Barrage → `Shooter`(사격형) 개명 (2026-08-19, 사용자)**: `AttackAIType.Barrage`(탄막 공격)와 코드 이름 충돌 회피. 에셋은 int 인덱스라 데이터 무변경(인덱스 0 유지, `RangeLabelOf(Shooter)="원거리"`). ⚠️ **미정합 잔존(개념/라벨층)**: enemy-design.md 개념어 '탄막형' + Addressables `archetype:탄막` 라벨 + 프리팹명 `Enemy_Barrage_*`는 아직 '탄막' — 이 층까지 '사격'으로 맞출지는 후속 결정(라벨 5개 재부여 수반).
-- **문서**: enemy-design.md §5. **▶ 기술 문서 = 여기서 `06_EnemyAuthoringTool.md` 신설** — M2-2 스키마(enum·`EnemyStats`·`EnemyDefinition`/`OrbDefinition`·오브 결정 (a)·`RangeLabelOf`) + 창(M2-3) + 유효성(M2-4) + **위 설계 결정·근거**를 한 문서로 통합 기술(M2-4까지 묶어 작성 — 사용자 결정 2026-08-19).
+- **문서**: enemy-design.md §5. **▶ 통합 기술문서(`06_EnemyAuthoringTool.md`) = 미작성 폐기** — 한 번 작성했으나 backlog 진행로그 톤이라, 내용이 이 backlog-M2에 이미 상세 누적된 것으로 대체(2026-08-20 결정, 06 삭제). 정식 기술문서(아키텍처·데이터·API 중심)는 후속에 별도 정리.
 
-### M2-4 · 유효성 경고 (교전거리 모순) 🟡 `[~]` (2026-08-19 착수)
+### M2-4 · 유효성 경고 (교전거리 모순) 🟢 `[x]` (2026-08-20 완료, a~e)
+- **✅ 완료(a~e)**: R1·R2 순수 로직 = `VD.Core.EnemyValidation.Validate(EnemyDefinition)`→`List<EnemyWarning>`(메시지+하이라이트 필드; 메타 `TendencyOf`/`RangeOf`). R3(라벨 교차) = `VD.Editor.EnemyTableEditorView.AppendLabelWarning`(비주얼 Addressables `archetype:` 라벨 조회 = **에디터 전용 API라 Editor층 불가피**; `ArchetypeLabel` 딕셔너리로 기대 라벨 ↔ 엔트리 라벨 집합 대조). 표시 = 상세 상단 경고박스(`RenderWarningBox`) + 모순 필드 red 테두리(`ApplyFieldHighlights`, `.so-field-error`) + 목록 행 ⚠(`AddWarnColumn`+`RefreshRows`), moveAI/attackAI/archetype/visual 변경 시 실시간(`RefreshValidation`). **e 검증(창 실측, 사용자 육안)**: R1(Suicide+Hover)·R2(Charger+Barrage·Shooter+Contact)·R3(라벨 밖 archetype) 경고 표시 / 유효 조합 깨끗 / 경고 있어도 저장 계속(비차단) / 유효 복귀 시 즉시 해제 / 컴파일·콘솔 에러 0. **⇒ DoD 충족.** (R3 라벨 사실: `Enemy_Charger_6`={돌진,자폭}·`Enemy_Barrage_2`={돌진,탄막}.)
 - **목적**: enemy-design §4·§6. 툴의 격상 포인트(단순 테이블 → 검증 툴). 포폴 핵심 서사.
 - **작업**: 규칙 판정 → 경고 표시(행/필드 하이라이트 + 메시지). **차단 아님, 경고만**(모순 조합도 저장 허용).
 - **DoD**: 모순 조합 만들면 창에 경고가 뜨고, 유효 조합은 깨끗. 저장은 안 막음.
@@ -103,7 +104,7 @@
   - **d** §6 라벨 교차검증(R3) — 비주얼 프리팹 Addressables `archetype:` 라벨 조회(**에디터 전용 API → VD.Editor**), 집합 밖이면 경고.
   - **e** 왕복+비차단 검증 — 모순 조합(Suicide+Hover, Charger+Barrage 등) 경고 확인, 유효는 깨끗, 저장 계속됨 → DoD.
 - **결정(2026-08-19, 사용자)**: 코어=VD.Core(R1·R2; **R3는 Addressables 에디터 API라 VD.Editor 불가피**) · R3 포함 · UX=경고박스+필드 red+행 ⚠.
-- **문서**: enemy-design.md §4·§6. (기술문서 `06_EnemyAuthoringTool.md`는 M2-4 완료 후 M2-2~2-4 통합 작성.)
+- **문서**: enemy-design.md §4·§6. (통합 기술문서 `06`은 미작성 폐기 — M2-3 문서란 참조.)
 
 ### M2-5 · 최소 스폰 연결 (툴 데이터 → 런타임 스폰) 🔴
 - **목적**: scope-tiering Must "최소 스폰 연결". 툴로 만든 적이 실제로 게임에 등장.

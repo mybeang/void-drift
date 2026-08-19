@@ -7,7 +7,7 @@ namespace VD.Enemy
     /// <list type="number">
     /// <item>① <b>비주얼</b>: 캐시에서 모델 프리팹 Resolve → <see cref="Enemy.AttachVisual"/>로 셸 자식 부착.</item>
     /// <item>② <b>스탯</b>: base(def.stats) × 전역배율(<see cref="DifficultyProvider"/>) = effective → <see cref="Enemy.ApplyStats"/>.</item>
-    /// <item>③ <b>AI(M3 자리)</b>: def.moveAI/attackAI로 AI 모듈 부착 — 이번엔 비움(이동은 셸 직진 유지).</item>
+    /// <item>③ <b>AI</b>: def.moveAI로 이동 모듈(<see cref="IMoveBehaviour"/>) 부착(M3-1). 공격(def.attackAI)은 M3-2.</item>
     /// </list>
     /// 위치/회전/launch/드랍은 스포너 관심사(여기 아님). "비주얼+스탯만" 스코프(M2-5, 사용자 결정).
     /// </summary>
@@ -15,6 +15,11 @@ namespace VD.Enemy
     {
         readonly EnemyVisualCache _cache;
         readonly DifficultyProvider _difficulty;
+
+        // 이동 AI 모듈(M3-1). 무상태라 싱글톤 공유(스폰마다 재할당 없음).
+        // ⚠ 상태 있는 모듈(사행 등 M4-7 추가 시)은 여기 공유하지 말고 인스턴스별로 생성할 것.
+        readonly IMoveBehaviour _straight = new StraightMove();
+        readonly IMoveBehaviour _chase = new ChaseMove();
 
         public EnemyBuilder(EnemyVisualCache cache, DifficultyProvider difficulty)
         {
@@ -34,7 +39,15 @@ namespace VD.Enemy
             float mult = _difficulty != null ? _difficulty.StatMultiplier : 1f;
             shell.ApplyStats(StatScaler.Scale(def.stats, mult));
 
-            // ③ [M3] AI 모듈 부착 자리 (def.moveAI / def.attackAI)
+            // ③ AI 모듈 부착: 이동(M3-1). 공격(def.attackAI)은 M3-2.
+            shell.SetMoveBehaviour(ResolveMove(def.moveAI));
         }
+
+        /// <summary>def.moveAI → 이동 모듈. 미구현(Weave/Hover, M4-7)은 직진으로 폴백.</summary>
+        IMoveBehaviour ResolveMove(MoveAIType type) => type switch
+        {
+            MoveAIType.Chase => _chase,
+            _ => _straight,
+        };
     }
 }

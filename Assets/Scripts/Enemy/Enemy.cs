@@ -10,7 +10,7 @@ namespace VD.Enemy
     /// <para>능력치는 <see cref="EnemyStats"/> 하나로 데이터화(M2-5b) — 스폰 시 빌더가 <see cref="ApplyStats"/>로
     /// <b>effective(base×전역배율)</b>를 주입(M2-5d/e). 인스펙터 <see cref="stats"/>는 미주입 시 폴백 기본값.</para>
     /// 비주얼은 프리팹에 없고 빌더가 자식으로 주입(M2-5c). despawn 기준은 스포너가 <see cref="Launch"/>로 주입.
-    /// M3-1에서 이동을 AI 모듈(직진/추적)로 분리 예정 — 지금은 직진 하드코딩.
+    /// 이동은 AI 모듈(<see cref="IMoveBehaviour"/>, M3-1)에 위임 — 빌더가 def.moveAI로 주입, Update가 매 프레임 Tick 창구.
     /// </summary>
     public sealed class Enemy : MonoBehaviour, IDamageable
     {
@@ -20,6 +20,10 @@ namespace VD.Enemy
         /// <summary>플레이어 접촉 데미지(PlayerHealth가 읽음).</summary>
         public float ContactDamage => stats.damage;
 
+        /// <summary>이동 속도(데이터). 이동 AI 모듈(<see cref="IMoveBehaviour"/>)이 읽음.</summary>
+        public float MoveSpeed => stats.moveSpeed;
+
+        IMoveBehaviour _move;   // 빌더가 주입(M3-1). null이면 정지.
         Action<Enemy> _return;
         Action<Vector3> _dropOnDeath;
         GameObject _visual;   // 주입된 비주얼 인스턴스(모델). 조립 시 부착·반납 시 파괴(M2-5c)
@@ -72,6 +76,13 @@ namespace VD.Enemy
             _despawnZ = despawnZ;
         }
 
+        /// <summary>빌더가 조립 시 호출(M3-1) — def.moveAI로 고른 이동 모듈 주입 + 스폰 상태 리셋. null이면 정지.</summary>
+        public void SetMoveBehaviour(IMoveBehaviour move)
+        {
+            _move = move;
+            _move?.OnSpawned();
+        }
+
         public void TakeDamage(float amount)
         {
             if (_dead) return;
@@ -82,8 +93,8 @@ namespace VD.Enemy
 
         void Update()
         {
-            // 직진 접근: 월드 -Z로 이동(플레이어/카메라 쪽). timeScale 0이면 자연 정지. 속도 = 데이터(stats).
-            transform.position += Vector3.back * (stats.moveSpeed * Time.deltaTime);
+            // 이동은 주입된 AI 모듈에 위임(M3-1). timeScale 0이면 dt=0 → 자연 정지. 속도 = 데이터(stats).
+            _move?.Tick(this, Time.deltaTime);
 
             if (!_dead && transform.position.z <= _despawnZ) Despawn();
         }

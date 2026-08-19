@@ -8,7 +8,7 @@
 - `Assets/Scripts/VD.Runtime.asmdef`
 - `Assets/Scripts/Editor/VD.Editor.asmdef`
 - ~~`Assets/Scripts/Core/VDRuntimeMarker.cs`~~ (M1-1에서 삭제 — 실코드가 참조 검증)
-- `Assets/Scripts/Editor/VDEditorMarker.cs` (참조 검증용 임시 마커, M2까지 유지)
+- ~~`Assets/Scripts/Editor/VDEditorMarker.cs`~~ (M2-3a에서 삭제 — 에디터 툴 실코드 진입으로 역할 종료)
 
 ---
 
@@ -104,8 +104,8 @@ M0-4의 목표는 "런타임/에디터 코드 분리 기반을 마련"하는 것
 
 | 어셈블리 | 위치 | 플랫폼 | 참조 | 담는 것 |
 |---|---|---|---|---|
-| `VD.Runtime` | `Assets/Scripts/` | 전체 | `UniTask`, `R3.Unity`, `Unity.InputSystem` (+ R3 코어 자동참조) | Core / Player / Enemy / UI 런타임 전부 |
-| `VD.Editor` | `Assets/Scripts/Editor/` | **Editor 전용** | `VD.Runtime` | 에디터 커스텀 툴(UI Toolkit) 전부 |
+| `VD.Runtime` | `Assets/Scripts/` | 전체 | `UniTask`, `R3.Unity`, `Unity.InputSystem`, `UnityEngine.UI`·`Unity.TextMeshPro`(M1-10), `Unity.Addressables`·`Unity.ResourceManager`(M2-2) (+ R3 코어 자동참조) | Core / Player / Enemy / UI / **Data**(SO) 런타임 전부 |
+| `VD.Editor` | `Assets/Scripts/Editor/` | **Editor 전용** | `VD.Runtime`, `Unity.Addressables`·`Unity.Addressables.Editor`(M2-3) | 에디터 커스텀 툴(UI Toolkit) 전부 |
 
 폴더 골격 (`Assets/Scripts/`):
 
@@ -117,6 +117,7 @@ Scripts/
 ├── Player/                  ← 플레이어 + 플레이어용 총알 (namespace VD.Player)
 ├── Enemy/                   ← 적 + 적용 총알 (namespace VD.Enemy)
 ├── UI/                      ← 런타임 UI(uGUI): HUD·타이틀·결과 (namespace VD.UI)
+├── Data/                    ← 적 데이터 SO: EnemyDefinition/OrbDefinition/EnemyStats, M2-2 신설 (namespace VD.Core)
 └── Editor/
     └── VD.Editor.asmdef     ← 여기부터 별도 에디터 어셈블리
 ```
@@ -149,6 +150,8 @@ Scripts/
 - **R3 코어(`R3.dll`)** 는 NuGetForUnity가 넣은 precompiled DLL이라 asmdef `references`(=asmdef 전용)에
   넣을 수 없다. 대신 `overrideReferences: false` 로 두어 **자동참조 DLL이 그대로 유입**되게 했다.
   (검증 결과 `R3.Observable` 정상 해석 → 유입 확인.)
+
+> **갱신(M1-10·M2-2)**: 위 M0-4 스냅샷 이후 `VD.Runtime.references`가 확장됨 — **`UnityEngine.UI`·`Unity.TextMeshPro`**(M1-10 HUD, uGUI+TMP), **`Unity.Addressables`·`Unity.ResourceManager`**(M2-2c `EnemyDefinition.visual`의 `AssetReferenceGameObject`용). 적 데이터 SO(`EnemyDefinition`/`OrbDefinition`/`EnemyStats`)는 **별도 `VD.Data` 어셈블리를 만들지 않고** `Assets/Scripts/Data/`(= `VD.Runtime` 내, ns `VD.Core`)에 둔다(사용자 결정 #2 — 런타임 스포너가 SO를 참조해야 해 순환·분리 비용 회피). ⇒ 운영규칙의 "3번째 어셈블리(`VD.Data`) 분리"는 아직 트리거되지 않음.
 
 ### 2. `VD.Editor.asmdef`
 
@@ -235,5 +238,5 @@ graph TD
   (에디터 툴만 쓰는 의존은 `VD.Editor` 쪽에 추가.)
 - **빈 폴더 주의**: `Player`/`Enemy`/`UI` 는 아직 스크립트가 없어 폴더 `.meta` 만 존재한다. Git은 빈 폴더를
   추적하지 않으므로, 실제 코드가 들어오기 전까지는 클론 환경에서 폴더가 비어 보일 수 있다(정상).
-- 마커 스크립트는 **참조 검증 목적의 임시 파일**이다. 실제 코드가 자리 잡으면 삭제한다. (M1-1: `VDRuntimeMarker` 삭제 완료. `VDEditorMarker`는 M2 에디터 툴 실코드 전까지 유지.)
+- 마커 스크립트는 **참조 검증 목적의 임시 파일**이었다. 실제 코드가 자리 잡으면 삭제. (M1-1: `VDRuntimeMarker` 삭제. **M2-3a: `VDEditorMarker`도 삭제** — 에디터 툴 실코드가 VD.Editor→VD.Runtime 참조를 검증.) ⇒ 마커 2종 모두 종료.
 ```

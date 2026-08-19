@@ -8,7 +8,7 @@ namespace VD.Core
     /// </summary>
     public enum Archetype
     {
-        Barrage, // 탄막형 — 거리 두고 탄 뿌림 (range 원거리)
+        Shooter, // 사격형 — 거리 두고 탄 뿌림 (range 원거리). AttackAIType.Barrage(탄막)와 이름 충돌 회피용 용어
         Charger, // 돌진형 — 고체력 몸통 충돌 (range 근거리)
         Bomber,  // 자폭형 — 저체력 고속 범위 폭발 (range 근거리)
         Hybrid,  // 복합형 — 돌진하며 원거리도 사격 (range 복합)

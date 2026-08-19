@@ -2,7 +2,9 @@
     "name": "VD.Editor",
     "rootNamespace": "VD.Editor",
     "references": [
-        "VD.Runtime"
+        "VD.Runtime",
+        "Unity.Addressables",
+        "Unity.Addressables.Editor"
     ],
     "includePlatforms": [
         "Editor"

@@ -1,0 +1,60 @@
+/* 재사용 오서링 뷰 스타일 (M2-3g). SoTableEditorView / 도메인 창 공통. */
+
+.so-table-editor {
+    flex-grow: 1;
+}
+
+.so-detail {
+    padding: 8px;
+}
+
+.so-detail PropertyField {
+    margin-bottom: 2px;
+}
+
+.so-name-field {
+    margin-bottom: 8px;
+}
+
+.so-name-field Label {
+    -unity-font-style: bold;
+}
+
+Toolbar {
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0.25);
+}
+
+/* 유효성 경고 박스 (M2-4) */
+.so-warning-box {
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    border-radius: 3px;
+    background-color: rgba(200, 120, 0, 0.15);
+    border-left-width: 3px;
+    border-left-color: rgb(220, 140, 0);
+}
+
+.so-warning-header {
+    -unity-font-style: bold;
+    color: rgb(230, 150, 20);
+    margin-bottom: 2px;
+}
+
+.so-warning-item {
+    white-space: normal;
+    color: rgb(210, 150, 70);
+}
+
+/* 모순 필드 강조 (M2-4c) */
+.so-field-error {
+    border-width: 1px;
+    border-color: rgb(220, 80, 70);
+    border-radius: 3px;
+}
+
+/* 목록 경고 행 ⚠ */
+.so-row-warn {
+    color: rgb(230, 150, 20);
+    -unity-text-align: middle-center;
+}

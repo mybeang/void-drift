@@ -3,6 +3,7 @@
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
 - **상태**: 🟡 Should. **있으면 확실히 강해지는 것들. 마감 압박 시 아래→위로 잘라낸다.**
+- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신, 레벨=탄약 매핑, 기관총도 평행 오프셋 멀티샷). **구 Step5(시작 로드아웃+마일스톤 획득)는 폐기→M4-3 흡수.** 다음 = **M4-3**(무기 마일스톤 3choice + 시작 로드아웃). 이슈 **I-4**(탄막 무제한 발사) 열림.
 - **전제(이전 M에서 옴)**: M1 코어(사격 M1-3·3choice M1-7·HUD M1-10·게임오버 M1-9), M2 툴(M2-4/M2-5), **M3 전부 완료**(이동/공격 AI M3-1/M3-2 · 적 12종 로스터 M3-3 · 3choice 데이터화+오서링 툴 M3-4). 각 태스크 **의존** 참조.
 - ⚠️ **M3에서 M4 일부 선구현됨(재작업 금지)**:
   - **M4-7**: 사행(`WeaveMove`)·조준단발(`AimedShot`)은 **M3-3에서 선반영** → **M4-7 잔여 = 견제(Hover)뿐**(현재 직진 폴백).
@@ -23,18 +24,36 @@
 
 ---
 
-### M4-1 · 무기 3종 (유도 미사일 / 레일건) + 동시 오토발사 🟡
+### M4-1 · 무기 3종 (유도 미사일 / 레일건) + 동시 오토발사 ✅ 완료(2026-08-20)
 - **작업**: 유도 미사일(호밍)·레일건(관통 라인) 추가, 보유 무기 동시 오토발사. weapon-acquisition 규칙 반영.
-- **DoD**: 3무기가 각기 다른 발사 패턴으로 동시 발사.
+- **DoD**: 3무기가 각기 다른 발사 패턴으로 동시 발사. → **충족**(기관총+유도+레일건 동시 발사, Play 검증).
 - **의존**: M1-3 · **문서**: weapon-acquisition.md
+- **구현 요약**(기술문서는 M4 완료 시 정리):
+  - **전략 모듈 패턴**(적 AI와 동형): `IWeapon.Tick(dt, WeaponContext)` — `PlayerShooter`가 오케스트레이터로 보유 무기 리스트를 매 프레임 틱. 공용(발사원점·base데미지·타겟질의·풀)은 `WeaponContext`. 위치=`Assets/Scripts/Player/Weapons/`.
+  - **무기 3종**: `StraightGun`(원뿔 스냅 직진 단일히트) · `HomingMissile`(가속·선회 유도) · `Railgun`(원뿔 스냅 초고속 **관통**+데미지감쇠). 각자 전용 풀(`ProjectilePool`/`HomingProjectilePool`/`RailProjectilePool`, 프리팹 분리).
+  - **유도 조준 = 타입 1순위(원거리 Shooter 우선)→동급 중 가장 먼 것**(사용자 결정, 원뿔 무관). `Enemy.Archetype` 노출+빌더 주입으로 분류. Aim 사거리=인스펙터(후일 플레이어 셋팅 툴). 발사=**날개 4발사대**(`homingHardpoints`), **탄약 수만큼 동시**(순환 아님). 미사일 모델=`MissileViking`.
+  - **레일건 궤적 VFX**=프리팹 TrailRenderer(청록, `RailTrail_Mat`=Sprites/Default). 관통수(`maxPierce`)·감쇠(`damageDecay`) 인스펙터. 탄약=수직 병렬 줄기.
+  - **탄약(동시 발사 줄기 수)** = `HomingMissile.Ammo`/`Railgun.Ammo` 프로퍼티로 준비, **레벨 연동은 M4-2**. 현재 인스펙터 수동값(`homingAmmo`/`railAmmo`).
+  - **현재 데모 상태 = 3종 전부 보유**(패턴 시연용). **시작 로드아웃(기관총만)+마일스톤 획득 = 구 Step5 폐기 → M4-3 흡수**(사용자 결정 2026-08-20 — 지금 임시구현 후 M4-3서 걷어내는 낭비 회피).
+  - VFX **UnityMCP 생성·부착 검증됨**(manage_components add + manage_vfx trail_set_* / 파티클 프리팹 자식 부착).
+  - **연계 이슈**: [issues.md](issues.md) **I-4**(탄막 적 무제한 발사 → 교전 라인 게이팅, 열림).
 
-### M4-2 · 무기 레벨 Lv1~4 (탄약↑) 🟡
-- **작업**: 무기별 레벨업(공격력/연사/탄속/관통수 상승) 데이터·적용.
+### M4-2 · 무기 레벨 Lv1~4 (탄약↑) ✅ 완료(2026-08-21)
+- **작업**: 무기별 레벨업(Lv1~4 = 탄약=동시 발사 줄기 수 상승) 데이터·적용. → **충족**(Play 검증, 특이사항 없음).
 - **DoD**: 무기 레벨업 시 탄약 파워가 실제로 상승. **의존**: M4-1
+- **결정(사용자, 2026-08-21)**: ①레벨 모델 = **명시 `Level` 필드 + 레벨→탄약 매핑**(향후 M4-3 재픽업·M5-4 특수기능 판정용). ②설계 §3대로 **기관총도 Lv1~4 멀티샷** — 배치=**평행 오프셋**(레일건식, 조준 축에 수직 나란히). ③검증 트리거 = **인스펙터 시작 레벨 필드**(런타임 레벨업 흐름은 M4-3).
+- **구현 요약**:
+  - **공통 레벨 머신** `WeaponBase : IWeapon`(`Assets/Scripts/Player/Weapons/WeaponBase.cs`) — `Level`(1~`MaxLevel`)·`MaxLevel`(=4, Lv5 특수는 M5-4서 5로)·`IsMaxLevel`·`LevelUp()`(포화 클램프), `Ammo => min(Level, MaxAmmo=4)`. 3무기가 상속(`sealed override Tick`).
+  - `IWeapon`에 레벨 API(`Level`/`MaxLevel`/`IsMaxLevel`/`LevelUp`) 추가 → M4-3가 `List<IWeapon>` 폴리모픽으로 최대치 판정·레벨업 구동.
+  - **기관총**(`StraightGun`): 평행 오프셋 멀티샷(`streamSpacing`, 가운데 정렬). Lv1=1발이라 **기존 동작 무변화**(회귀 없음).
+  - **유도/레일**: 기존 수동 `_ammo`/`public Ammo` 제거 → 레벨=탄약(유도=발사대 수, 레일=레일 줄기 수).
+  - **PlayerShooter**: 인스펙터 `homingAmmo`/`railAmmo`(수동 탄약) → **`straightStartLevel`/`homingStartLevel`/`railStartLevel`**(1~4) + 기관총 `straightStreamSpacing`. 생성자에 시작 레벨 주입.
+  - **M4-3 레벨업 훅** = `IWeapon.LevelUp()`(구 "Ammo 세터" 대체). 무기카드 3choice가 미보유=추가·보유=`LevelUp`, `IsMaxLevel`이면 풀 제외.
 
 ### M4-3 · 무기 마일스톤 (플레이어 5레벨마다 무기 카드) 🟡
-- **작업**: progression §1. 레벨 5·10·15…에 3choice로 무기 카드 최소 1개 보장.
+- **작업**: progression §1. 레벨 5·10·15…에 3choice로 무기 카드 최소 1개 보장. **+ 시작 로드아웃(기관총만)으로 전환**(구 M4-1 Step5 흡수).
 - **DoD**: 5의 배수 레벨업 시 무기 카드가 반드시 후보에 포함. **의존**: M4-1, M1-7
+- ⚠️ **선구현(M4-1/M4-2)**: 무기 모듈 3종+전용 풀+`PlayerShooter` 오케스트레이터 **완비**, **레벨 Lv1~4(=탄약) 완비(M4-2)**. **잔여 = ①시작 로드아웃(현재 3종전부보유 → 기관총만 시작으로) + ②마일스톤 3choice 무기카드(획득/레벨업, `UpgradeSystem`/`LevelUpPopup` 연동)**. **레벨업 훅 = `IWeapon.LevelUp()`**(미보유=무기 추가, 보유=`LevelUp`, `IsMaxLevel`이면 풀 제외).
 
 ### M4-4 · 실드 스킬 (전용 버튼) + 강화 3종 🟡
 - **작업**: controls-design §4. 코너 전용 버튼, 실드 발동(무적/방어), 쿨다운/지속/HP 강화 3종.

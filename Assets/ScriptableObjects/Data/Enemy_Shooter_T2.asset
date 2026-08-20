@@ -29,6 +29,6 @@ MonoBehaviour:
     killScore: 20
     fireInterval: 1.2
     projectileSpeed: 20
-    barrageCount: 5
+    barrageCount: 3
     suicideRadius: 0
   dropOrb: {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}

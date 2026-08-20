@@ -5,11 +5,11 @@ namespace VD.Player
     /// <summary>
     /// 유도 미사일 무기(M4-1 Step2) — 자기 쿨다운마다 사거리 안 적을 <b>타입 1순위(원거리 우선)→가장 먼 것</b>으로 조준(원뿔 무관)해
     /// 유도 투사체(<see cref="HomingProjectile"/>)를 발사한다. 타겟이 없으면 쏘지 않고 대기(쿨다운 유지 → 타겟 등장 즉시 발사).
-    /// <para><b>탄약(<see cref="Ammo"/>)</b> = 동시 발사 줄기 수(weapon-acquisition §3). 발사대(날개 하드포인트) 앞에서부터
-    /// 탄약 수만큼 <b>동시</b> 발사 — Lv1=1번만, 탄약업하면 2·3·4번 순으로 추가(레벨업 연동=M4-2). 하드포인트 없으면 FirePoint서 1발.</para>
-    /// 탄속(가속도)·수명·선회율·Aim 사거리는 생성자 주입(코드 기본값 — Aim 사거리는 인스펙터 노출, M4-2에서 SO화 가능).
+    /// <para><b>탄약(M4-2)</b> = <see cref="WeaponBase.Ammo"/>(=레벨). 발사대(날개 하드포인트) 앞에서부터
+    /// 탄약 수만큼 <b>동시</b> 발사 — Lv1=1번만, 레벨업하면 2·3·4번 순으로 추가. 하드포인트 없으면 FirePoint서 1발.</para>
+    /// 탄속(가속도)·수명·선회율·Aim 사거리는 생성자 주입(코드 기본값 — Aim 사거리는 인스펙터 노출, 후일 SO화 가능).
     /// </summary>
-    public sealed class HomingMissile : IWeapon
+    public sealed class HomingMissile : WeaponBase
     {
         readonly float _fireInterval;
         readonly float _initialSpeed;
@@ -20,16 +20,9 @@ namespace VD.Player
         readonly float _aimRange;
 
         float _cooldown;
-        int _ammo;   // 동시 발사 줄기 수(=활성 발사대 수). 1~. 레벨업(M4-2)이 올림.
 
-        /// <summary>탄약(동시 발사 줄기 수). 최소 1. M4-2 레벨업이 이 값을 올린다.</summary>
-        public int Ammo
-        {
-            get => _ammo;
-            set => _ammo = Mathf.Max(1, value);
-        }
-
-        public HomingMissile(float fireInterval, float initialSpeed, float acceleration, float maxSpeed, float projectileLifetime, float turnRate, float aimRange, int ammo)
+        public HomingMissile(float fireInterval, float initialSpeed, float acceleration, float maxSpeed, float projectileLifetime, float turnRate, float aimRange, int startLevel)
+            : base(startLevel)
         {
             _fireInterval = fireInterval;
             _initialSpeed = initialSpeed;
@@ -38,10 +31,9 @@ namespace VD.Player
             _projectileLifetime = projectileLifetime;
             _turnRate = turnRate;
             _aimRange = aimRange;
-            _ammo = Mathf.Max(1, ammo);
         }
 
-        public void Tick(float dt, WeaponContext ctx)
+        public override void Tick(float dt, WeaponContext ctx)
         {
             _cooldown -= dt;
             if (_cooldown > 0f) return;
@@ -52,7 +44,7 @@ namespace VD.Player
             // 탄약 수만큼 발사대 앞에서부터 동시 발사. 하드포인트 없으면 FirePoint서 1발.
             var hps = ctx.HomingHardpoints;
             int available = hps != null ? hps.Length : 0;
-            int count = available > 0 ? Mathf.Min(_ammo, available) : 1;
+            int count = available > 0 ? Mathf.Min(Ammo, available) : 1;
 
             for (int i = 0; i < count; i++)
             {

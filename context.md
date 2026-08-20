@@ -48,10 +48,13 @@
 
 > 다음 작업은 **다른(새) 세션**에서 진행될 수 있음. 이 섹션이 인계 기준.
 
-### ▶ 다음 세션 인계 — ✅ M3 완료, 다음 = M5-1 빌드 1차 / M4 (2026-08-20)
+### ▶ 다음 세션 인계 — 🔶 M4 진행 중(M4-1·M4-2 완료), 다음 = M4-3 (2026-08-21)
 
 - **완료 상태**: **M1 코어루프 + M2 적 파이프라인 + M3 전부(적 12종 로스터·이동/공격 AI·3choice 데이터화) 완료 ⇒ Must 코어 충족.** 적 = **조합형**(공통 로직 셸 + `EnemyBuilder` 조립: 비주얼+스탯+**AI 모듈**). 파이프라인 = **[06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)**, M3 상세 = [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡.
-- **다음 권장**: backlog대로 **M5-1 모바일 빌드 1차**(빌드 리스크 조기 확인) → 이후 **M4**(난이도 페이즈 M4-5·스폰 타임라인 M4-6·M4-7 견제(Hover)·M4-8 무기/풀세트). 밸런싱은 M4-5 난이도 그래프 뒤 일괄.
+- **M4 진행 순서(사용자 확정 2026-08-20)**: `M4-1→2→3→4→7→8→5→6→9→10`. M5-1 빌드는 뒤로.
+- **✅ M4-1 완료(2026-08-20)**: 무기 3종 **전략 모듈**(`IWeapon`/`WeaponContext`/`PlayerShooter` 오케스트레이터, `Assets/Scripts/Player/Weapons/`) — `StraightGun`·`HomingMissile`·`Railgun`, 각 전용 풀(`ProjectilePool`/`HomingProjectilePool`/`RailProjectilePool`). **동시 오토발사**. 유도=**타입1순위 조준**(원거리 Shooter 우선→가장 먼, `Enemy.Archetype` 주입)·가속·**날개 4발사대 탄약 동시발사**·MissileViking 모델. 레일건=관통(`maxPierce`)+감쇠+**TrailRenderer 궤적**(`RailTrail_Mat`). 탄약(동시줄기수)=레벨연동(M4-2 완료 — 아래 참조). **현재 데모=3종 전부 보유; 시작 로드아웃+마일스톤 획득(구 Step5)=M4-3 흡수.** 신규 이슈 **I-4**(탄막 무제한 발사). 상세 = [backlog-M4.md](Docs/Dev/backlog-M4.md) ⚡·M4-1. **무기 기술문서는 M4 완료 시 정리(사용자 결정).**
+- **✅ M4-2 완료(2026-08-21)**: 무기 레벨 **Lv1~4 = 탄약↑**. 공통 `WeaponBase : IWeapon`(`Assets/Scripts/Player/Weapons/`) 레벨 머신 — `Level`(1~`MaxLevel`=4)·`IsMaxLevel`·`LevelUp()`, **`Ammo => min(Level, 4)`** 매핑. 3무기 상속. `IWeapon`에 레벨 API 노출(M4-3가 폴리모픽 조회). **기관총도 평행 오프셋 멀티샷**(레일건식, `straightStreamSpacing`; Lv1=1발 동작무변화). 유도/레일 수동 `Ammo` 제거→레벨=탄약. `PlayerShooter` 인스펙터 `*Ammo`→**`*StartLevel`(1~4, 검증용 시작값)**. **M4-3 레벨업 훅 = `IWeapon.LevelUp()`**. Play 검증 특이사항 없음.
+- **다음 = M4-3**(무기 마일스톤 3choice 무기카드 + 시작 로드아웃 기관총만 전환 — 구 Step5 흡수). 밸런싱은 M4-5 난이도 그래프 뒤 일괄.
 - **3choice 데이터화(M3-4)**: `UpgradeDefinition` SO(`Assets/Scripts/Data/`, type/수치/가중치/maxStacks/표시) + **Upgrade Authoring 창**(`Window/Void Drift/Upgrade Authoring`, `SoTableEditorView` 재사용 — 두 번째 Table Tool). `UpgradeSystem`=SO 풀 가중치 롤·중복없음·type 라우팅. 강화 6종 SO(`Upgrade_*`): 이동/최대체력/자석 + 신규 체력재생·오브가치·공격력(=기초 공격력, M4-8 배율 base). 적용 훅=`PlayerHealth.AddRegen`·`ExperienceSystem.AddOrbValueBonus`·`PlayerShooter.AddAttackPower`. HUD=`GameEvents.HpValues`(HP 절대값) 채널 추가로 HP 숫자 표기.
 - **AI = 순수 C# 전략 모듈**(사용자 결정, MonoBehaviour 아님): `IMoveBehaviour`(`StraightMove`/`ChaseMove`/`WeaveMove`)·`IAttackBehaviour`(`ContactAttack`/`BarrageAttack`/`AimedShot`/`SuicideAttack`), 위치=`Assets/Scripts/Enemy/AI/`. `Enemy`가 Update에서 `Tick` 위임, `EnemyBuilder.ResolveMove`/`ResolveAttack`가 `def.moveAI`/`def.attackAI`로 주입(무상태=싱글톤 공유, 상태 있는 탄막/조준단발/사행=인스턴스별). 플레이어 조회=`PlayerLocator`(Player 태그). **직진 하드코딩은 M3-1이 제거함.** **`WeaveMove`·`AimedShot`은 M3-3에서 M4-7 선반영 — 견제(Hover)만 미구현(직진 폴백).**
 - **적 로스터(M3-3) = 4라인 × 3티어 = 12 SO**: `Enemy_{LightCharger,HeavyCharger,Shooter,Bomber}_T{1,2,3}`(구 `Enemy_Sample_*` 삭제). Light/Heavy는 둘 다 archetype=`Charger`, 네이밍·스탯으로 분리. 티어 = 이동 복잡도(직진→추적→사행)+공격밀도+스탯 에스컬레이션. **모델 크기 편차 보정 = `EnemyDefinition.visualScale`(신설)** — 빌더 ①이 `Enemy.AttachVisual(prefab, scale)`로 비주얼 자식에만 곱(히트박스=셸 고정). 7개 모델 전부 사용(라벨 유효).

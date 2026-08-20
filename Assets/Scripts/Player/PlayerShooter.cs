@@ -27,6 +27,11 @@ namespace VD.Player
         [SerializeField] float projectileLifetime = 3f;
         [Tooltip("기초 공격력(무기 공통 base). M3-4 강화가 가산, M4-8 무기 배율이 곱함. 수치는 Day5 튜닝")]
         [SerializeField] float projectileDamage = 10f;
+        [Tooltip("기관총 시작 레벨(1~4). 레벨=탄약(동시 발사 줄기 수). 검증용 시작값 — 런타임 레벨업 흐름은 M4-3")]
+        [Range(1, 4)]
+        [SerializeField] int straightStartLevel = 1;
+        [Tooltip("기관총 줄기 간 간격(월드). 레벨>1일 때 나란한 탄 사이 폭")]
+        [SerializeField] float straightStreamSpacing = 0.8f;
 
         [Header("조준 (원뿔 타겟 스냅 — 기관총)")]
         [Tooltip("조준 원뿔 반각(도). 이 안의 적에게 스냅해 발사. 밖이면 조준 축(FirePoint.forward) 직사")]
@@ -43,9 +48,9 @@ namespace VD.Player
         [SerializeField] HomingProjectilePool homingPool;
         [Tooltip("발사대(날개 하드포인트) 목록. 배열 앞에서부터 탄약 수만큼 동시 발사(1번→2번→…). 비면 FirePoint(중앙) 폴백")]
         [SerializeField] Transform[] homingHardpoints;
-        [Tooltip("[임시] 유도 탄약(동시 발사 줄기 수, 1~4). 발사대 앞에서부터 이 수만큼 동시 발사. 레벨업 연동은 M4-2 — 지금은 테스트용 수동값")]
+        [Tooltip("유도 시작 레벨(1~4). 레벨=탄약(동시 발사 줄기 수, 발사대 앞에서부터). 검증용 시작값 — 런타임 레벨업 흐름은 M4-3")]
         [Range(1, 4)]
-        [SerializeField] int homingAmmo = 1;
+        [SerializeField] int homingStartLevel = 1;
         [Tooltip("유도 발사 간격(초). 기관총보다 느리게. 수치 Day5")]
         [SerializeField] float homingFireInterval = 0.8f;
         [Tooltip("유도 초기 탄속(월드/초). 여기서 가속. 수치 Day5")]
@@ -80,9 +85,9 @@ namespace VD.Player
         [SerializeField] float railConeHalfAngle = 20f;
         [Tooltip("레일 조준 사거리(월드)")]
         [SerializeField] float railAimRange = 90f;
-        [Tooltip("[임시] 레일 탄약(동시 발사 줄기 수, 1~4). 조준 축에 수직으로 나란히. 레벨업 연동은 M4-2 — 지금은 테스트용 수동값")]
+        [Tooltip("레일 시작 레벨(1~4). 레벨=탄약(동시 발사 줄기 수, 조준 축에 수직으로 나란히). 검증용 시작값 — 런타임 레벨업 흐름은 M4-3")]
         [Range(1, 4)]
-        [SerializeField] int railAmmo = 1;
+        [SerializeField] int railStartLevel = 1;
         [Tooltip("레일 줄기 간 간격(월드). 탄약>1일 때 나란한 레일 사이 폭")]
         [SerializeField] float railStreamSpacing = 1.5f;
 
@@ -107,10 +112,11 @@ namespace VD.Player
                 BaseDamage = projectileDamage,
             };
 
-            // M4-1: 일단 3종 전부 보유(패턴 시연, 획득 전환=Step5/M4-3). 기관총(Step1) + 유도(Step2) + 레일건(Step3).
-            _weapons.Add(new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange));
-            _weapons.Add(new HomingMissile(homingFireInterval, homingInitialSpeed, homingAcceleration, homingMaxSpeed, homingLifetime, homingTurnRate, homingAimRange, homingAmmo));
-            _weapons.Add(new Railgun(railFireInterval, railSpeed, railLifetime, railMaxPierce, railDamageDecay, railConeHalfAngle, railAimRange, railStreamSpacing, railAmmo));
+            // M4-1: 일단 3종 전부 보유(패턴 시연, 획득 전환=M4-3). 기관총 + 유도 + 레일건.
+            // M4-2: 시작 레벨 주입(레벨=탄약). 런타임 레벨업 트리거(무기카드 3choice)는 M4-3.
+            _weapons.Add(new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange, straightStreamSpacing, straightStartLevel));
+            _weapons.Add(new HomingMissile(homingFireInterval, homingInitialSpeed, homingAcceleration, homingMaxSpeed, homingLifetime, homingTurnRate, homingAimRange, homingStartLevel));
+            _weapons.Add(new Railgun(railFireInterval, railSpeed, railLifetime, railMaxPierce, railDamageDecay, railConeHalfAngle, railAimRange, railStreamSpacing, railStartLevel));
         }
 
         /// <summary>기초 공격력(무기 공통 base) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>

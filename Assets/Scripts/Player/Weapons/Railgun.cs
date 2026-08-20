@@ -5,11 +5,11 @@ namespace VD.Player
     /// <summary>
     /// 레일건 무기(M4-1 Step3) — 자기 쿨다운(느림·고관통)마다 조준 방향으로 <b>초고속 관통 라인</b>(<see cref="RailProjectile"/>)을 발사.
     /// 조준 = 기관총과 동일 원뿔 스냅(최근접, 없으면 축 직사). 타겟 없어도 발사(직선 빔).
-    /// <para><b>탄약(<see cref="Ammo"/>)</b> = 동시 발사 레일 줄기 수(weapon-acquisition §3) — 조준 축에 수직으로 나란히 오프셋(레벨업 연동=M4-2).
+    /// <para><b>탄약(M4-2)</b> = <see cref="WeaponBase.Ammo"/>(=레벨) — 동시 발사 레일 줄기 수, 조준 축에 수직으로 나란히 오프셋.
     /// <b>최대 관통 수</b>는 레벨 무관 별도 스택(기본값 주입, 업그레이드가 올림). 궤적 VFX는 프리팹 TrailRenderer.</para>
-    /// 수치는 생성자 주입(코드 기본값 — M4-2에서 SO화 가능).
+    /// 수치는 생성자 주입(코드 기본값 — 후일 SO화 가능).
     /// </summary>
-    public sealed class Railgun : IWeapon
+    public sealed class Railgun : WeaponBase
     {
         readonly float _fireInterval;
         readonly float _projectileSpeed;
@@ -20,17 +20,10 @@ namespace VD.Player
         readonly float _aimRange;
         readonly float _streamSpacing;
 
-        int _ammo;   // 동시 발사 레일 줄기 수. 최소 1. 레벨업(M4-2)이 올림.
         float _cooldown;
 
-        /// <summary>탄약(동시 발사 레일 줄기 수). 최소 1. M4-2 레벨업이 이 값을 올린다.</summary>
-        public int Ammo
-        {
-            get => _ammo;
-            set => _ammo = Mathf.Max(1, value);
-        }
-
-        public Railgun(float fireInterval, float projectileSpeed, float projectileLifetime, int maxPierce, float damageDecay, float coneHalfAngle, float aimRange, float streamSpacing, int ammo)
+        public Railgun(float fireInterval, float projectileSpeed, float projectileLifetime, int maxPierce, float damageDecay, float coneHalfAngle, float aimRange, float streamSpacing, int startLevel)
+            : base(startLevel)
         {
             _fireInterval = fireInterval;
             _projectileSpeed = projectileSpeed;
@@ -40,10 +33,9 @@ namespace VD.Player
             _coneHalfAngle = coneHalfAngle;
             _aimRange = aimRange;
             _streamSpacing = streamSpacing;
-            _ammo = Mathf.Max(1, ammo);
         }
 
-        public void Tick(float dt, WeaponContext ctx)
+        public override void Tick(float dt, WeaponContext ctx)
         {
             _cooldown -= dt;
             if (_cooldown > 0f) return;
@@ -61,7 +53,7 @@ namespace VD.Player
             if (side.sqrMagnitude < 1e-4f) side = ctx.FirePoint.right;
             side.Normalize();
 
-            int n = Mathf.Max(1, _ammo);
+            int n = Ammo;
             float startOffset = -(n - 1) * 0.5f * _streamSpacing;
             for (int i = 0; i < n; i++)
             {

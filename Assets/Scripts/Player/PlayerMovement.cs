@@ -29,6 +29,10 @@ namespace VD.Player
         [Tooltip("속도 상한(월드 유닛/초). 0이면 무제한(게인에 완전 비례). 빠른 플릭 과속 방지용.")]
         [SerializeField] float maxSpeed = 0f;
 
+        [Header("[PC] 키보드 이동 (WASD/화살표 — 드래그와 공존·합산)")]
+        [Tooltip("초당 이동량(뷰포트 분율). 1.2 → 약 0.8초에 화면 끝에서 끝. 0이면 키보드 이동 비활성.")]
+        [SerializeField] float keyboardMoveSpeed = 1.2f;
+
         [Header("스폰 위치 (뷰포트 좌표 0~1)")]
         [Tooltip("기본 위치: 정중앙에서 약간 아래 → (0.5, 0.42)")]
         [SerializeField] Vector2 spawnViewportPoint = new Vector2(0.5f, 0.42f);
@@ -38,8 +42,9 @@ namespace VD.Player
         [SerializeField] Vector2 viewportMargin = new Vector2(0.06f, 0.06f);
 
         Rigidbody _rb;
-        Vector2 _accumulatedDelta;   // Update에서 누적, FixedUpdate에서 소비
-        float _depth;                // 카메라 → 기체 평면 거리(뷰포트 변환 z)
+        Vector2 _accumulatedDelta;     // 드래그 픽셀 델타: Update에서 누적, FixedUpdate에서 소비
+        Vector2 _accumulatedKeyFrac;   // [PC] 키보드 이동(뷰포트 분율): Update에서 누적, FixedUpdate에서 소비
+        float _depth;                  // 카메라 → 기체 평면 거리(뷰포트 변환 z)
 
         /// <summary>이동속도(드래그 게인) 배율 강화 — M1-8. pct=0.12 → +12%(누적).</summary>
         public void AddMoveSpeedMultiplier(float pct) => dragGain *= (1f + pct);
@@ -67,6 +72,7 @@ namespace VD.Player
             if (!IsPlaying())
             {
                 _accumulatedDelta = Vector2.zero;
+                _accumulatedKeyFrac = Vector2.zero;
                 return;
             }
 
@@ -74,6 +80,22 @@ namespace VD.Player
             var pointer = Pointer.current;
             if (pointer != null && pointer.press.isPressed)
                 _accumulatedDelta += pointer.delta.ReadValue();
+
+            // [PC] 키보드 이동: WASD/화살표 방향을 초당 이동량으로 누적(뷰포트 분율, 드래그와 합산).
+            if (keyboardMoveSpeed > 0f)
+            {
+                var kb = Keyboard.current;
+                if (kb != null)
+                {
+                    Vector2 dir = Vector2.zero;
+                    if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  dir.x -= 1f;
+                    if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) dir.x += 1f;
+                    if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    dir.y += 1f;
+                    if (kb.sKey.isPressed || kb.downArrowKey.isPressed)  dir.y -= 1f;
+                    if (dir.sqrMagnitude > 1e-6f)
+                        _accumulatedKeyFrac += dir.normalized * (keyboardMoveSpeed * Time.deltaTime);
+                }
+            }
         }
 
         void FixedUpdate()
@@ -88,6 +110,8 @@ namespace VD.Player
 
             Vector2 pxDelta = _accumulatedDelta;
             _accumulatedDelta = Vector2.zero;
+            Vector2 keyFrac = _accumulatedKeyFrac;
+            _accumulatedKeyFrac = Vector2.zero;
 
             // 픽셀 델타 → 화면 분율(해상도/DPI 무관). 가로=폭, 세로=높이 기준.
             Vector2 frac = new Vector2(
@@ -99,6 +123,7 @@ namespace VD.Player
             Vector2 targetVp = new Vector2(curVp.x, curVp.y);
             if (frac.magnitude >= deadZoneScreenFraction)
                 targetVp += new Vector2(frac.x * dragGain, frac.y * dragGain);
+            targetVp += keyFrac;   // [PC] 키보드 이동(이미 뷰포트 분율, 게인 미적용) — 드래그와 합산
 
             // 목표를 경계 안으로 선-클램프 → 경계에서 바깥으로 미는 속도가 애초에 안 생김(부르르 떨림 방지).
             targetVp.x = Mathf.Clamp(targetVp.x, viewportMargin.x, 1f - viewportMargin.x);

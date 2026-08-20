@@ -40,16 +40,17 @@ namespace VD.Player
             GameManager.Instance?.Events?.SetHpNormalized(_hp / maxHp);
         }
 
-        void OnTriggerEnter(Collider other)
+        /// <summary>
+        /// 데미지 적용(공용) — 적 접촉(<see cref="OnTriggerEnter"/>)과 적탄(<see cref="VD.Enemy.EnemyBullet"/>)/자폭이 호출.
+        /// 아군 오사 방지를 위해 <c>IDamageable</c>는 여전히 미구현 — 이 메서드는 적 계열만 명시적으로 호출한다.
+        /// </summary>
+        public void ApplyDamage(float amount)
         {
             if (_dead) return;
 
-            var e = other.GetComponentInParent<EnemyEntity>();
-            if (e == null) return;   // 적이 아님(자기 총알 등) → 무시
-
-            _hp -= e.ContactDamage;
+            _hp -= amount;
             if (_hp < 0f) _hp = 0f;
-            Debug.Log($"[TEMP] 플레이어 피격 -{e.ContactDamage} → HP {_hp}/{maxHp}", this);   // TODO: 임시 로그, 검증 후 제거
+            Debug.Log($"[TEMP] 플레이어 피격 -{amount} → HP {_hp}/{maxHp}", this);   // TODO: 임시 로그, 검증 후 제거
 
             GameManager.Instance?.Events?.SetHpNormalized(_hp / maxHp);
 
@@ -58,6 +59,16 @@ namespace VD.Player
                 _dead = true;
                 GameManager.Instance?.GameOver();   // 정지형 게임오버(M1-9)
             }
+        }
+
+        void OnTriggerEnter(Collider other)
+        {
+            if (_dead) return;
+
+            var e = other.GetComponentInParent<EnemyEntity>();
+            if (e == null) return;   // 적이 아님(자기 총알 등) → 무시
+
+            ApplyDamage(e.ContactDamage);
         }
     }
 }

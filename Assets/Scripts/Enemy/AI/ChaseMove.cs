@@ -12,7 +12,6 @@ namespace VD.Enemy
     public sealed class ChaseMove : IMoveBehaviour
     {
         readonly float _homingRange;   // 이 거리 이내로 들어오면 추적 개시(Day5 튜닝 / SO화 후보)
-        Transform _target;             // 캐시(플레이어 1체). 놓치면 다음 Tick에 재조회.
 
         public ChaseMove(float homingRange = 30f)
         {
@@ -28,7 +27,7 @@ namespace VD.Enemy
 
             pos += Vector3.back * step;   // 항상 -Z 접근(직진과 동일 → 반드시 despawn 경계 도달)
 
-            Transform target = ResolveTarget();
+            Transform target = PlayerLocator.Get();
             if (target != null)
             {
                 Vector3 tp = target.position;
@@ -43,14 +42,6 @@ namespace VD.Enemy
             }
 
             self.transform.position = pos;
-        }
-
-        Transform ResolveTarget()
-        {
-            if (_target != null) return _target;   // Unity null 체크(파괴 시 재조회)
-            var go = GameObject.FindGameObjectWithTag("Player");
-            _target = go != null ? go.transform : null;
-            return _target;
         }
     }
 }

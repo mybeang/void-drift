@@ -19,8 +19,8 @@ MonoBehaviour:
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   moveAI: 2
-  attackAI: 0
-  archetype: 1
+  attackAI: 2
+  archetype: 0
   stats:
     maxHp: 30
     moveSpeed: 8

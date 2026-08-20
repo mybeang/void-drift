@@ -28,6 +28,8 @@ namespace VD.Enemy
         [SerializeField] EnemyPool pool;
         [Tooltip("오브 풀(M1-5). 비우면 씬에서 자동 탐색. 없으면 오브 드랍 없음")]
         [SerializeField] OrbPool orbPool;
+        [Tooltip("적탄 풀(M3-2, 탄막 발사용). 비우면 씬에서 자동 탐색. 없으면 탄막 무발사")]
+        [SerializeField] EnemyBulletPool bulletPool;
         [Tooltip("난이도 배율 소스(M2-5d 스텁, M4-5 실배율). 비우면 배율 1.0")]
         [SerializeField] DifficultyProvider difficulty;
 
@@ -56,6 +58,7 @@ namespace VD.Enemy
         {
             if (pool == null) pool = FindAnyObjectByType<EnemyPool>();
             if (orbPool == null) orbPool = FindAnyObjectByType<OrbPool>();
+            if (bulletPool == null) bulletPool = FindAnyObjectByType<EnemyBulletPool>();
             if (difficulty == null) difficulty = FindAnyObjectByType<DifficultyProvider>();
         }
 
@@ -68,7 +71,7 @@ namespace VD.Enemy
         async UniTaskVoid Warmup()
         {
             await _cache.PreloadAsync(DistinctVisuals());
-            _builder = new EnemyBuilder(_cache, difficulty);
+            _builder = new EnemyBuilder(_cache, difficulty, bulletPool);
             _ready = true;
             Debug.Log($"[TEMP] EnemySpawner 준비 완료 — 스폰 후보 {CountValid()}종");   // TODO: 임시 로그
         }

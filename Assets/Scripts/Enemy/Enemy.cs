@@ -23,7 +23,20 @@ namespace VD.Enemy
         /// <summary>이동 속도(데이터). 이동 AI 모듈(<see cref="IMoveBehaviour"/>)이 읽음.</summary>
         public float MoveSpeed => stats.moveSpeed;
 
-        IMoveBehaviour _move;   // 빌더가 주입(M3-1). null이면 정지.
+        // 공격 AI 모듈(M3-2)이 읽는 스탯. 데이터=stats, 전달 방식은 모듈이 결정.
+        /// <summary>공격 데미지(탄/자폭). = 접촉과 동일 필드(stats.damage).</summary>
+        public float Damage => stats.damage;
+        /// <summary>발사 간격(초). 탄막/조준단발.</summary>
+        public float FireInterval => stats.fireInterval;
+        /// <summary>적 탄속. 탄막/조준단발.</summary>
+        public float ProjectileSpeed => stats.projectileSpeed;
+        /// <summary>한 번에 뿌리는 탄 수. 탄막.</summary>
+        public int BarrageCount => stats.barrageCount;
+        /// <summary>자폭 폭발 반경.</summary>
+        public float SuicideRadius => stats.suicideRadius;
+
+        IMoveBehaviour _move;       // 빌더가 주입(M3-1). null이면 정지.
+        IAttackBehaviour _attack;   // 빌더가 주입(M3-2). null이면 공격 없음.
         Action<Enemy> _return;
         Action<Vector3> _dropOnDeath;
         GameObject _visual;   // 주입된 비주얼 인스턴스(모델). 조립 시 부착·반납 시 파괴(M2-5c)
@@ -83,6 +96,13 @@ namespace VD.Enemy
             _move?.OnSpawned();
         }
 
+        /// <summary>빌더가 조립 시 호출(M3-2) — def.attackAI로 고른 공격 모듈 주입 + 스폰 상태 리셋. null이면 공격 없음.</summary>
+        public void SetAttackBehaviour(IAttackBehaviour attack)
+        {
+            _attack = attack;
+            _attack?.OnSpawned();
+        }
+
         public void TakeDamage(float amount)
         {
             if (_dead) return;
@@ -93,8 +113,11 @@ namespace VD.Enemy
 
         void Update()
         {
-            // 이동은 주입된 AI 모듈에 위임(M3-1). timeScale 0이면 dt=0 → 자연 정지. 속도 = 데이터(stats).
-            _move?.Tick(this, Time.deltaTime);
+            float dt = Time.deltaTime;   // timeScale 0이면 0 → 자연 정지.
+
+            // 이동·공격을 주입된 AI 모듈에 위임(M3-1/M3-2). 공격이 자폭으로 자멸시키면 _dead=true → 이후 스킵.
+            _move?.Tick(this, dt);
+            if (!_dead) _attack?.Tick(this, dt);
 
             if (!_dead && transform.position.z <= _despawnZ) Despawn();
         }
@@ -108,7 +131,8 @@ namespace VD.Enemy
             Despawn();
         }
 
-        void Despawn()
+        /// <summary>즉시 소멸(풀 반납). 드랍/처치점수 없음 — 화면 밖 이탈 및 자폭(<see cref="SuicideAttack"/>)이 사용.</summary>
+        public void Despawn()
         {
             _dead = true;
             _return?.Invoke(this);

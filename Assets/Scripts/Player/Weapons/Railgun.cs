@@ -20,7 +20,14 @@ namespace VD.Player
         readonly float _aimRange;
         readonly float _streamSpacing;
 
+        /// <summary>최대 관통 수 상한(레일건 3축, weapon-acquisition §5 "최대 5").</summary>
+        public const int MaxPierceCap = 5;
+
+        int _bonusPierce;   // 최대 관통수 강화(M4-8, 누적). 기본+보너스는 MaxPierceCap로 클램프.
         float _cooldown;
+
+        /// <summary>최대 관통 수 강화(누적) — 한 줄기가 뚫는 몹 수 +amount(상한 <see cref="MaxPierceCap"/>).</summary>
+        public void AddPierce(int amount) => _bonusPierce += amount;
 
         public Railgun(float fireInterval, float projectileSpeed, float projectileLifetime, int maxPierce, float damageDecay, float coneHalfAngle, float aimRange, float streamSpacing, int startLevel)
             : base(startLevel)
@@ -40,7 +47,9 @@ namespace VD.Player
             _cooldown -= dt;
             if (_cooldown > 0f) return;
             if (ctx.RailPool == null || ctx.FirePoint == null) return;
-            _cooldown = _fireInterval;
+            _cooldown = _fireInterval / FireRateMult;   // 연사 강화(M4-8)
+
+            int pierce = Mathf.Min(_maxPierce + _bonusPierce, MaxPierceCap);   // 관통수 강화(M4-8, 상한 클램프)
 
             // 조준 방향 = 축(FirePoint.forward). 원뿔 안에 적 있으면 스냅. 타겟 없어도 직선 발사.
             Vector3 dir = ctx.FirePoint.forward;
@@ -60,7 +69,7 @@ namespace VD.Player
                 Vector3 origin = ctx.FirePoint.position + side * (startOffset + i * _streamSpacing);
                 RailProjectile p = ctx.RailPool.Get();
                 p.transform.SetPositionAndRotation(origin, rot);
-                p.Launch(_projectileSpeed, _projectileLifetime, ctx.BaseDamage, _damageDecay, _maxPierce);
+                p.Launch(_projectileSpeed * ProjectileSpeedMult, _projectileLifetime, ctx.BaseDamage, _damageDecay, pierce);   // 탄속·관통 강화(M4-8)
             }
         }
     }

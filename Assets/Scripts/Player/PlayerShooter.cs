@@ -147,6 +147,14 @@ namespace VD.Player
             else Acquire(id, 1);
         }
 
+        // ── 무기별 파워 강화 (M4-8, 3choice 무기 파워 카드) — 보유 무기에만 적용 ──
+        /// <summary>지정 무기 연사속도 강화(보유 시).</summary>
+        public void AddWeaponFireRate(WeaponId id, float pct) { if (_owned.TryGetValue(id, out IWeapon w)) w.AddFireRate(pct); }
+        /// <summary>지정 무기 탄속 강화(보유 시).</summary>
+        public void AddWeaponProjectileSpeed(WeaponId id, float pct) { if (_owned.TryGetValue(id, out IWeapon w)) w.AddProjectileSpeed(pct); }
+        /// <summary>레일건 최대 관통 수 강화(보유 시).</summary>
+        public void AddRailgunPierce(int amount) { if (_owned.TryGetValue(WeaponId.Railgun, out IWeapon w) && w is Railgun r) r.AddPierce(amount); }
+
         /// <summary>기초 공격력(무기 공통 base) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>
         public void AddAttackPower(float amount)
         {

@@ -20,6 +20,20 @@ namespace VD.Player
         /// <summary>현재 탄약(동시 발사 줄기 수). = min(<see cref="Level"/>, <see cref="MaxAmmo"/>). 파생 무기가 발사 수로 사용.</summary>
         protected int Ammo => Mathf.Min(Level, MaxAmmo);
 
+        // ── 무기별 파워 배율(M4-8, 3choice 무기 파워 카드가 누적) ────────────────
+        float _fireRateMult = 1f;    // 연사속도 배율(↑=빠름). 발사 간격에 나눔.
+        float _projSpeedMult = 1f;   // 탄속 배율(↑=빠름). 탄속에 곱함.
+
+        /// <summary>연사속도 배율(1=기본). 발사 간격 = 기본간격 / 이 값.</summary>
+        protected float FireRateMult => _fireRateMult;
+        /// <summary>탄속 배율(1=기본). 탄속 = 기본탄속 × 이 값.</summary>
+        protected float ProjectileSpeedMult => _projSpeedMult;
+
+        /// <summary>연사속도 강화(누적, 배수). pct=0.1 → +10%.</summary>
+        public void AddFireRate(float pct) => _fireRateMult *= (1f + pct);
+        /// <summary>탄속 강화(누적, 배수). pct=0.1 → +10%.</summary>
+        public void AddProjectileSpeed(float pct) => _projSpeedMult *= (1f + pct);
+
         /// <param name="startLevel">시작 레벨(1~maxLevel로 클램프). 인스펙터 검증값 또는 획득(=1).</param>
         /// <param name="maxLevel">최대 레벨. M4-2=4(Lv5 특수는 M5-4에서 5로).</param>
         protected WeaponBase(int startLevel, int maxLevel = 4)

@@ -22,5 +22,14 @@ namespace VD.Core
         ShieldCooldown, // 실드 쿨다운 감소(비율) — AddCooldownReduction
         ShieldDuration, // 실드 지속시간 증가(초) — AddDuration
         ShieldHp,       // 실드 HP 총량 증가 — AddShieldHp
+
+        // ── 무기별 파워(M4-8): 해당 무기 보유 시에만 등장. 값=배수(연사/탄속, isPercent) 또는 관통수(정수) ──
+        StraightFireRate,   // 기관총 연사속도
+        StraightProjSpeed,  // 기관총 탄속
+        HomingFireRate,     // 유도 연사속도
+        HomingProjSpeed,    // 유도 탄속
+        RailgunFireRate,    // 레일건 연사속도
+        RailgunProjSpeed,   // 레일건 탄속
+        RailgunPierce,      // 레일건 최대 관통 수(정수, 상한 5)
     }
 }

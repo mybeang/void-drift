@@ -93,6 +93,11 @@ namespace VD.Player
                 if (!milestone || shooter == null) return false;   // 무기 카드 = 마일스톤 전용
                 return !shooter.IsWeaponMaxed(id);                 // Lv4 최대치 도달 무기 제외
             }
+            if (TryWeaponPowerId(d.type, out WeaponId pid))
+            {
+                if (shooter == null || !shooter.HasWeapon(pid)) return false;   // 무기 파워 = 해당 무기 보유 시만
+                return !(d.maxStacks > 0 && StackOf(d.type) >= d.maxStacks);
+            }
             return !(d.maxStacks > 0 && StackOf(d.type) >= d.maxStacks);
         }
 
@@ -110,7 +115,7 @@ namespace VD.Player
             return list.Count - 1;
         }
 
-        /// <summary>UpgradeType → WeaponId(무기 카드 여부). 무기 3종만 true.</summary>
+        /// <summary>UpgradeType → WeaponId(무기 획득/레벨업 카드 여부, 마일스톤). 무기 3종만 true.</summary>
         static bool TryWeaponId(UpgradeType t, out WeaponId id)
         {
             switch (t)
@@ -118,6 +123,22 @@ namespace VD.Player
                 case UpgradeType.WeaponStraight: id = WeaponId.Straight; return true;
                 case UpgradeType.WeaponHoming:   id = WeaponId.Homing;   return true;
                 case UpgradeType.WeaponRailgun:  id = WeaponId.Railgun;  return true;
+                default: id = default; return false;
+            }
+        }
+
+        /// <summary>UpgradeType → 무기 파워 카드가 요구하는 WeaponId(M4-8). 파워 7종만 true(해당 무기 보유 시 등장).</summary>
+        static bool TryWeaponPowerId(UpgradeType t, out WeaponId id)
+        {
+            switch (t)
+            {
+                case UpgradeType.StraightFireRate:
+                case UpgradeType.StraightProjSpeed: id = WeaponId.Straight; return true;
+                case UpgradeType.HomingFireRate:
+                case UpgradeType.HomingProjSpeed:   id = WeaponId.Homing;   return true;
+                case UpgradeType.RailgunFireRate:
+                case UpgradeType.RailgunProjSpeed:
+                case UpgradeType.RailgunPierce:     id = WeaponId.Railgun;  return true;
                 default: id = default; return false;
             }
         }
@@ -142,6 +163,15 @@ namespace VD.Player
                 case UpgradeType.ShieldCooldown: if (shield != null)   shield.AddCooldownReduction(def.value);      break;
                 case UpgradeType.ShieldDuration: if (shield != null)   shield.AddDuration(def.value);               break;
                 case UpgradeType.ShieldHp:       if (shield != null)   shield.AddShieldHp(def.value);               break;
+
+                // 무기별 파워(M4-8) — 보유 무기에만 적용(미보유면 IsEligible이 이미 걸러 등장 안 함).
+                case UpgradeType.StraightFireRate:  if (shooter != null) shooter.AddWeaponFireRate(WeaponId.Straight, def.value);      break;
+                case UpgradeType.StraightProjSpeed: if (shooter != null) shooter.AddWeaponProjectileSpeed(WeaponId.Straight, def.value); break;
+                case UpgradeType.HomingFireRate:    if (shooter != null) shooter.AddWeaponFireRate(WeaponId.Homing, def.value);        break;
+                case UpgradeType.HomingProjSpeed:   if (shooter != null) shooter.AddWeaponProjectileSpeed(WeaponId.Homing, def.value);   break;
+                case UpgradeType.RailgunFireRate:   if (shooter != null) shooter.AddWeaponFireRate(WeaponId.Railgun, def.value);       break;
+                case UpgradeType.RailgunProjSpeed:  if (shooter != null) shooter.AddWeaponProjectileSpeed(WeaponId.Railgun, def.value);  break;
+                case UpgradeType.RailgunPierce:     if (shooter != null) shooter.AddRailgunPierce(Mathf.RoundToInt(def.value));        break;
             }
             _stacks[def.type] = StackOf(def.type) + 1;   // 스택 누적(maxStacks 판정용)
         }

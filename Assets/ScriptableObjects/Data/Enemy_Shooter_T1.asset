@@ -32,5 +32,5 @@ MonoBehaviour:
     barrageCount: 1
     suicideRadius: 0
     hoverDistance: 36
-    hoverDuration: 3
+    hoverDuration: 10
   dropOrb: {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}

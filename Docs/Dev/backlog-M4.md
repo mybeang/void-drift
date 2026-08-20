@@ -3,7 +3,7 @@
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
 - **상태**: 🟡 Should. **있으면 확실히 강해지는 것들. 마감 압박 시 아래→위로 잘라낸다.**
-- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신). ✅ **M4-3 완료**(시작 로드아웃 기관총만 + 5레벨 마일스톤 3choice 무기 카드). ✅ **M4-4 완료**(실드 액티브 스킬 — 자체HP 방어막·에스컬 쿨다운 15+5·코너버튼+Space·강화 3종). ✅ **PC 보조 입력**(WASD 이동, Space 실드). 다음 = **M4-7**(적 AI 견제/Hover). 이슈 **I-4**(탄막 무제한 발사) 열림.
+- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신). ✅ **M4-3 완료**(시작 로드아웃 기관총만 + 5레벨 마일스톤 3choice 무기 카드). ✅ **M4-4 완료**(실드 액티브 스킬 — 자체HP 방어막·에스컬 쿨다운 15+5·코너버튼+Space·강화 3종). ✅ **PC 보조 입력**(WASD 이동, Space 실드). ✅ **M4-7 완료**(견제/Hover). ✅ **M4-8 구현 완료**(무기별 파워 연사/탄속/관통 — 보유 무기만 등장, 7카드/19풀; **플레이 검증 보류**). 다음 = **M4-5**(난이도 페이즈). 이슈 **I-4**(탄막 무제한 발사) 열림.
 - **전제(이전 M에서 옴)**: M1 코어(사격 M1-3·3choice M1-7·HUD M1-10·게임오버 M1-9), M2 툴(M2-4/M2-5), **M3 전부 완료**(이동/공격 AI M3-1/M3-2 · 적 12종 로스터 M3-3 · 3choice 데이터화+오서링 툴 M3-4). 각 태스크 **의존** 참조.
 - ⚠️ **M3에서 M4 일부 선구현됨(재작업 금지)**:
   - **M4-7**: 사행(`WeaveMove`)·조준단발(`AimedShot`)은 **M3-3에서 선반영** → **M4-7 잔여 = 견제(Hover)뿐**(현재 직진 폴백).
@@ -84,13 +84,24 @@
 - **DoD**: 툴에서 페이즈별 스폰 프로파일을 편집→런타임 스폰에 반영. **의존**: M2-4, M4-5 · **문서**: enemy-design.md §5, progression-design.md §2
 - **인접**: 난이도 **배율 곡선 데이터**를 툴로 편집하는 아이디어는 M4-5에 등재(둘 다 `SoTableEditorView<T>` 재사용·통합 튜닝 창 비전 계열).
 
-### M4-7 · 적 AI 풀세트 (사행/견제 + 조준단발) 🟡
-- **작업**: 이동AI 사행·견제(호버), 공격AI 조준단발 추가(§3 4×4 완성). 9개 에셋 버킷 채우기.
+### M4-7 · 적 AI 풀세트 (사행/견제 + 조준단발) ✅ 완료(2026-08-21)
+- **작업**: 이동AI 사행·견제(호버), 공격AI 조준단발 추가(§3 4×4 완성). → **충족**(사행·조준단발=M3-3 선반영, 견제=여기 구현. Play·툴 검증).
 - **DoD**: 이동4×공격4 모듈 전부 선택 가능·동작. **의존**: M3-1, M3-2 · **문서**: enemy-design.md §3
+- **구현(견제/Hover)**:
+  - [HoverMove.cs](../../Assets/Scripts/Enemy/AI/HoverMove.cs) — **Approach→Hover→Leave** 3상태(per-instance, 스폰마다 new). Z간격 기준 접근 → 선호 거리서 정지 → 머무는 시간 후 -Z 재접근해 **끝라인 despawn**(사용자 결정: 이탈=재접근). `EnemyBuilder.ResolveMove`에 `Hover => new HoverMove()`.
+  - **사격은 멈춰있을 때(Hover)만**(사용자 결정) — `Enemy._attackSuppressed`(스폰 시 false 리셋) + 공격 틱 게이트, `HoverMove`가 매 프레임 `SetAttackSuppressed(_phase != Hover)`. 접근/이탈 중 사격 억제. 비-Hover 적은 기본 false라 항상 사격.
+  - **선호거리·머무는시간 = SO 데이터**(`EnemyStats.hoverDistance`/`hoverDuration`, `Enemy.HoverDistance`/`Duration`로 노출). **오서링 툴에서 MoveAI==견제일 때만 편집 가능**(`EnemyTableEditorView.ApplyMoveFieldStates`, 공격AI별 필드와 동형). 검증 적=`Enemy_Shooter_T1`(견제+조준단발, dist 36/dur 3).
+  - **측면 추적 없음(v1)**·수치 Day5.
 
-### M4-8 · 업그레이드 풀 풀세트 🟡
-- **작업**: upgrade-pool. 탄속/최대 관통수/체력재생/오브 획득범위·가치 등 추가.
+### M4-8 · 업그레이드 풀 풀세트 ✅ 구현 완료(2026-08-21, 플레이 검증 보류)
+- **작업**: upgrade-pool. 무기별 파워(연사/탄속/관통) 추가. (체력재생/오브범위·가치/공격력·실드는 M3-4·M4-4서 이미 구현.) → **구현 충족**. **플레이 검증은 보류**(항목 많아 후속 일괄, 사용자 결정 2026-08-21).
 - **DoD**: 풀세트가 3choice에 반영, 카테고리별 강화 성립. **의존**: M3-4 · **문서**: upgrade-pool.md
+- **결정(사용자, 2026-08-21)**: ①무기 파워 = **무기별 적용**(카드가 무기 지정, 보유 무기만). ②최대 관통수(레일건 전용) = **레일건 보유 시에만** 등장.
+- **구현**:
+  - **파워 배율**(`WeaponBase`): `FireRateMult`/`ProjectileSpeedMult` + `AddFireRate`/`AddProjectileSpeed`(누적 배수, `IWeapon`에 노출). 발사 시 간격÷연사·탄속×배율. 유도=초기/가속/최대속도에 배율. `Railgun.AddPierce`(관통 보너스, 상한 `MaxPierceCap=5`).
+  - **라우팅**(`PlayerShooter`): `AddWeaponFireRate`/`AddWeaponProjectileSpeed`(WeaponId별)·`AddRailgunPierce` — **보유 무기에만**.
+  - **3choice**: `UpgradeType` 7종(`{Straight,Homing,Railgun}FireRate`/`ProjSpeed` + `RailgunPierce`), `UpgradeSystem.TryWeaponPowerId` 게이트(해당 무기 보유 시만·maxStacks). SO 7종(`Upgrade_{무기}_{FireRate/ProjSpeed/Pierce}`, 연사/탄속 +12%·stacks5, 관통 +1·stacks3) + pool **19개**.
+  - **미채택**: 무기별 공격력 배율(공격력은 M3-4서 전역 base로 구현, 별도 무기배율은 스코프 밖).
 
 ### M4-9 · 피격/파괴 VFX (빨간 깜빡) 🟡
 - **작업**: onepage 차별점. 파괴 가능 오브젝트 피격 시 빨간 깜빡임, 파괴 이펙트(JMO Assets VFX 활용 검토).

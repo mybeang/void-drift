@@ -36,7 +36,7 @@ namespace VD.Player
             _cooldown -= dt;
             if (_cooldown > 0f) return;
             if (ctx.StraightPool == null || ctx.FirePoint == null) return;
-            _cooldown = _fireInterval;
+            _cooldown = _fireInterval / FireRateMult;   // 연사 강화(M4-8)
 
             // 조준 방향 = 조준 축(FirePoint.forward). 원뿔 안에 적 있으면 그 적으로 스냅.
             Vector3 dir = ctx.FirePoint.forward;
@@ -56,7 +56,7 @@ namespace VD.Player
                 Vector3 origin = ctx.FirePoint.position + side * (startOffset + i * _streamSpacing);
                 Projectile p = ctx.StraightPool.Get();
                 p.transform.SetPositionAndRotation(origin, rot);
-                p.Launch(_projectileSpeed, _projectileLifetime, ctx.BaseDamage);
+                p.Launch(_projectileSpeed * ProjectileSpeedMult, _projectileLifetime, ctx.BaseDamage);   // 탄속 강화(M4-8)
             }
         }
     }

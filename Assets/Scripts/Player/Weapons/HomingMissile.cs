@@ -39,7 +39,7 @@ namespace VD.Player
             if (_cooldown > 0f) return;
             if (ctx.HomingPool == null || ctx.FirePoint == null) return;
             if (!ctx.TryAcquireHomingTarget(_aimRange, out Transform target)) return;   // 타겟 없으면 대기(쿨다운 유지)
-            _cooldown = _fireInterval;
+            _cooldown = _fireInterval / FireRateMult;   // 연사 강화(M4-8)
 
             // 탄약 수만큼 발사대 앞에서부터 동시 발사. 하드포인트 없으면 FirePoint서 1발.
             var hps = ctx.HomingHardpoints;
@@ -61,9 +61,11 @@ namespace VD.Player
                 ? Quaternion.LookRotation(toTarget.normalized, Vector3.up)
                 : ctx.FirePoint.rotation;
 
+            // 탄속 강화(M4-8) = 초기속도·가속·최대속도에 배율(선회율·수명은 불변).
+            float sm = ProjectileSpeedMult;
             HomingProjectile m = ctx.HomingPool.Get();
             m.transform.SetPositionAndRotation(origin, rot);
-            m.Launch(_initialSpeed, _acceleration, _maxSpeed, _projectileLifetime, ctx.BaseDamage, _turnRate, target);
+            m.Launch(_initialSpeed * sm, _acceleration * sm, _maxSpeed * sm, _projectileLifetime, ctx.BaseDamage, _turnRate, target);
         }
     }
 }

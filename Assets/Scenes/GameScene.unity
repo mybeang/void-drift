@@ -4347,6 +4347,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0aae7dc84546a3148b2c488a45daf62a, type: 2}
   - {fileID: 11400000, guid: 67f0d669cd50a83499c4f8d044dadef5, type: 2}
   - {fileID: 11400000, guid: 154f1836bf766f84385dc12c1cb17915, type: 2}
+  - {fileID: 11400000, guid: f5723ed5ec5e723419f6dc7d1dfd7196, type: 2}
+  - {fileID: 11400000, guid: 2fcf8a6683a7bec45b3b2a3f768501fb, type: 2}
+  - {fileID: 11400000, guid: e6bedbbb55da2a6479a154115ac083e6, type: 2}
+  - {fileID: 11400000, guid: 8867011be4246ea4aaed9e5f3e935c8e, type: 2}
+  - {fileID: 11400000, guid: 7f42947dee978f74a84770b5836070b9, type: 2}
+  - {fileID: 11400000, guid: c43b3a8be598f8d4dbd8423f39f2702e, type: 2}
+  - {fileID: 11400000, guid: c3113cdbcae628c4ba55b93907d4769f, type: 2}
   movement: {fileID: 0}
   health: {fileID: 0}
   orbPool: {fileID: 0}

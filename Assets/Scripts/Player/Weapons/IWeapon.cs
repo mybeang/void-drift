@@ -24,5 +24,10 @@ namespace VD.Player
 
         /// <summary>한 단계 레벨업(<see cref="MaxLevel"/>에서 포화). M4-3 무기카드 재픽업이 호출.</summary>
         void LevelUp();
+
+        /// <summary>연사속도 강화(누적, 배수). M4-8 무기 파워 카드가 호출.</summary>
+        void AddFireRate(float pct);
+        /// <summary>탄속 강화(누적, 배수). M4-8 무기 파워 카드가 호출.</summary>
+        void AddProjectileSpeed(float pct);
     }
 }

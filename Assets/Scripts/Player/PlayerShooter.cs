@@ -38,6 +38,29 @@ namespace VD.Player
         [Tooltip("[임시] 조준 원뿔 기즈모 표시(Scene/Game). 검증·튜닝 후 제거")]
         [SerializeField] bool drawAimGizmo = true;
 
+        [Header("유도 미사일 (Step2)")]
+        [Tooltip("유도 미사일 전용 풀. 비우면 씬에서 자동 탐색")]
+        [SerializeField] HomingProjectilePool homingPool;
+        [Tooltip("발사대(날개 하드포인트) 목록. 배열 앞에서부터 탄약 수만큼 동시 발사(1번→2번→…). 비면 FirePoint(중앙) 폴백")]
+        [SerializeField] Transform[] homingHardpoints;
+        [Tooltip("[임시] 유도 탄약(동시 발사 줄기 수, 1~4). 발사대 앞에서부터 이 수만큼 동시 발사. 레벨업 연동은 M4-2 — 지금은 테스트용 수동값")]
+        [Range(1, 4)]
+        [SerializeField] int homingAmmo = 1;
+        [Tooltip("유도 발사 간격(초). 기관총보다 느리게. 수치 Day5")]
+        [SerializeField] float homingFireInterval = 0.8f;
+        [Tooltip("유도 초기 탄속(월드/초). 여기서 가속. 수치 Day5")]
+        [SerializeField] float homingInitialSpeed = 12f;
+        [Tooltip("유도 가속도(월드/초^2). 발사 후 점점 빨라짐. 수치 Day5")]
+        [SerializeField] float homingAcceleration = 45f;
+        [Tooltip("유도 최대 탄속(월드/초). 0이하=무제한. 수치 Day5")]
+        [SerializeField] float homingMaxSpeed = 48f;
+        [Tooltip("유도 수명(초)")]
+        [SerializeField] float homingLifetime = 4f;
+        [Tooltip("유도 선회율(도/초). 클수록 급선회. 수치 Day5")]
+        [SerializeField] float homingTurnRate = 160f;
+        [Tooltip("유도 Aim 사거리(월드). 이 안에서 타입 1순위(원거리 우선)→가장 먼 적을 조준. 나중에 플레이어 셋팅 툴로 이관")]
+        [SerializeField] float homingAimRange = 90f;
+
         readonly List<IWeapon> _weapons = new();
         WeaponContext _ctx;
 
@@ -45,17 +68,21 @@ namespace VD.Player
         {
             if (firePoint == null) firePoint = transform;
             if (pool == null) pool = FindAnyObjectByType<ProjectilePool>();
+            if (homingPool == null) homingPool = FindAnyObjectByType<HomingProjectilePool>();
 
             _ctx = new WeaponContext
             {
                 FirePoint = firePoint,
                 TargetMask = targetMask,
                 StraightPool = pool,
+                HomingPool = homingPool,
+                HomingHardpoints = homingHardpoints,
                 BaseDamage = projectileDamage,
             };
 
-            // M4-1 Step1: 기관총만(리팩터·동작 무변화). 유도/레일건=Step2/3에서 _weapons에 추가.
+            // M4-1: 일단 3종 전부 보유(패턴 시연, 획득 전환=Step5/M4-3). 기관총(Step1) + 유도(Step2). 레일건=Step3.
             _weapons.Add(new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange));
+            _weapons.Add(new HomingMissile(homingFireInterval, homingInitialSpeed, homingAcceleration, homingMaxSpeed, homingLifetime, homingTurnRate, homingAimRange, homingAmmo));
         }
 
         /// <summary>기초 공격력(무기 공통 base) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>
@@ -72,6 +99,8 @@ namespace VD.Player
             _ctx.FirePoint = firePoint;
             _ctx.TargetMask = targetMask;
             _ctx.StraightPool = pool;
+            _ctx.HomingPool = homingPool;
+            _ctx.HomingHardpoints = homingHardpoints;
             _ctx.BaseDamage = projectileDamage;
 
             float dt = Time.deltaTime;

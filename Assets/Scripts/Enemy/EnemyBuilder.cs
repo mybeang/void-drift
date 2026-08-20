@@ -49,6 +49,9 @@ namespace VD.Enemy
             // ③ AI 모듈 부착: 이동(M3-1) + 공격(M3-2).
             shell.SetMoveBehaviour(ResolveMove(def.moveAI));
             shell.SetAttackBehaviour(ResolveAttack(def.attackAI));
+
+            // ④ 아키타입 주입(M4-1) — 유도 미사일 조준 타입 우선순위 분류용.
+            shell.SetArchetype(def.archetype);
         }
 
         /// <summary>def.moveAI → 이동 모듈. Weave는 위상 상태라 인스턴스별 new. Hover(M4-7)만 직진 폴백.</summary>

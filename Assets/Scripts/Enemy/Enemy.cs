@@ -23,6 +23,12 @@ namespace VD.Enemy
         /// <summary>이동 속도(데이터). 이동 AI 모듈(<see cref="IMoveBehaviour"/>)이 읽음.</summary>
         public float MoveSpeed => stats.moveSpeed;
 
+        /// <summary>아키타입(원거리/근거리 파생 소스). 빌더가 def.archetype 주입 — 유도 미사일 조준 타입 우선순위(M4-1)가 읽음.</summary>
+        public Archetype Archetype { get; private set; }
+
+        /// <summary>빌더가 조립 시 호출 — 아키타입 주입(조준 타입 분류용, M4-1).</summary>
+        public void SetArchetype(Archetype archetype) => Archetype = archetype;
+
         // 공격 AI 모듈(M3-2)이 읽는 스탯. 데이터=stats, 전달 방식은 모듈이 결정.
         /// <summary>공격 데미지(탄/자폭). = 접촉과 동일 필드(stats.damage).</summary>
         public float Damage => stats.damage;

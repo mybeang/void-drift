@@ -12,5 +12,10 @@ namespace VD.Core
         HpRegen,        // 초당 체력 재생 ↑ (PlayerHealth) — M3-4 신규, I-3 대응
         OrbValue,       // 오브 획득 경험치 배수 ↑ (ExperienceSystem) — M3-4 신규
         AttackPower,    // 기초 공격력(투사체 데미지) 가산 ↑ (PlayerShooter) — M3-4 신규. 무기별 배율은 M4-8
+
+        // ── 무기 카드(M4-3): 5레벨 마일스톤에만 등장, 미보유=획득·보유=레벨업(Lv4=최대치 제외). 값 필드 미사용 ──
+        WeaponStraight, // 기관총 획득/레벨업 (PlayerShooter, WeaponId.Straight)
+        WeaponHoming,   // 유도 미사일 획득/레벨업 (PlayerShooter, WeaponId.Homing)
+        WeaponRailgun,  // 레일건 획득/레벨업 (PlayerShooter, WeaponId.Railgun)
     }
 }

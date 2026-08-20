@@ -23,8 +23,12 @@ namespace VD.Player
         [SerializeField] PlayerShooter shooter;
         [SerializeField] ExperienceSystem experience;
 
+        /// <summary>무기 카드 등장 주기(플레이어 레벨). 5의 배수마다 무기 카드 최소 1개 보장(weapon-acquisition §4).</summary>
+        const int MilestoneInterval = 5;
+
         readonly Dictionary<UpgradeType, int> _stacks = new Dictionary<UpgradeType, int>();
         readonly List<UpgradeDefinition> _candidates = new List<UpgradeDefinition>();
+        readonly List<UpgradeDefinition> _weaponCandidates = new List<UpgradeDefinition>();
         readonly List<UpgradeDefinition> _result = new List<UpgradeDefinition>();
 
         void Awake()
@@ -38,41 +42,93 @@ namespace VD.Player
 
         int StackOf(UpgradeType t) => _stacks.TryGetValue(t, out int n) ? n : 0;
 
-        /// <summary>가중치 기반 중복없는 롤(최대 count개). weight 0·maxStacks 도달 종은 제외.</summary>
-        public List<UpgradeDefinition> Roll(int count)
+        /// <summary>
+        /// 가중치 기반 중복없는 롤(최대 count개). weight 0·maxStacks 도달·부적격 종은 제외.
+        /// <paramref name="playerLevel"/>이 5의 배수(마일스톤)면 <b>무기 카드 최소 1개 보장</b>(있을 때),
+        /// 나머지는 일반 추첨(무기 카드 추가 등장 가능). 마일스톤 아니면 무기 카드는 후보에서 배제.
+        /// </summary>
+        public List<UpgradeDefinition> Roll(int count, int playerLevel)
         {
+            bool milestone = playerLevel > 0 && playerLevel % MilestoneInterval == 0;
+
             _candidates.Clear();
             foreach (var d in pool)
-            {
-                if (d == null || d.weight <= 0f) continue;
-                if (d.maxStacks > 0 && StackOf(d.type) >= d.maxStacks) continue;
-                _candidates.Add(d);
-            }
+                if (IsEligible(d, milestone)) _candidates.Add(d);
 
             _result.Clear();
-            int n = Mathf.Min(count, _candidates.Count);
-            for (int k = 0; k < n; k++)
-            {
-                float total = 0f;
-                foreach (var d in _candidates) total += d.weight;
 
-                float r = Random.Range(0f, total);
-                int pick = _candidates.Count - 1;
-                for (int i = 0; i < _candidates.Count; i++)
+            // 마일스톤: 적격 무기 카드 중 1장을 먼저 가중 추첨해 확정(최소 1개 보장).
+            if (milestone)
+            {
+                _weaponCandidates.Clear();
+                foreach (var d in _candidates)
+                    if (TryWeaponId(d.type, out _)) _weaponCandidates.Add(d);
+                if (_weaponCandidates.Count > 0)
                 {
-                    r -= _candidates[i].weight;
-                    if (r <= 0f) { pick = i; break; }
+                    UpgradeDefinition weapon = _weaponCandidates[PickWeighted(_weaponCandidates)];
+                    _result.Add(weapon);
+                    _candidates.Remove(weapon);
                 }
+            }
+
+            // 나머지 슬롯 = 남은 후보(스탯 + 마일스톤이면 무기 카드도 포함)에서 중복없이 가중 추첨.
+            int remaining = Mathf.Min(count, _result.Count + _candidates.Count) - _result.Count;
+            for (int k = 0; k < remaining; k++)
+            {
+                int pick = PickWeighted(_candidates);
                 _result.Add(_candidates[pick]);
                 _candidates.RemoveAt(pick);   // 중복 방지
             }
             return _result;
         }
 
+        /// <summary>이 강화가 지금 롤에 등장 가능한지. 무기 카드는 마일스톤에만·최대치 미도달·보유 무관, 스탯은 maxStacks 미도달.</summary>
+        bool IsEligible(UpgradeDefinition d, bool milestone)
+        {
+            if (d == null || d.weight <= 0f) return false;
+            if (TryWeaponId(d.type, out WeaponId id))
+            {
+                if (!milestone || shooter == null) return false;   // 무기 카드 = 마일스톤 전용
+                return !shooter.IsWeaponMaxed(id);                 // Lv4 최대치 도달 무기 제외
+            }
+            return !(d.maxStacks > 0 && StackOf(d.type) >= d.maxStacks);
+        }
+
+        /// <summary>가중치 비례 인덱스 추첨(리스트 비었으면 마지막 인덱스 방어).</summary>
+        static int PickWeighted(List<UpgradeDefinition> list)
+        {
+            float total = 0f;
+            foreach (var d in list) total += d.weight;
+            float r = Random.Range(0f, total);
+            for (int i = 0; i < list.Count; i++)
+            {
+                r -= list[i].weight;
+                if (r <= 0f) return i;
+            }
+            return list.Count - 1;
+        }
+
+        /// <summary>UpgradeType → WeaponId(무기 카드 여부). 무기 3종만 true.</summary>
+        static bool TryWeaponId(UpgradeType t, out WeaponId id)
+        {
+            switch (t)
+            {
+                case UpgradeType.WeaponStraight: id = WeaponId.Straight; return true;
+                case UpgradeType.WeaponHoming:   id = WeaponId.Homing;   return true;
+                case UpgradeType.WeaponRailgun:  id = WeaponId.Railgun;  return true;
+                default: id = default; return false;
+            }
+        }
+
         /// <summary>강화 적용(라우팅) — type별 적용 대상·방식이 갈림. 값은 SO(def.value). 팝업이 선택 확정 시 호출.</summary>
         public void Apply(UpgradeDefinition def)
         {
             if (def == null) return;
+            if (TryWeaponId(def.type, out WeaponId wid))
+            {
+                shooter?.AcquireOrLevelUp(wid);   // 무기 카드: 레벨은 무기가 추적(_stacks 미사용)
+                return;
+            }
             switch (def.type)
             {
                 case UpgradeType.MoveSpeed:    if (movement != null)   movement.AddMoveSpeedMultiplier(def.value); break;
@@ -89,6 +145,13 @@ namespace VD.Player
         public UpgradeDisplay Describe(UpgradeDefinition def)
         {
             if (def == null) return new UpgradeDisplay(string.Empty, string.Empty, string.Empty);
+            if (TryWeaponId(def.type, out WeaponId wid))
+            {
+                // 무기 카드: 효과문구를 보유 상태에서 파생(미보유=획득 / 보유=Lv업).
+                int lv = shooter != null ? shooter.WeaponLevel(wid) : 0;
+                string effect = lv <= 0 ? "획득 (Lv1)" : "Lv" + lv + " → Lv" + (lv + 1);
+                return new UpgradeDisplay(def.title, def.description, effect);
+            }
             return new UpgradeDisplay(def.title, def.description, def.EffectText);
         }
     }

@@ -3,7 +3,7 @@
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
 - **상태**: 🟡 Should. **있으면 확실히 강해지는 것들. 마감 압박 시 아래→위로 잘라낸다.**
-- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신, 레벨=탄약 매핑, 기관총도 평행 오프셋 멀티샷). **구 Step5(시작 로드아웃+마일스톤 획득)는 폐기→M4-3 흡수.** 다음 = **M4-3**(무기 마일스톤 3choice + 시작 로드아웃). 이슈 **I-4**(탄막 무제한 발사) 열림.
+- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신). ✅ **M4-3 완료**(시작 로드아웃 기관총만 + 5레벨 마일스톤 3choice 무기 카드 — `PlayerShooter` 무기 슬롯 API + `UpgradeSystem` 마일스톤 롤 + 무기 SO 3종). 다음 = **M4-4**(실드 스킬). 이슈 **I-4**(탄막 무제한 발사) 열림.
 - **전제(이전 M에서 옴)**: M1 코어(사격 M1-3·3choice M1-7·HUD M1-10·게임오버 M1-9), M2 툴(M2-4/M2-5), **M3 전부 완료**(이동/공격 AI M3-1/M3-2 · 적 12종 로스터 M3-3 · 3choice 데이터화+오서링 툴 M3-4). 각 태스크 **의존** 참조.
 - ⚠️ **M3에서 M4 일부 선구현됨(재작업 금지)**:
   - **M4-7**: 사행(`WeaveMove`)·조준단발(`AimedShot`)은 **M3-3에서 선반영** → **M4-7 잔여 = 견제(Hover)뿐**(현재 직진 폴백).
@@ -50,10 +50,16 @@
   - **PlayerShooter**: 인스펙터 `homingAmmo`/`railAmmo`(수동 탄약) → **`straightStartLevel`/`homingStartLevel`/`railStartLevel`**(1~4) + 기관총 `straightStreamSpacing`. 생성자에 시작 레벨 주입.
   - **M4-3 레벨업 훅** = `IWeapon.LevelUp()`(구 "Ammo 세터" 대체). 무기카드 3choice가 미보유=추가·보유=`LevelUp`, `IsMaxLevel`이면 풀 제외.
 
-### M4-3 · 무기 마일스톤 (플레이어 5레벨마다 무기 카드) 🟡
-- **작업**: progression §1. 레벨 5·10·15…에 3choice로 무기 카드 최소 1개 보장. **+ 시작 로드아웃(기관총만)으로 전환**(구 M4-1 Step5 흡수).
+### M4-3 · 무기 마일스톤 (플레이어 5레벨마다 무기 카드) ✅ 완료(2026-08-21)
+- **작업**: progression §1. 레벨 5·10·15…에 3choice로 무기 카드 최소 1개 보장. **+ 시작 로드아웃(기관총만)으로 전환**(구 M4-1 Step5 흡수). → **충족**(Play 검증, 특이사항 없음).
 - **DoD**: 5의 배수 레벨업 시 무기 카드가 반드시 후보에 포함. **의존**: M4-1, M1-7
-- ⚠️ **선구현(M4-1/M4-2)**: 무기 모듈 3종+전용 풀+`PlayerShooter` 오케스트레이터 **완비**, **레벨 Lv1~4(=탄약) 완비(M4-2)**. **잔여 = ①시작 로드아웃(현재 3종전부보유 → 기관총만 시작으로) + ②마일스톤 3choice 무기카드(획득/레벨업, `UpgradeSystem`/`LevelUpPopup` 연동)**. **레벨업 훅 = `IWeapon.LevelUp()`**(미보유=무기 추가, 보유=`LevelUp`, `IsMaxLevel`이면 풀 제외).
+- **결정(사용자, 2026-08-21)**: 무기 카드 통합 = **기존 `UpgradeDefinition` 풀에 무기 타입 추가**(별도 추상화 아님) — 팝업 계약 무변화, 오서링 툴에서 가중치 편집, 마일스톤·최대치·획득/Lv업 표시는 무기 타입에 한해 코드 특수 처리.
+- **구현 요약**:
+  - **①시작 로드아웃**: `PlayerShooter.Awake`가 **기관총만** `Acquire`(weapon-acquisition §2). 무기 슬롯 API 신설 — `_owned`(Dictionary<WeaponId,IWeapon>)·`BuildWeapon` 팩토리·`HasWeapon`/`WeaponLevel`/`IsWeaponMaxed`/`AcquireOrLevelUp`. `WeaponId`(Straight/Homing/Railgun) enum 신규. (죽은 `homingStartLevel`/`railStartLevel` 인스펙터 필드 제거, `straightStartLevel`·`straightStreamSpacing`는 유지.)
+  - **②마일스톤 카드**: `UpgradeSystem.Roll(count, playerLevel)` — `playerLevel % 5 == 0`이면 **무기 카드 1개 가중 보장 + 나머지 일반 롤**, 아니면 무기 카드 배제. `IsEligible`(무기=마일스톤 전용·Lv4 제외 / 스탯=maxStacks), `PickWeighted` 헬퍼, `TryWeaponId` 매핑. `Apply`→`shooter.AcquireOrLevelUp`, `Describe`→미보유 "획득 (Lv1)"/보유 "Lv{n}→Lv{n+1}" 동적.
+  - **UpgradeType**: `WeaponStraight/Homing/Railgun`(6/7/8) 추가. **LevelUpPopup**: `Queue<int>` 레벨 큐로 전환, 레벨값을 `Roll`에 전달(기존엔 버렸음).
+  - **데이터/씬**: `Upgrade_Weapon_{Straight,Homing,Railgun}` SO 3종(`ScriptableObjects/Data/`, weight 1, 값 필드 미사용) + `UpgradeSystem.pool` **9개**(스탯 6 + 무기 3) 배선.
+  - **잔여**: 무기 카드 가중치 초기값·마일스톤 자격 3개 미만 엣지(§8)는 Day5. 무기 파워(연사/탄속/관통) 별도 카드 = M4-8.
 
 ### M4-4 · 실드 스킬 (전용 버튼) + 강화 3종 🟡
 - **작업**: controls-design §4. 코너 전용 버튼, 실드 발동(무적/방어), 쿨다운/지속/HP 강화 3종.

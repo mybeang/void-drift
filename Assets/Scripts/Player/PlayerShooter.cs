@@ -27,7 +27,7 @@ namespace VD.Player
         [SerializeField] float projectileLifetime = 3f;
         [Tooltip("기초 공격력(무기 공통 base). M3-4 강화가 가산, M4-8 무기 배율이 곱함. 수치는 Day5 튜닝")]
         [SerializeField] float projectileDamage = 10f;
-        [Tooltip("기관총 시작 레벨(1~4). 레벨=탄약(동시 발사 줄기 수). 검증용 시작값 — 런타임 레벨업 흐름은 M4-3")]
+        [Tooltip("기관총 시작 레벨(1~4). 시작 로드아웃=기관총만(M4-3). 레벨=탄약(동시 발사 줄기 수). 보통 1")]
         [Range(1, 4)]
         [SerializeField] int straightStartLevel = 1;
         [Tooltip("기관총 줄기 간 간격(월드). 레벨>1일 때 나란한 탄 사이 폭")]
@@ -48,9 +48,6 @@ namespace VD.Player
         [SerializeField] HomingProjectilePool homingPool;
         [Tooltip("발사대(날개 하드포인트) 목록. 배열 앞에서부터 탄약 수만큼 동시 발사(1번→2번→…). 비면 FirePoint(중앙) 폴백")]
         [SerializeField] Transform[] homingHardpoints;
-        [Tooltip("유도 시작 레벨(1~4). 레벨=탄약(동시 발사 줄기 수, 발사대 앞에서부터). 검증용 시작값 — 런타임 레벨업 흐름은 M4-3")]
-        [Range(1, 4)]
-        [SerializeField] int homingStartLevel = 1;
         [Tooltip("유도 발사 간격(초). 기관총보다 느리게. 수치 Day5")]
         [SerializeField] float homingFireInterval = 0.8f;
         [Tooltip("유도 초기 탄속(월드/초). 여기서 가속. 수치 Day5")]
@@ -85,13 +82,11 @@ namespace VD.Player
         [SerializeField] float railConeHalfAngle = 20f;
         [Tooltip("레일 조준 사거리(월드)")]
         [SerializeField] float railAimRange = 90f;
-        [Tooltip("레일 시작 레벨(1~4). 레벨=탄약(동시 발사 줄기 수, 조준 축에 수직으로 나란히). 검증용 시작값 — 런타임 레벨업 흐름은 M4-3")]
-        [Range(1, 4)]
-        [SerializeField] int railStartLevel = 1;
         [Tooltip("레일 줄기 간 간격(월드). 탄약>1일 때 나란한 레일 사이 폭")]
         [SerializeField] float railStreamSpacing = 1.5f;
 
-        readonly List<IWeapon> _weapons = new();
+        readonly List<IWeapon> _weapons = new();                       // 틱 순서(동시 오토발사)
+        readonly Dictionary<WeaponId, IWeapon> _owned = new();          // 슬롯 조회(획득/레벨업/최대치 판정)
         WeaponContext _ctx;
 
         void Awake()
@@ -112,11 +107,44 @@ namespace VD.Player
                 BaseDamage = projectileDamage,
             };
 
-            // M4-1: 일단 3종 전부 보유(패턴 시연, 획득 전환=M4-3). 기관총 + 유도 + 레일건.
-            // M4-2: 시작 레벨 주입(레벨=탄약). 런타임 레벨업 트리거(무기카드 3choice)는 M4-3.
-            _weapons.Add(new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange, straightStreamSpacing, straightStartLevel));
-            _weapons.Add(new HomingMissile(homingFireInterval, homingInitialSpeed, homingAcceleration, homingMaxSpeed, homingLifetime, homingTurnRate, homingAimRange, homingStartLevel));
-            _weapons.Add(new Railgun(railFireInterval, railSpeed, railLifetime, railMaxPierce, railDamageDecay, railConeHalfAngle, railAimRange, railStreamSpacing, railStartLevel));
+            // M4-3: 시작 로드아웃 = 기관총만(weapon-acquisition §2). 유도/레일건은 5레벨 마일스톤 무기 카드로 획득.
+            Acquire(WeaponId.Straight, straightStartLevel);
+        }
+
+        /// <summary>보유 무기를 <see cref="WeaponId"/>별 튜닝값으로 시작 레벨 <paramref name="startLevel"/>에 생성해 등록. 이미 있으면 무시.</summary>
+        void Acquire(WeaponId id, int startLevel)
+        {
+            if (_owned.ContainsKey(id)) return;
+            IWeapon w = BuildWeapon(id, startLevel);
+            if (w == null) return;
+            _owned[id] = w;
+            _weapons.Add(w);
+        }
+
+        /// <summary>무기 인스턴스 팩토리 — 인스펙터 튜닝값 주입. 획득 시 startLevel=1(=탄약 1), 마일스톤 재픽업은 <see cref="IWeapon.LevelUp"/>.</summary>
+        IWeapon BuildWeapon(WeaponId id, int startLevel) => id switch
+        {
+            WeaponId.Straight => new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange, straightStreamSpacing, startLevel),
+            WeaponId.Homing   => new HomingMissile(homingFireInterval, homingInitialSpeed, homingAcceleration, homingMaxSpeed, homingLifetime, homingTurnRate, homingAimRange, startLevel),
+            WeaponId.Railgun  => new Railgun(railFireInterval, railSpeed, railLifetime, railMaxPierce, railDamageDecay, railConeHalfAngle, railAimRange, railStreamSpacing, startLevel),
+            _ => null,
+        };
+
+        // ── 무기 슬롯 API (M4-3, 3choice 무기 카드가 사용) ────────────────────────────
+        /// <summary>해당 무기 보유 여부.</summary>
+        public bool HasWeapon(WeaponId id) => _owned.ContainsKey(id);
+
+        /// <summary>현재 무기 레벨(미보유=0). 카드 표시(획득 vs Lv업)에 사용.</summary>
+        public int WeaponLevel(WeaponId id) => _owned.TryGetValue(id, out IWeapon w) ? w.Level : 0;
+
+        /// <summary>보유+최대레벨(Lv4) 도달 — 무기 카드 풀에서 제외 판정.</summary>
+        public bool IsWeaponMaxed(WeaponId id) => _owned.TryGetValue(id, out IWeapon w) && w.IsMaxLevel;
+
+        /// <summary>미보유면 획득(Lv1), 보유면 한 단계 레벨업. 마일스톤 무기 카드 선택 시 호출.</summary>
+        public void AcquireOrLevelUp(WeaponId id)
+        {
+            if (_owned.TryGetValue(id, out IWeapon w)) w.LevelUp();
+            else Acquire(id, 1);
         }
 
         /// <summary>기초 공격력(무기 공통 base) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>

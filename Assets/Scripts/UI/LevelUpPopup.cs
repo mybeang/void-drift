@@ -24,7 +24,7 @@ namespace VD.UI
 
         UpgradeSystem _upgrades;
         List<UpgradeDefinition> _current;
-        int _pending;
+        readonly Queue<int> _pendingLevels = new Queue<int>();   // 대기 레벨업(값=새 레벨, 마일스톤 판정용)
         bool _showing;
 
         void Awake()
@@ -49,20 +49,21 @@ namespace VD.UI
                 cardButtons[i].onClick.AddListener(() => OnCardClicked(idx));
             }
 
-            events.LevelUp.Subscribe(_ => OnLevelUp()).AddTo(this);
+            events.LevelUp.Subscribe(OnLevelUp).AddTo(this);
         }
 
-        void OnLevelUp()
+        void OnLevelUp(int newLevel)
         {
-            _pending++;
+            _pendingLevels.Enqueue(newLevel);
             if (!_showing) ShowNext();
         }
 
         void ShowNext()
         {
-            if (_pending <= 0) return;
+            if (_pendingLevels.Count == 0) return;
 
-            _current = _upgrades.Roll(cardButtons.Length);
+            int level = _pendingLevels.Dequeue();
+            _current = _upgrades.Roll(cardButtons.Length, level);
             for (int i = 0; i < cardButtons.Length; i++)
             {
                 bool has = i < _current.Count;
@@ -86,11 +87,10 @@ namespace VD.UI
             if (!_showing || _current == null || index < 0 || index >= _current.Count) return;
 
             _upgrades.Apply(_current[index]);
-            _pending--;
             _showing = false;
             if (panelRoot != null) panelRoot.SetActive(false);
 
-            if (_pending > 0) ShowNext();
+            if (_pendingLevels.Count > 0) ShowNext();
             else GameManager.Instance?.Resume();
         }
     }

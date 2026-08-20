@@ -3977,6 +3977,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cf83a81c2cfb17c4b86cbb9d8ffdb9e4, type: 2}
   - {fileID: 11400000, guid: 001811dd6e1721844bb48a5240ea8c76, type: 2}
   - {fileID: 11400000, guid: 3976360f4ba08564289f4a373bda721d, type: 2}
+  - {fileID: 11400000, guid: f1849e75888f431438edacb55785bdde, type: 2}
+  - {fileID: 11400000, guid: e083d1fad78060041bb3d0ebfe3f94c0, type: 2}
+  - {fileID: 11400000, guid: 92bc0240bc7ba8e4faf9b225a39ebe93, type: 2}
   movement: {fileID: 0}
   health: {fileID: 0}
   orbPool: {fileID: 0}
@@ -4985,6 +4988,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2280451389863029075, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: maxHp
+      value: 1000
+      objectReference: {fileID: 0}
     - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: aimRange
       value: 120
@@ -5004,6 +5011,10 @@ PrefabInstance:
     - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: homingStartLevel
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: projectileDamage
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 4798779706923505197, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: m_Name

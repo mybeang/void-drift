@@ -29,7 +29,7 @@
 2. **[onepage-design.md](Docs/Designs/onepage-design.md)** — 기획 허브: 개요 + §0 문서 인덱스 + TODO
 3. **주제별 세부 문서** — onepage §0 인덱스에서 이동
    - 기획(`Docs/Designs/`): 업그레이드/무기(upgrade-pool, weapon-acquisition), 적/에디터툴(enemy-design), 조작(controls-design), UI(ui-design), 진행·난이도·점수(progression-design), 우선순위(scope-tiering)
-   - 개발·이슈(`Docs/Dev/`): [backlog.md](Docs/Dev/backlog.md)(**허브** — 개요·스냅샷·크로스컷·진행로그) + **마일스톤별 상세 `backlog-M0..M5.md`**(각 상단 `⚡ 특이사항` 헤더만 읽어도 크로스 마일스톤 파악 — 특정 마일스톤 작업 시 그 파일 하나면 충분), [issues.md](Docs/Dev/issues.md)(알려진 문제·보류·버그 트래커), [01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md)(asmdef 어셈블리 구조·이유), [02_GameStateArchitecture.md](Docs/Dev/02_GameStateArchitecture.md)(게임 상태머신·이벤트 채널, M1-1), [03_PlayerMovementAndCamera.md](Docs/Dev/03_PlayerMovementAndCamera.md)(플레이어 이동·뱅킹·카메라 리그, M1-2), [04_ObjectPooling.md](Docs/Dev/04_ObjectPooling.md)(재사용 풀 베이스 `PooledObjectPool<T>`, M1-3~M1-5), [05_ProgressionAndEvents.md](Docs/Dev/05_ProgressionAndEvents.md)(경험치/레벨업 + GameEvents 진행 채널, M1-6), [06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)(⭐적 조합 파이프라인 — 스키마·오서링 툴·유효성·런타임 조립, M2 전체) 등 기술 설계 문서
+   - 개발·이슈(`Docs/Dev/`): [backlog.md](Docs/Dev/backlog.md)(**허브** — 개요·스냅샷·크로스컷·진행로그) + **마일스톤별 상세 `backlog-M0..M5.md`**(각 상단 `⚡ 특이사항` 헤더만 읽어도 크로스 마일스톤 파악 — 특정 마일스톤 작업 시 그 파일 하나면 충분), [issues.md](Docs/Dev/issues.md)(알려진 문제·보류·버그 트래커), [01_AssemblyDefinition.md](Docs/Dev/01_AssemblyDefinition.md)(asmdef 어셈블리 구조·이유), [02_GameStateArchitecture.md](Docs/Dev/02_GameStateArchitecture.md)(게임 상태머신·이벤트 채널, M1-1), [03_PlayerMovementAndCamera.md](Docs/Dev/03_PlayerMovementAndCamera.md)(플레이어 이동·뱅킹·카메라 리그, M1-2), [04_ObjectPooling.md](Docs/Dev/04_ObjectPooling.md)(재사용 풀 베이스 `PooledObjectPool<T>`, M1-3~M1-5), [05_ProgressionAndEvents.md](Docs/Dev/05_ProgressionAndEvents.md)(경험치/레벨업 + GameEvents 진행 채널, M1-6), [06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)(⭐적 조합 파이프라인 — 스키마·오서링 툴·유효성·런타임 조립 + **AI 모듈(이동/공격, §4.7)**, M2~M3) 등 기술 설계 문서
 
 > 세부 문서와 onepage가 어긋나면 **세부 문서가 최신**(onepage §3·§7·§8은 초안 잔재 가능). 발견 즉시 정합화.
 
@@ -48,15 +48,16 @@
 
 > 다음 작업은 **다른(새) 세션**에서 진행될 수 있음. 이 섹션이 인계 기준.
 
-### ▶ 다음 세션 인계 — M3(적 AI 모듈) 착수 기준 (2026-08-20)
+### ▶ 다음 세션 인계 — M3 진행중(M3-1·M3-2 완료, 다음 = M3-3) (2026-08-20)
 
-- **완료 상태**: **M1 코어루프 + M2 적 파이프라인 전부 완료.** 적 = **조합형**(공통 로직 셸 + `EnemyBuilder` 조립: 비주얼+스탯 주입). 파이프라인 전체 = **[06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)** 먼저 읽을 것.
-- **M3가 채울 곳 = `EnemyBuilder.Build`의 ③ AI 자리**([Assets/Scripts/Enemy/EnemyBuilder.cs](Assets/Scripts/Enemy/EnemyBuilder.cs)) — `def.moveAI`/`def.attackAI`로 **재사용 AI 모듈**을 부착. **`EnemySpawner`/`Enemy`는 건드리지 않음**(빌더 ③만 추가). 현재 이동은 `Enemy.Update`에 **직진(-Z) 하드코딩**(M3-1이 대체), moveAI/attackAI enum은 **데이터로만** 실려 있음.
-  - **M3-1** 이동AI(직진/추적) · **M3-2** 공격AI(충돌/탄막/자폭) + **`EnemyBullet` 레이어 신설**(물리 매트릭스 추가) + 적탄→`PlayerHealth` · **M3-3** 아키타입/볼륨업(적 7종 — 현 스폰 3종은 테스트) · **M3-4** 3choice 풀 데이터화. 상세 = [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡ 헤더.
-- **씬/데이터 상태(GameScene, 저장됨)**: `EnemySpawner`에 `spawnTable`=[Charger:3, Barrage:2, Bomber:1] + `DifficultyProvider`(배율 1.0 스텁) 배치. `Enemy.prefab`=**비주얼 없는 로직 셸**(스케일 6, root Collider+`Enemy`), `EnemyPool`=셸 prewarm. 테스트 SO = `Assets/ScriptableObjects/Data/Enemy_Sample_{Charger,Barrage,Bomber}` + `Orb_Green`.
-- **M2-5 스코프 밖(이후)**: 드랍오브 데이터화(`dropOrb.visual`/`xpValue` 주입) · 실난이도 배율=M4-5 · 비주얼 스케일/회전 모델별 정합=Day5.
+- **완료 상태**: **M1 코어루프 + M2 적 파이프라인 + M3-1(이동AI)·M3-2(공격AI+적탄) 완료.** 적 = **조합형**(공통 로직 셸 + `EnemyBuilder` 조립: 비주얼+스탯+**AI 모듈**). 파이프라인 전체 = **[06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)** 먼저 읽을 것(AI 모듈 상세는 [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡).
+- **AI = 순수 C# 전략 모듈**(사용자 결정, MonoBehaviour 아님): `IMoveBehaviour`(`StraightMove`/`ChaseMove`)·`IAttackBehaviour`(`ContactAttack`/`BarrageAttack`/`SuicideAttack`), 위치=`Assets/Scripts/Enemy/AI/`. `Enemy`가 Update에서 `Tick` 위임, `EnemyBuilder.ResolveMove`/`ResolveAttack`가 `def.moveAI`/`def.attackAI`로 주입(무상태=싱글톤 공유, 상태 있는 탄막=인스턴스별). 플레이어 조회=`PlayerLocator`(Player 태그). **직진 하드코딩은 M3-1이 제거함.** 미구현 enum(Weave/Hover 이동·AimedShot 공격)=직진/충돌 폴백(M4-7).
+  - **남은 것**: **M3-3** 아키타입/볼륨업(적 7종 — 현 스폰 3종은 테스트) · **M3-4** 3choice 풀 데이터화. 상세 = [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡ 헤더.
+- **씬/데이터 상태(GameScene, 저장됨)**: `EnemySpawner`에 `spawnTable`=[Charger:3, Barrage:2, Bomber:1] + `DifficultyProvider`(배율 1.0 스텁) + **`EnemyBulletPool`(prewarm 64, 스포너 `bulletPool`에 연결)** 배치. `Enemy.prefab`=**비주얼 없는 로직 셸**(스케일 6, root Collider+`Enemy`), `EnemyPool`=셸 prewarm. **적탄 `EnemyBullet.prefab`=임시 붉은 큐브(비주얼 교체 예정)**. 테스트 SO = `Assets/ScriptableObjects/Data/Enemy_Sample_{Charger,Barrage,Bomber}` + `Orb_Green`.
+- **레이어(M3-2 신설)**: `EnemyBullet`(11) 추가 — 물리 매트릭스 **EnemyBullet×Player만 ON**. 기존 Player(8)/Enemy(9)/PlayerBullet(10)에 더함.
+- **M2-5 스코프 밖(이후)**: 드랍오브 데이터화(`dropOrb.visual`/`xpValue` 주입) · 실난이도 배율=M4-5 · 비주얼 스케일/회전 모델별 정합=Day5. 적탄 비주얼 교체·부채꼴 각/탄 수명 SO화도 이후.
 - **이슈**: [issues.md](Docs/Dev/issues.md) **I-2**(플레이어 Aim 어색, 보류) · **I-1**(이동 관성감, 보류).
-- **주의**: 레이어 물리 매트릭스는 **에디터 재부팅 시 재적용** 필요(M3-2 `EnemyBullet` 추가 시 특히).
+- **주의**: 레이어 물리 매트릭스는 **에디터 재부팅 시 재적용** 필요(신설 `EnemyBullet`×Player 포함).
 
 ---
 

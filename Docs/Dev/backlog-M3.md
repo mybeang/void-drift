@@ -2,7 +2,8 @@
 > 상위 허브: [backlog.md](backlog.md) | 인접: [backlog-M2.md](backlog-M2.md) ← **M3** → [backlog-M4.md](backlog-M4.md)
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
-- **상태**: 🟡 진행중 — **M3-1(이동AI)·M3-2(공격AI+적탄)·M3-3(적 12종 로스터) 완료**, **M3-4(3choice 풀)만 남음**. **M3 완료 = Must 코어 전부 충족** → 직후 **M5-1 모바일 빌드 1차** 권장(빌드 리스크 조기 확인).
+- **상태**: ✅ **M3 완료** — M3-1(이동AI)·M3-2(공격AI+적탄)·M3-3(적 12종 로스터)·M3-4(3choice 데이터화). **⇒ Must 코어 전부 충족.** 다음 권장 = **M5-1 모바일 빌드 1차**(빌드 리스크 조기 확인) 후 M4(난이도/무기/풀세트).
+- **3choice 데이터화(M3-4)**: `UpgradeDefinition` SO(수치/가중치/maxStacks/표시) + **Upgrade Authoring 창**(`SoTableEditorView` 재사용 — 두 번째 Table Tool). `UpgradeSystem`=SO 풀 기반 가중치 롤·중복없음·maxStacks 제외·type 라우팅 Apply. 공용 강화 6종(이동/최대체력/자석 + 신규 체력재생·오브가치·공격력). 공격력=기초 공격력(무기별 배율은 M4-8의 base).
 - **AI 아키텍처(M3-1/M3-2 확정)**: 이동·공격 모두 **순수 C# 전략 모듈**(MonoBehaviour 아님, 사용자 결정) — `IMoveBehaviour`/`IAttackBehaviour`. `Enemy`가 메시지 창구(Update)로 `Tick` 위임, `EnemyBuilder`가 `def.moveAI`/`def.attackAI`로 주입. 무상태 모듈은 빌더가 싱글톤 공유, 상태 있는 모듈(탄막 쿨다운·사행 위상)은 인스턴스별 생성. 플레이어 조회 = `PlayerLocator`(Player 태그) 공용. **적탄 = `EnemyBullet`+`EnemyBulletPool`(`PlayerHealth.ApplyDamage` 타격), `EnemyBullet` 레이어(11)+매트릭스(×Player만).** 이동 = `StraightMove`/`ChaseMove`/`WeaveMove`(Hover=직진 폴백), 공격 = `ContactAttack`/`BarrageAttack`/`AimedShot`/`SuicideAttack`. **`WeaveMove`·`AimedShot`은 M3-3에서 M4-7 선반영.** 모델 크기 보정 = `EnemyDefinition.visualScale`(M3-3, 비주얼 자식에만 곱·히트박스 셸 고정).
 - **전제(이전 M에서 옴)**:
   - **M2-2 SO 스키마·enum(이동AI 4·공격AI 4·아키타입 3)** 이 여기 실구현의 계약. enum 값과 정합 유지.
@@ -63,11 +64,18 @@
   | `spaceship_7` | 탄막/특수 | 원반형 |
   > 잠정 매핑 — M3-3에서 실제 AI·스탯 붙이며 확정. `spaceship_6`은 M1-4에서 먼저 등장(이동만 → 이후 확장).
 
-### M3-4 · 3choice 풀 정리 (Must 범위 확정) 🔴
+### M3-4 · 3choice 풀 데이터화 (Must 범위 확정) ✅
 - **목적**: M1-8을 데이터화·정리(공용 스탯 강화 확정 세트).
-- **작업**: 공용 스탯(공격력/이동속도/최대체력) 강화를 데이터로 정리, 롤 가중치/중복 규칙 확정. (무기·풀세트는 M4)
+- **작업**: 공용 스탯 강화를 데이터로 정리, 롤 가중치/중복 규칙 확정. (무기·풀세트는 M4)
 - **DoD**: 3choice가 안정적으로 의미 있는 선택지를 제공(빌드 분기 성립).
 - **의존**: M1-8
 - **문서**: upgrade-pool.md
+- **완료(2026-08-20, 사용자 Play 검증)**:
+  - **`UpgradeDefinition` SO**(`Assets/Scripts/Data/`) — `type`(라우팅 키)·`title`/`description`·`value`·`isPercent`·`weight`·`maxStacks`. `EffectText`가 표시문자열 파생(+N / +N%).
+  - **Upgrade Authoring 창**(`Window/Void Drift/Upgrade Authoring`) — `UpgradeTableEditorView : SoTableEditorView<UpgradeDefinition>` + 창. 적 오서링에 이어 **두 번째 Table Tool**(같은 베이스 재사용, 관심사 분리 실증).
+  - **`UpgradeSystem` 리팩터**: 하드코딩 float → SO 풀(`pool[]`). `Roll`=가중치 기반·중복없음(+`maxStacks` 도달분 제외), `Apply`=type 라우팅(값은 SO), `Describe`=SO 렌더. 스택 누적(`_stacks`) 추적. `LevelUpPopup`은 `UpgradeDefinition` 기반으로 갱신.
+  - **강화 6종 SO**: 이동속도(+12%)·최대체력(+20)·자석범위(+2) + **신규 체력재생(+2/s)·오브가치(+25%)·공격력(+3)**. 가중치 1 균등·maxStacks 0(무제한). 수치=시작점(Day5).
+  - **신규 Apply 훅**: `PlayerHealth.AddRegen`(재생, Update 회복) · `ExperienceSystem.AddOrbValueBonus`(습득 xp 배수) · `PlayerShooter.AddAttackPower`(기초 공격력=투사체 데미지; M4-8 무기배율의 base). [I-3](issues.md) 체력 회복은 체력재생으로 경로 확보(밸런싱 M4-5).
+  - **HUD 개선(M1-10 연장)**: `GameEvents.HpValues`(HP 절대값 채널, `HpAmount` 구조체) + `PlayerHealth.PublishHp` 일원화 → `HudView`가 HP 남은/총 숫자 표기. HP/XP 라벨·배경도 보강(레이아웃 사용자 조정).
 
 > **M3 완료 = Must 전부 충족.** 여기서 **M5-1 모바일 빌드 1차**를 먼저 돌려 빌드 리스크를 조기 확인 권장.

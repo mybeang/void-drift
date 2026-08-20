@@ -87,11 +87,12 @@ Enemy 사망 → Orb 드랍 → (자석) 플레이어 근접 습득
 |---|---|---|---|---|
 | 입력 | `EnemyKilled` | `Observable<int>` (처치점수) | `Enemy`(`PublishEnemyKilled`) | `ScoreSystem` |
 | 출력(상태) | `HpNormalized` | `ReadOnlyReactiveProperty<float>` (0~1) | `PlayerHealth`(`SetHpNormalized`) | HUD(M1-10) |
+| 출력(상태) | `HpValues` | `ReadOnlyReactiveProperty<HpAmount>` (현재/최대, M3-4) | `PlayerHealth`(`SetHpValues`) | HUD(HP 숫자 표기) |
 | 출력(상태) | `Score` | `ReadOnlyReactiveProperty<int>` | `ScoreSystem`(`SetScore`) | HUD/결과 |
 | 출력(상태) | `SurvivalTime` | `ReadOnlyReactiveProperty<float>` (초) | `ScoreSystem`(`SetSurvivalTime`) | HUD/결과 |
 
 - 발행/갱신 메서드는 M1-6과 동일하게 **`internal`**(정당한 소유자만).
-- `HpNormalized`는 `PlayerHealth`(VD.Player)가 갱신 — HP 로직 자체는 플레이어에, **채널 노출만** GameEvents.
+- `HpNormalized`/`HpValues`는 `PlayerHealth`(VD.Player)가 갱신(`PublishHp`로 일원화, M3-4) — HP 로직 자체는 플레이어에, **채널 노출만** GameEvents.
 
 ### ScoreSystem 로직
 

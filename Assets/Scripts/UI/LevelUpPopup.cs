@@ -23,7 +23,7 @@ namespace VD.UI
         [SerializeField] TMP_Text[] cardEffects;
 
         UpgradeSystem _upgrades;
-        List<UpgradeType> _current;
+        List<UpgradeDefinition> _current;
         int _pending;
         bool _showing;
 

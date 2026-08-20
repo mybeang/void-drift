@@ -52,6 +52,7 @@ namespace VD.Core
 
         readonly Subject<int> _enemyKilled = new();
         readonly ReactiveProperty<float> _hpNormalized = new(1f);
+        readonly ReactiveProperty<HpAmount> _hpValues = new(new HpAmount(1f, 1f));
         readonly ReactiveProperty<int> _score = new(0);
         readonly ReactiveProperty<float> _survivalTime = new(0f);
 
@@ -59,6 +60,8 @@ namespace VD.Core
         public Observable<int> EnemyKilled => _enemyKilled;
         /// <summary>플레이어 HP 0~1(HUD 게이지용). 갱신은 PlayerHealth(internal SetHpNormalized)만.</summary>
         public ReadOnlyReactiveProperty<float> HpNormalized => _hpNormalized;
+        /// <summary>플레이어 HP 절대값(현재/최대, HUD 숫자 표기용). 갱신은 PlayerHealth(internal SetHpValues)만.</summary>
+        public ReadOnlyReactiveProperty<HpAmount> HpValues => _hpValues;
         /// <summary>현재 점수(생존시간+처치). 갱신은 ScoreSystem만.</summary>
         public ReadOnlyReactiveProperty<int> Score => _score;
         /// <summary>생존시간(초). 갱신은 ScoreSystem만.</summary>
@@ -68,6 +71,8 @@ namespace VD.Core
         internal void PublishEnemyKilled(int score) => _enemyKilled.OnNext(score);
         /// <summary>HP 진행도 갱신 — PlayerHealth에서만.</summary>
         internal void SetHpNormalized(float normalized) => _hpNormalized.Value = normalized;
+        /// <summary>HP 절대값 갱신 — PlayerHealth에서만.</summary>
+        internal void SetHpValues(float current, float max) => _hpValues.Value = new HpAmount(current, max);
         /// <summary>점수 갱신 — ScoreSystem에서만.</summary>
         internal void SetScore(int score) => _score.Value = score;
         /// <summary>생존시간 갱신 — ScoreSystem에서만.</summary>
@@ -82,8 +87,17 @@ namespace VD.Core
             _levelUp.Dispose();
             _enemyKilled.Dispose();
             _hpNormalized.Dispose();
+            _hpValues.Dispose();
             _score.Dispose();
             _survivalTime.Dispose();
         }
+    }
+
+    /// <summary>HUD 숫자 표기용 HP 절대값(현재/최대). 값 동등성으로 불변 시 재발행 안 됨.</summary>
+    public readonly struct HpAmount
+    {
+        public readonly float Current;
+        public readonly float Max;
+        public HpAmount(float current, float max) { Current = current; Max = max; }
     }
 }

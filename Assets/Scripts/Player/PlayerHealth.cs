@@ -19,16 +19,40 @@ namespace VD.Player
 
         float _hp;
         bool _dead;
+        float _regenPerSec;   // 체력재생 강화(M3-4) — 초당 회복량
 
         void Awake()
         {
             _hp = maxHp;
         }
 
+        void Update()
+        {
+            // 체력재생(M3-4). timeScale 0(팝업/게임오버)이면 dt=0 → 정지. 만피/사망 시 스킵.
+            if (_dead || _regenPerSec <= 0f || _hp >= maxHp) return;
+            _hp = Mathf.Min(maxHp, _hp + _regenPerSec * Time.deltaTime);
+            PublishHp();
+        }
+
+        /// <summary>HP 상태 게시(정규화 + 절대값) — HUD 게이지·숫자 표기 공용(M1-10/M3-4).</summary>
+        void PublishHp()
+        {
+            var ev = GameManager.Instance?.Events;
+            if (ev == null) return;
+            ev.SetHpNormalized(maxHp > 0f ? _hp / maxHp : 0f);
+            ev.SetHpValues(_hp, maxHp);
+        }
+
+        /// <summary>체력재생 강화(M3-4, 3choice) — 초당 회복량 가산.</summary>
+        public void AddRegen(float perSec)
+        {
+            _regenPerSec += perSec;
+        }
+
         void Start()
         {
-            // GameManager.Awake 이후 시점 — 초기 HP% 게시.
-            GameManager.Instance?.Events?.SetHpNormalized(1f);
+            // GameManager.Awake 이후 시점 — 초기 HP 게시(정규화 + 절대값).
+            PublishHp();
         }
 
         /// <summary>최대 체력 가산 강화 — M1-8. 늘린 만큼 현재 HP도 회복하고 HP% 갱신.</summary>
@@ -37,7 +61,7 @@ namespace VD.Player
             if (_dead) return;
             maxHp += amount;
             _hp = Mathf.Min(_hp + amount, maxHp);
-            GameManager.Instance?.Events?.SetHpNormalized(_hp / maxHp);
+            PublishHp();
         }
 
         /// <summary>
@@ -52,7 +76,7 @@ namespace VD.Player
             if (_hp < 0f) _hp = 0f;
             Debug.Log($"[TEMP] 플레이어 피격 -{amount} → HP {_hp}/{maxHp}", this);   // TODO: 임시 로그, 검증 후 제거
 
-            GameManager.Instance?.Events?.SetHpNormalized(_hp / maxHp);
+            PublishHp();
 
             if (_hp <= 0f)
             {

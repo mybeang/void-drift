@@ -20,6 +20,13 @@ namespace VD.Core
         int _level = 1;
         float _xpIntoLevel;
         float _threshold;
+        float _orbMultiplier = 1f;   // 오브가치 강화(M3-4) — 습득 경험치 배수
+
+        /// <summary>오브가치 강화(M3-4, 3choice) — 습득 경험치 배수를 가산(pct 0.25 → +25%p).</summary>
+        public void AddOrbValueBonus(float pct)
+        {
+            _orbMultiplier += pct;
+        }
 
         void Start()
         {
@@ -39,7 +46,7 @@ namespace VD.Core
 
         void OnOrbCollected(int xp)
         {
-            _xpIntoLevel += xp;
+            _xpIntoLevel += xp * _orbMultiplier;   // 오브가치 강화 반영(M3-4)
 
             while (_xpIntoLevel >= _threshold)   // 초과분 이월, 한 번에 여러 레벨 가능
             {

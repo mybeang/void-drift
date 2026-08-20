@@ -18,6 +18,8 @@ namespace VD.UI
         [SerializeField] TMP_Text levelText;
         [SerializeField] Image hpFill;
         [SerializeField] Image xpFill;
+        [Tooltip("HP 숫자 표기(남은/총). M3-4 HUD 개선")]
+        [SerializeField] TMP_Text hpValueText;
 
         void Start()
         {
@@ -34,6 +36,7 @@ namespace VD.UI
             events.Score.Subscribe(s => { if (scoreText) scoreText.text = "SCORE  " + s; }).AddTo(this);
             events.Level.Subscribe(l => { if (levelText) levelText.text = "Lv " + l; }).AddTo(this);
             events.HpNormalized.Subscribe(h => { if (hpFill) hpFill.fillAmount = h; }).AddTo(this);
+            events.HpValues.Subscribe(v => { if (hpValueText) hpValueText.text = Mathf.CeilToInt(v.Current) + "/" + Mathf.CeilToInt(v.Max); }).AddTo(this);
             events.XpNormalized.Subscribe(x => { if (xpFill) xpFill.fillAmount = x; }).AddTo(this);
         }
 

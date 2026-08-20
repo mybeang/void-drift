@@ -45,6 +45,12 @@ namespace VD.Player
             if (pool == null) pool = FindAnyObjectByType<ProjectilePool>();
         }
 
+        /// <summary>기초 공격력(투사체 데미지) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>
+        public void AddAttackPower(float amount)
+        {
+            projectileDamage += amount;
+        }
+
         void Update()
         {
             if (!IsPlaying() || pool == null || firePoint == null) return;

@@ -78,6 +78,17 @@ namespace VD.Core
         /// <summary>생존시간 갱신 — ScoreSystem에서만.</summary>
         internal void SetSurvivalTime(float seconds) => _survivalTime.Value = seconds;
 
+        // ── 실드 액티브 스킬 — M4-4 ──────────────────────────────────
+        // 실드 상태(출력): PlayerShield가 갱신 → HUD 코너 버튼(활성/쿨다운 필)이 구독.
+
+        readonly ReactiveProperty<ShieldState> _shield = new(new ShieldState(false, true, 0f, 0f));
+
+        /// <summary>실드 상태(활성/준비/쿨다운 비율). 갱신은 PlayerShield(internal SetShieldState)만.</summary>
+        public ReadOnlyReactiveProperty<ShieldState> Shield => _shield;
+
+        /// <summary>실드 상태 갱신 — PlayerShield에서만.</summary>
+        internal void SetShieldState(ShieldState state) => _shield.Value = state;
+
         public void Dispose()
         {
             _state.Dispose();
@@ -90,6 +101,7 @@ namespace VD.Core
             _hpValues.Dispose();
             _score.Dispose();
             _survivalTime.Dispose();
+            _shield.Dispose();
         }
     }
 
@@ -99,5 +111,18 @@ namespace VD.Core
         public readonly float Current;
         public readonly float Max;
         public HpAmount(float current, float max) { Current = current; Max = max; }
+    }
+
+    /// <summary>HUD 실드 버튼용 상태(M4-4). <see cref="Cooldown01"/>=남은 쿨다운 비율(1→0, 필용), <see cref="CooldownRemaining"/>=남은 쿨다운 초(카운트 표시용). 준비/활성이면 둘 다 0.</summary>
+    public readonly struct ShieldState
+    {
+        public readonly bool Active;             // 실드 활성 중(버블 on)
+        public readonly bool Ready;              // 재발동 가능(버튼 interactable)
+        public readonly float Cooldown01;        // 남은 쿨다운 비율 0~1(방사형 필)
+        public readonly float CooldownRemaining; // 남은 쿨다운 초(버튼 숫자 카운트)
+        public ShieldState(bool active, bool ready, float cooldown01, float cooldownRemaining)
+        {
+            Active = active; Ready = ready; Cooldown01 = cooldown01; CooldownRemaining = cooldownRemaining;
+        }
     }
 }

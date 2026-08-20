@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ad70ab526e11e043afc76302f9ab3cd, type: 3}
+  m_Name: Upgrade_Shield_Hp
+  m_EditorClassIdentifier: VD.Runtime::VD.Core.UpgradeDefinition
+  type: 11
+  title: "\uC2E4\uB4DC \uAC15\uB3C4"
+  description: "\uC2E4\uB4DC HP \uCD1D\uB7C9 \uC99D\uAC00"
+  value: 20
+  isPercent: 0
+  weight: 1
+  maxStacks: 10

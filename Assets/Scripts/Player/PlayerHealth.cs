@@ -20,10 +20,12 @@ namespace VD.Player
         float _hp;
         bool _dead;
         float _regenPerSec;   // 체력재생 강화(M3-4) — 초당 회복량
+        PlayerShield _shield;  // 실드 액티브 스킬(M4-4) — 있으면 데미지 우선 흡수
 
         void Awake()
         {
             _hp = maxHp;
+            _shield = GetComponent<PlayerShield>();
         }
 
         void Update()
@@ -71,6 +73,9 @@ namespace VD.Player
         public void ApplyDamage(float amount)
         {
             if (_dead) return;
+
+            // 실드 활성 시 데미지 우선 흡수 → 플레이어 HP 무피해(M4-4).
+            if (_shield != null && _shield.TryAbsorb(amount)) return;
 
             _hp -= amount;
             if (_hp < 0f) _hp = 0f;

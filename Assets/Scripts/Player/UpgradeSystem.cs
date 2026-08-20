@@ -22,6 +22,7 @@ namespace VD.Player
         [SerializeField] OrbPool orbPool;
         [SerializeField] PlayerShooter shooter;
         [SerializeField] ExperienceSystem experience;
+        [SerializeField] PlayerShield shield;
 
         /// <summary>무기 카드 등장 주기(플레이어 레벨). 5의 배수마다 무기 카드 최소 1개 보장(weapon-acquisition §4).</summary>
         const int MilestoneInterval = 5;
@@ -38,6 +39,7 @@ namespace VD.Player
             if (orbPool == null) orbPool = FindAnyObjectByType<OrbPool>();
             if (shooter == null) shooter = FindAnyObjectByType<PlayerShooter>();
             if (experience == null) experience = FindAnyObjectByType<ExperienceSystem>();
+            if (shield == null) shield = FindAnyObjectByType<PlayerShield>();
         }
 
         int StackOf(UpgradeType t) => _stacks.TryGetValue(t, out int n) ? n : 0;
@@ -137,6 +139,9 @@ namespace VD.Player
                 case UpgradeType.HpRegen:      if (health != null)     health.AddRegen(def.value);                 break;
                 case UpgradeType.OrbValue:     if (experience != null) experience.AddOrbValueBonus(def.value);     break;
                 case UpgradeType.AttackPower:  if (shooter != null)    shooter.AddAttackPower(def.value);          break;
+                case UpgradeType.ShieldCooldown: if (shield != null)   shield.AddCooldownReduction(def.value);      break;
+                case UpgradeType.ShieldDuration: if (shield != null)   shield.AddDuration(def.value);               break;
+                case UpgradeType.ShieldHp:       if (shield != null)   shield.AddShieldHp(def.value);               break;
             }
             _stacks[def.type] = StackOf(def.type) + 1;   // 스택 누적(maxStacks 판정용)
         }

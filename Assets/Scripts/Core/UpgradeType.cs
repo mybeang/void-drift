@@ -17,5 +17,10 @@ namespace VD.Core
         WeaponStraight, // 기관총 획득/레벨업 (PlayerShooter, WeaponId.Straight)
         WeaponHoming,   // 유도 미사일 획득/레벨업 (PlayerShooter, WeaponId.Homing)
         WeaponRailgun,  // 레일건 획득/레벨업 (PlayerShooter, WeaponId.Railgun)
+
+        // ── 실드 강화(M4-4): 항상 등장(시작 보유). 스택 누적 (PlayerShield) ──
+        ShieldCooldown, // 실드 쿨다운 감소(비율) — AddCooldownReduction
+        ShieldDuration, // 실드 지속시간 증가(초) — AddDuration
+        ShieldHp,       // 실드 HP 총량 증가 — AddShieldHp
     }
 }

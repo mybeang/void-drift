@@ -21,9 +21,9 @@
 런타임 조립 (`VD.Runtime` / ns `VD.Enemy`, `VD.Core`)
 - `Assets/Scripts/Enemy/Enemy.cs` — 로직 셸 · `EnemyBuilder.cs` — 조립 seam · `EnemyVisualCache.cs` — 비주얼 로드/재사용 · `EnemyPool.cs` · `EnemySpawner.cs` — DB·스폰 · `Assets/Scripts/Core/PooledObjectPool.cs` — 풀 베이스
 
-AI 모듈 (M3-1/M3-2, `VD.Runtime` / ns `VD.Enemy`, `Assets/Scripts/Enemy/AI/`)
-- 이동: `IMoveBehaviour.cs` · `StraightMove.cs` · `ChaseMove.cs`
-- 공격: `IAttackBehaviour.cs` · `ContactAttack.cs` · `BarrageAttack.cs` · `SuicideAttack.cs`
+AI 모듈 (M3-1/M3-2/M3-3, `VD.Runtime` / ns `VD.Enemy`, `Assets/Scripts/Enemy/AI/`)
+- 이동: `IMoveBehaviour.cs` · `StraightMove.cs` · `ChaseMove.cs` · `WeaveMove.cs`(M3-3, M4-7 선반영)
+- 공격: `IAttackBehaviour.cs` · `ContactAttack.cs` · `BarrageAttack.cs` · `AimedShot.cs`(M3-3, M4-7 선반영) · `SuicideAttack.cs`
 - 공용: `PlayerLocator.cs`(Player 태그 조회) · 적탄 `Assets/Scripts/Enemy/EnemyBullet.cs` · `EnemyBulletPool.cs` · 타격 대상 `Assets/Scripts/Player/PlayerHealth.cs`(`ApplyDamage`)
 
 ---
@@ -61,6 +61,7 @@ AI 모듈 (M3-1/M3-2, `VD.Runtime` / ns `VD.Enemy`, `Assets/Scripts/Enemy/AI/`)
 | 필드 | 타입 | 의미 |
 |---|---|---|
 | `visual` | `AssetReferenceGameObject` | 모델 프리팹(Addressables `Enemy` 그룹). 런타임에 로드·주입 |
+| `visualScale` | `float` | 비주얼 크기 배수(M3-3, 모델별 편차 보정). 기본 1, 0이하는 1. 비주얼 자식에만 곱(히트박스 셸 불변) |
 | `moveAI` | `MoveAIType` | 이동 AI 종류(실 로직 M3-1) |
 | `attackAI` | `AttackAIType` | 공격 AI 종류(실 로직 M3-2) |
 | `archetype` | `Archetype` | 아키타입 — **교전거리(range) 파생원** |
@@ -164,7 +165,7 @@ public static string RangeLabelOf(Archetype a) => a switch {
 - `Update`가 창구: `_move.Tick(this, dt)` → `!_dead`면 `_attack.Tick(this, dt)` → despawn 경계 판정. `timeScale 0`이면 dt=0 → 자연 정지.
 - 스탯 = `[SerializeField] EnemyStats stats`(미주입 시 폴백). 빌더가 `ApplyStats(EnemyStats effective)`로 덮고 체력도 리셋. 모듈이 읽는 프로퍼티: `MoveSpeed`·`ContactDamage`/`Damage`·`FireInterval`·`ProjectileSpeed`·`BarrageCount`·`SuicideRadius`(모두 `stats` 파생).
 - AI 슬롯: `SetMoveBehaviour(IMoveBehaviour)` · `SetAttackBehaviour(IAttackBehaviour)`(주입 시 `OnSpawned` 리셋). 자폭이 쓰는 `Despawn()`(드랍/점수 없이 반납)은 public.
-- 비주얼 = `AttachVisual(GameObject prefab)`(캐시가 준 프리팹을 셸 자식으로 Instantiate, 로컬 스케일 보존=셸 스케일에 곱) / `ClearVisual()`(인스턴스 파괴).
+- 비주얼 = `AttachVisual(GameObject prefab, float scale)`(캐시가 준 프리팹을 셸 자식으로 Instantiate, 로컬 스케일 보존=셸 스케일에 곱; `scale`=모델 크기 편차 보정=`def.visualScale`, **비주얼 자식에만** 곱해 히트박스=셸 불변, M3-3) / `ClearVisual()`(인스턴스 파괴).
 - 스포너 주입: `Launch(float despawnZ)`(despawn 경계) · `SetDropHandler(Action<Vector3>)`(드랍 콜백).
 
 ### 4.2 조립 seam `EnemyBuilder`
@@ -172,7 +173,7 @@ public static string RangeLabelOf(Archetype a) => a switch {
 `EnemyDefinition`(데이터) + 풀 셸(`Enemy`) → 조립된 적. `Build(Enemy shell, EnemyDefinition def)`:
 
 ```
-① 비주얼: shell.AttachVisual( cache.Resolve(def.visual) )
+① 비주얼: shell.AttachVisual( cache.Resolve(def.visual), def.visualScale )   (scale 0이하는 1)
 ② 스탯 : shell.ApplyStats( StatScaler.Scale(def.stats, difficulty.StatMultiplier) )
 ③ AI   : shell.SetMoveBehaviour( ResolveMove(def.moveAI) )       (M3-1)
          shell.SetAttackBehaviour( ResolveAttack(def.attackAI) ) (M3-2)
@@ -219,15 +220,16 @@ SO별 다른 비주얼을 Addressables로 로드·재사용. `PreloadAsync(IEnum
 |---|---|---|
 | Straight | `StraightMove` | -Z 직진(기존 셸 하드코딩 이관) |
 | Chase | `ChaseMove` | 항상 -Z 접근(despawn 보장) + 플레이어와 거리 ≤ `_homingRange`(기본 30)일 때만 XY 보정 |
-| Weave / Hover | — | **미구현 → 직진 폴백**(M4-7) |
+| Weave | `WeaveMove` | -Z 접근 + 좌우(X) 사인파(측면속도 적분, 진폭/주파수 기본값). 위상=per-instance. **M3-3에서 M4-7 선반영** |
+| Hover | — | **미구현 → 직진 폴백**(M4-7) |
 
 **공격 모듈**(`AttackAIType`)
 | enum | 모듈 | 동작 |
 |---|---|---|
 | Contact | `ContactAttack` | 발사 없음(no-op) — 접촉 데미지는 `PlayerHealth` 트리거가 `ContactDamage`로 처리 |
+| AimedShot | `AimedShot` | `FireInterval`마다 플레이어 방향 **한 발**(탄막의 1발 버전). 쿨다운=per-instance. **M3-3에서 M4-7 선반영** |
 | Barrage | `BarrageAttack` | `FireInterval`마다 플레이어 조준 **부채꼴**(월드 Y축 스프레드, 각 `_spreadAngle` 50° 기본)로 `BarrageCount`발 |
 | Suicide | `SuicideAttack` | 플레이어와 거리 ≤ `SuicideRadius` 시 `ApplyDamage` 후 `Despawn`(드랍/점수 없음) — 돌진(단발 접촉) vs 자폭(범위 트리거) 차별 |
-| AimedShot | — | **미구현 → 충돌(no-op) 폴백**(M4-7) |
 
 **공용 배선**
 - `PlayerLocator.Get()` — `Player` 태그로 플레이어 Transform 한 번 조회·캐시(이동/공격 모듈 공유, Core→Player 결합 회피).
@@ -248,7 +250,7 @@ SO별 다른 비주얼을 Addressables로 로드·재사용. `PreloadAsync(IEnum
 매 틱   ─▶ PickWeighted() → def
          └▶ EnemyPool.Get() → 순수 셸
              └▶ EnemyBuilder.Build:
-                 ① AttachVisual( cache.Resolve(def.visual) )              ← 모델이 셸에 붙음
+                 ① AttachVisual( cache.Resolve(def.visual), def.visualScale ) ← 모델이 셸에 붙음(크기 배수)
                  ② ApplyStats( StatScaler.Scale(def.stats, 배율) )        ← effective 스탯 주입
                  ③ SetMove/AttackBehaviour( def.moveAI/attackAI )         ← AI 모듈 주입(M3)
              └▶ Launch(despawnZ) + SetDropHandler → 씬에 등장·이동(Update가 모듈 Tick)
@@ -278,7 +280,8 @@ SO별 다른 비주얼을 Addressables로 로드·재사용. `PreloadAsync(IEnum
 
 ## 7. 경계 / 이후
 
-- **AI 실동작** — ✅ **M3-1/M3-2 완료**(§4.7): 이동(직진/추적)·공격(충돌/탄막/자폭) 모듈이 ③에 부착됨. **남은 것**: 이동 사행/견제·공격 조준단발 = **M4-7**(현재 폴백), 아키타입별 대표 조합·적 7종 = **M3-3**, 적탄 비주얼 교체·부채꼴 각/탄 수명 SO화 = 이후.
+- **AI 실동작** — ✅ **M3-1/M3-2/M3-3 완료**(§4.7): 이동(직진/추적/사행)·공격(충돌/조준단발/탄막/자폭) 모듈이 ③에 부착됨. **남은 것**: 이동 **견제(Hover)** = **M4-7**(현재 직진 폴백; 사행·조준단발은 M3-3에서 선반영). 적탄 비주얼 교체·부채꼴 각/탄 수명/사행 진폭 SO화 = 이후.
+- **적 로스터** — ✅ **M3-3 완료**: 4라인(LightCharger·HeavyCharger·Shooter·Bomber) × 3티어 = 12 SO. 모델 크기 편차 = `visualScale`로 보정. 밸런싱 수치는 **M4-5 난이도 그래프 뒤 튜닝**(파킹). 시간 게이팅=M4-6.
 - **드랍오브 데이터화** — `dropOrb.visual`/`xpValue` 주입은 이후(현재 공유 Orb 고정).
 - **실난이도 배율** — `DifficultyProvider` 스텁(1.0) → **M4-5**(페이즈 곡선). 배율 곡선의 **에디터 툴화**는 [backlog-M4.md](backlog-M4.md) M4-5에 아이디어 등재.
 - **비주얼 스케일/회전** — 모델이 셸 스케일(현재 6)에 곱해져 모델별 크기 편차 → **Day5 튜닝**.

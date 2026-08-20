@@ -48,15 +48,17 @@
 
 > 다음 작업은 **다른(새) 세션**에서 진행될 수 있음. 이 섹션이 인계 기준.
 
-### ▶ 다음 세션 인계 — M3 진행중(M3-1·M3-2 완료, 다음 = M3-3) (2026-08-20)
+### ▶ 다음 세션 인계 — M3 진행중(M3-1·M3-2·M3-3 완료, 다음 = M3-4) (2026-08-20)
 
-- **완료 상태**: **M1 코어루프 + M2 적 파이프라인 + M3-1(이동AI)·M3-2(공격AI+적탄) 완료.** 적 = **조합형**(공통 로직 셸 + `EnemyBuilder` 조립: 비주얼+스탯+**AI 모듈**). 파이프라인 전체 = **[06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)** 먼저 읽을 것(AI 모듈 상세는 [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡).
-- **AI = 순수 C# 전략 모듈**(사용자 결정, MonoBehaviour 아님): `IMoveBehaviour`(`StraightMove`/`ChaseMove`)·`IAttackBehaviour`(`ContactAttack`/`BarrageAttack`/`SuicideAttack`), 위치=`Assets/Scripts/Enemy/AI/`. `Enemy`가 Update에서 `Tick` 위임, `EnemyBuilder.ResolveMove`/`ResolveAttack`가 `def.moveAI`/`def.attackAI`로 주입(무상태=싱글톤 공유, 상태 있는 탄막=인스턴스별). 플레이어 조회=`PlayerLocator`(Player 태그). **직진 하드코딩은 M3-1이 제거함.** 미구현 enum(Weave/Hover 이동·AimedShot 공격)=직진/충돌 폴백(M4-7).
-  - **남은 것**: **M3-3** 아키타입/볼륨업(적 7종 — 현 스폰 3종은 테스트) · **M3-4** 3choice 풀 데이터화. 상세 = [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡ 헤더.
-- **씬/데이터 상태(GameScene, 저장됨)**: `EnemySpawner`에 `spawnTable`=[Charger:3, Barrage:2, Bomber:1] + `DifficultyProvider`(배율 1.0 스텁) + **`EnemyBulletPool`(prewarm 64, 스포너 `bulletPool`에 연결)** 배치. `Enemy.prefab`=**비주얼 없는 로직 셸**(스케일 6, root Collider+`Enemy`), `EnemyPool`=셸 prewarm. **적탄 `EnemyBullet.prefab`=임시 붉은 큐브(비주얼 교체 예정)**. 테스트 SO = `Assets/ScriptableObjects/Data/Enemy_Sample_{Charger,Barrage,Bomber}` + `Orb_Green`.
+- **완료 상태**: **M1 코어루프 + M2 적 파이프라인 + M3-1(이동AI)·M3-2(공격AI+적탄)·M3-3(적 12종 로스터) 완료.** 적 = **조합형**(공통 로직 셸 + `EnemyBuilder` 조립: 비주얼+스탯+**AI 모듈**). 파이프라인 전체 = **[06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)** 먼저 읽을 것(AI/로스터 상세는 [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡).
+- **AI = 순수 C# 전략 모듈**(사용자 결정, MonoBehaviour 아님): `IMoveBehaviour`(`StraightMove`/`ChaseMove`/`WeaveMove`)·`IAttackBehaviour`(`ContactAttack`/`BarrageAttack`/`AimedShot`/`SuicideAttack`), 위치=`Assets/Scripts/Enemy/AI/`. `Enemy`가 Update에서 `Tick` 위임, `EnemyBuilder.ResolveMove`/`ResolveAttack`가 `def.moveAI`/`def.attackAI`로 주입(무상태=싱글톤 공유, 상태 있는 탄막/조준단발/사행=인스턴스별). 플레이어 조회=`PlayerLocator`(Player 태그). **직진 하드코딩은 M3-1이 제거함.** **`WeaveMove`·`AimedShot`은 M3-3에서 M4-7 선반영 — 견제(Hover)만 미구현(직진 폴백).**
+  - **남은 것**: **M3-4** 3choice 풀 데이터화(M1-8 `UpgradeType`/`UpgradeSystem` 정리). 상세 = [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡ 헤더.
+- **적 로스터(M3-3) = 4라인 × 3티어 = 12 SO**: `Enemy_{LightCharger,HeavyCharger,Shooter,Bomber}_T{1,2,3}`(구 `Enemy_Sample_*` 삭제). Light/Heavy는 둘 다 archetype=`Charger`, 네이밍·스탯으로 분리. 티어 = 이동 복잡도(직진→추적→사행)+공격밀도+스탯 에스컬레이션. **모델 크기 편차 보정 = `EnemyDefinition.visualScale`(신설)** — 빌더 ①이 `Enemy.AttachVisual(prefab, scale)`로 비주얼 자식에만 곱(히트박스=셸 고정). 7개 모델 전부 사용(라벨 유효).
+- **씬/데이터 상태(GameScene, 저장됨)**: `EnemySpawner`에 `spawnTable`=**12행(티어 가중 T1:3/T2:2/T3:1)** + `DifficultyProvider`(배율 1.0 스텁) + `EnemyBulletPool`(prewarm 64, 스포너 `bulletPool` 연결) 배치. `Enemy.prefab`=**비주얼 없는 로직 셸**(스케일 6, root Collider+`Enemy`), `EnemyPool`=셸 prewarm. **적탄 `EnemyBullet.prefab`=임시 붉은 큐브(비주얼 교체 예정)**.
 - **레이어(M3-2 신설)**: `EnemyBullet`(11) 추가 — 물리 매트릭스 **EnemyBullet×Player만 ON**. 기존 Player(8)/Enemy(9)/PlayerBullet(10)에 더함.
-- **M2-5 스코프 밖(이후)**: 드랍오브 데이터화(`dropOrb.visual`/`xpValue` 주입) · 실난이도 배율=M4-5 · 비주얼 스케일/회전 모델별 정합=Day5. 적탄 비주얼 교체·부채꼴 각/탄 수명 SO화도 이후.
-- **이슈**: [issues.md](Docs/Dev/issues.md) **I-2**(플레이어 Aim 어색, 보류) · **I-1**(이동 관성감, 보류).
+- **밸런싱 파킹(M4-5 이후)**: 적 스탯·탄막 밀도·초반 과다 스폰은 전부 **시작점** — **난이도 그래프(M4-5)** 만든 뒤 튜닝. 시간 게이팅(초반=저티어)=**M4-6**. **[I-3] 플레이어 체력 회복 수단 부재**도 그때 함께.
+- **M2-5 스코프 밖(이후)**: 드랍오브 데이터화(`dropOrb.visual`/`xpValue` 주입) · 적탄 비주얼 교체·부채꼴 각/탄 수명·`WeaveMove` 진폭·`AimedShot` 등 코드 기본값의 SO화.
+- **이슈**: [issues.md](Docs/Dev/issues.md) **I-3**(체력 회복 부재, 보류) · **I-2**(플레이어 Aim 어색, 보류) · **I-1**(이동 관성감, 보류).
 - **주의**: 레이어 물리 매트릭스는 **에디터 재부팅 시 재적용** 필요(신설 `EnemyBullet`×Player 포함).
 
 ---

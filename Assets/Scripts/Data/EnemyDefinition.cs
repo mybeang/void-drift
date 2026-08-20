@@ -16,6 +16,9 @@ namespace VD.Core
         [Tooltip("적 비주얼 프리팹(Addressables 'Enemy' 그룹의 Enemy_* 중 하나). 스폰 시 로드(M2-5)")]
         public AssetReferenceGameObject visual;
 
+        [Tooltip("비주얼 크기 배수 — 모델별 크기 편차 보정(M3-3). 셸 자식 비주얼의 로컬 스케일에 곱함. 1=원본, 0이하는 1로 취급. 히트박스(셸 콜라이더)는 별도 고정")]
+        public float visualScale = 1f;
+
         [Header("AI 조합")]
         [Tooltip("이동 AI 종류. 실제 이동 로직은 M3-1")]
         public MoveAIType moveAI;

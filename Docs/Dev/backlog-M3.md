@@ -2,14 +2,14 @@
 > 상위 허브: [backlog.md](backlog.md) | 인접: [backlog-M2.md](backlog-M2.md) ← **M3** → [backlog-M4.md](backlog-M4.md)
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
-- **상태**: 🟡 진행중 — **M3-1(이동AI)·M3-2(공격AI+적탄) 완료**, **M3-3·M3-4 남음**. **M3 완료 = Must 코어 전부 충족** → 직후 **M5-1 모바일 빌드 1차** 권장(빌드 리스크 조기 확인).
-- **AI 아키텍처(M3-1/M3-2 확정)**: 이동·공격 모두 **순수 C# 전략 모듈**(MonoBehaviour 아님, 사용자 결정) — `IMoveBehaviour`/`IAttackBehaviour`. `Enemy`가 메시지 창구(Update)로 `Tick` 위임, `EnemyBuilder`가 `def.moveAI`/`def.attackAI`로 주입. 무상태 모듈은 빌더가 싱글톤 공유, 상태 있는 모듈(탄막 쿨다운·사행 위상)은 인스턴스별 생성. 플레이어 조회 = `PlayerLocator`(Player 태그) 공용. **적탄 = `EnemyBullet`+`EnemyBulletPool`(`PlayerHealth.ApplyDamage` 타격), `EnemyBullet` 레이어(11)+매트릭스(×Player만).**
+- **상태**: 🟡 진행중 — **M3-1(이동AI)·M3-2(공격AI+적탄)·M3-3(적 12종 로스터) 완료**, **M3-4(3choice 풀)만 남음**. **M3 완료 = Must 코어 전부 충족** → 직후 **M5-1 모바일 빌드 1차** 권장(빌드 리스크 조기 확인).
+- **AI 아키텍처(M3-1/M3-2 확정)**: 이동·공격 모두 **순수 C# 전략 모듈**(MonoBehaviour 아님, 사용자 결정) — `IMoveBehaviour`/`IAttackBehaviour`. `Enemy`가 메시지 창구(Update)로 `Tick` 위임, `EnemyBuilder`가 `def.moveAI`/`def.attackAI`로 주입. 무상태 모듈은 빌더가 싱글톤 공유, 상태 있는 모듈(탄막 쿨다운·사행 위상)은 인스턴스별 생성. 플레이어 조회 = `PlayerLocator`(Player 태그) 공용. **적탄 = `EnemyBullet`+`EnemyBulletPool`(`PlayerHealth.ApplyDamage` 타격), `EnemyBullet` 레이어(11)+매트릭스(×Player만).** 이동 = `StraightMove`/`ChaseMove`/`WeaveMove`(Hover=직진 폴백), 공격 = `ContactAttack`/`BarrageAttack`/`AimedShot`/`SuicideAttack`. **`WeaveMove`·`AimedShot`은 M3-3에서 M4-7 선반영.** 모델 크기 보정 = `EnemyDefinition.visualScale`(M3-3, 비주얼 자식에만 곱·히트박스 셸 고정).
 - **전제(이전 M에서 옴)**:
   - **M2-2 SO 스키마·enum(이동AI 4·공격AI 4·아키타입 3)** 이 여기 실구현의 계약. enum 값과 정합 유지.
   - M1-4 적 기반(`Enemy`/`EnemyPool`/`EnemySpawner`), M1-9 데미지/게임오버. `spaceship_6`은 M1-4서 선행 사용(이동만).
   - M1-8 3choice 최소 풀(`UpgradeType`/`UpgradeSystem`)을 M3-4가 데이터화·정리.
 - **이후로 이관**:
-  - 이동AI **사행/견제** + 공격AI **조준단발**(§3 4×4 완성) → **M4-7**. M3은 최소 2종(이동)·2~3종(공격)만.
+  - ~~이동AI 사행 + 공격AI 조준단발~~ → **M3-3에서 선반영**(`WeaveMove`/`AimedShot`, 티어 사다리에 필요해서). **견제(Hover)만 M4-7 잔여**(현재 직진 폴백). §3 4×4는 Hover만 남음.
   - 업그레이드 **풀세트**(탄속/관통/재생/오브범위 등) → **M4-8**. M3-4는 공용 스탯 확정 세트까지.
 - **이후 M이 여기서 확인할 것**:
   - **M2-5 스폰 연결**이 실제 동작하려면 M3-1·M3-2 AI 모듈 필요(SO가 지정한 AI를 여기서 구현).
@@ -39,12 +39,18 @@
 - **문서**: enemy-design.md §3
 - **완료(2026-08-20)**: `IAttackBehaviour` + `ContactAttack`(발사 없음 no-op — 접촉 데미지는 `PlayerHealth` 트리거가 `ContactDamage`로 처리, 조준단발 M4-7도 여기 폴백)/`BarrageAttack`(**부채꼴, 플레이어 조준** — 사용자 결정, 월드 Y축 기준 스프레드, 쿨다운 상태라 인스턴스별 생성)/`SuicideAttack`(플레이어와 거리 ≤ `suicideRadius` 시 `ApplyDamage` 후 `Despawn`, 드랍/점수 없음 — 돌진형 단발접촉과 차별=범위 트리거). `EnemyBuilder.ResolveAttack`가 `def.attackAI`로 주입. **적탄** `EnemyBullet`+`EnemyBulletPool`(Projectile/풀 미러, prewarm 64) — `PlayerHealth.ApplyDamage`(접촉/적탄/자폭 공용으로 추출) 타격. **`EnemyBullet` 레이어(11) 신설 + 물리 매트릭스 EnemyBullet×Player만 ON**. 프리팹 `Assets/Prefabs/EnemyBullet.prefab`(**임시 붉은 큐브** 0.35, kinematic RB+트리거, URP/Lit `EnemyBullet_Placeholder.mat` — **비주얼 교체 예정**). 발사간격/탄속/탄수/자폭반경=SO 데이터(부채꼴 각 `_spreadAngle` 50°·탄 수명 6초는 코드 기본값). 사용자 Play 검증 완료(탄막 과다=SO 수치 튜닝 대상, Day5).
 
-### M3-3 · 아키타입 2~3 (탄막형/돌진형/자폭형) 🔴
-- **목적**: enemy-design §2. 비주얼 아키타입과 성향 결합.
-- **작업**: 아키타입별 대표 조합을 SO 데이터로 구성(탄막형=원거리+탄막, 돌진형=근거리 충돌 고체력, 자폭형=고속 저체력 자폭). 돌진형 vs 자폭형 차별화(단발 충돌 vs 범위 폭발) 반영.
+### M3-3 · 적 로스터 12종 (4라인 × 3티어) ✅
+- **목적**: enemy-design §2. 비주얼 아키타입과 성향 결합 + 복잡도 티어 볼륨업.
+- **작업**: 아키타입별 대표 조합을 SO 데이터로 구성(탄막형=원거리+탄막, 돌진형=근거리 충돌, 자폭형=고속 저체력 자폭). 돌진형 vs 자폭형 차별화(단발 충돌 vs 범위 폭발) 반영.
 - **DoD**: 세 아키타입이 시각·행동으로 구분되어 등장.
 - **의존**: M3-1, M3-2
 - **문서**: enemy-design.md §2
+- **완료(2026-08-20, 사용자 Play 검증)** — 최초 "3종 대표"에서 **복잡도 티어 로스터로 확장**(사용자 결정):
+  - **구조 = 4 라인 × 3 티어(T1 단순→T3 복잡) = 12 SO**. 라인: **LightCharger**(저체력·고속·충돌)·**HeavyCharger**(고체력·저속·충돌) — 둘 다 archetype=`Charger` 유지, 네이밍/스탯으로 분리 · **Shooter**(탄막) · **Bomber**(자폭). 네이밍 = `Enemy_{라인}_T{n}`.
+  - **에스컬레이션**: 이동 복잡도(직진→추적→사행) + 공격 밀도 + 스탯. 초반(T1)은 저체력 위주로 완화. 티어 = 이산 패턴 변화(전역 배율 M4-5와 상보). **시간 게이팅(초반=저티어)은 M4-6** — 현재 스폰테이블은 티어 가중(T1:3/T2:2/T3:1) 정적.
+  - **M4-7 선반영**: 사다리에 필요해 `WeaveMove`(좌우 사인, 측면속도 적분·per-instance)·`AimedShot`(조준단발, 탄막 1발 버전·per-instance)을 **여기서 구현**하고 빌더에 배선. **견제(Hover)만 M4-7 잔여**(직진 폴백).
+  - **비주얼**: 7개 모델 전부 사용(라벨 유효, 경고 0). 라인×티어에 분산. **모델 크기 편차 보정 = `EnemyDefinition.visualScale`(신설)** — 빌더 ①이 `Enemy.AttachVisual(prefab, scale)`로 **비주얼 자식에만** 곱(히트박스=셸 고정, 0이하는 1). `Enemy_Heavy_1`(대형·모함급)이 raw 6배라 특히 축소. 값은 모델별 실측→라인 목표로 정규화(0.39~1.22).
+  - **데이터**: `Assets/ScriptableObjects/Data/Enemy_{LightCharger,HeavyCharger,Shooter,Bomber}_T{1,2,3}.asset` 12종(구 `Enemy_Sample_*` 3종 삭제·대체). `EnemySpawner.spawnTable` 12행 재구성. 스탯 전부 **시작점(Day5 튜닝)** — 밸런싱은 M4-5 난이도 그래프 뒤로 파킹(초반 과다 스폰·탄막 난이도·[I-3](issues.md) 체력 회복 부재 관측).
 - **비주얼→아키타입 매핑 (잠정, 2026-08-18 사용자)** — 소스 = `FREE Low Poly Spaceships`:
   | 프리팹 | 아키타입(잠정) | 비고 |
   |---|---|---|

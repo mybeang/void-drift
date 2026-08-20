@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca5509b0948339a448504d063d479ca1, type: 3}
+  m_Name: Enemy_LightCharger_T3
+  m_EditorClassIdentifier: VD.Runtime::VD.Core.EnemyDefinition
+  visual:
+    m_AssetGUID: 3573afb1138428247bb9e078fef4aee4
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  visualScale: 0.62
+  moveAI: 2
+  attackAI: 0
+  archetype: 1
+  stats:
+    maxHp: 25
+    moveSpeed: 13
+    damage: 10
+    killScore: 15
+    fireInterval: 0
+    projectileSpeed: 0
+    barrageCount: 0
+    suicideRadius: 0
+  dropOrb: {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}

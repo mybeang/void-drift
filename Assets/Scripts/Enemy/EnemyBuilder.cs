@@ -38,8 +38,9 @@ namespace VD.Enemy
         {
             if (shell == null || def == null) return;
 
-            // ① 비주얼 (미리 로드된 프리팹, 없으면 null → 부착 안 함)
-            shell.AttachVisual(_cache != null ? _cache.Resolve(def.visual) : null);
+            // ① 비주얼 (미리 로드된 프리팹, 없으면 null → 부착 안 함) + 크기 배수(M3-3, 0이하는 1)
+            float vScale = def.visualScale > 0f ? def.visualScale : 1f;
+            shell.AttachVisual(_cache != null ? _cache.Resolve(def.visual) : null, vScale);
 
             // ② 스탯: base × 전역배율 → effective (배율 소스 없으면 1.0)
             float mult = _difficulty != null ? _difficulty.StatMultiplier : 1f;
@@ -50,19 +51,21 @@ namespace VD.Enemy
             shell.SetAttackBehaviour(ResolveAttack(def.attackAI));
         }
 
-        /// <summary>def.moveAI → 이동 모듈. 미구현(Weave/Hover, M4-7)은 직진으로 폴백.</summary>
+        /// <summary>def.moveAI → 이동 모듈. Weave는 위상 상태라 인스턴스별 new. Hover(M4-7)만 직진 폴백.</summary>
         IMoveBehaviour ResolveMove(MoveAIType type) => type switch
         {
             MoveAIType.Chase => _chase,
-            _ => _straight,
+            MoveAIType.Weave => new WeaveMove(),
+            _ => _straight,   // Straight + Hover(미구현, M4-7) 폴백
         };
 
-        /// <summary>def.attackAI → 공격 모듈. 탄막은 쿨다운 상태 때문에 인스턴스별 new. 미구현(조준단발, M4-7)은 충돌 no-op 폴백.</summary>
+        /// <summary>def.attackAI → 공격 모듈. 탄막/조준단발은 쿨다운 상태라 인스턴스별 new. 그 외는 싱글톤.</summary>
         IAttackBehaviour ResolveAttack(AttackAIType type) => type switch
         {
             AttackAIType.Barrage => new BarrageAttack(_bulletPool),
+            AttackAIType.AimedShot => new AimedShot(_bulletPool),
             AttackAIType.Suicide => _suicide,
-            _ => _contact,
+            _ => _contact,   // Contact no-op 폴백
         };
     }
 }

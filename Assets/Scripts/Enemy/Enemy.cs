@@ -60,8 +60,9 @@ namespace VD.Enemy
             _hp = effective.maxHp;
         }
 
-        /// <summary>빌더가 조립 시 호출 — 캐시가 준 비주얼 프리팹을 셸 자식으로 부착(M2-5c). 이전 비주얼은 먼저 제거. null이면 무시.</summary>
-        public void AttachVisual(GameObject prefab)
+        /// <summary>빌더가 조립 시 호출 — 캐시가 준 비주얼 프리팹을 셸 자식으로 부착(M2-5c). 이전 비주얼은 먼저 제거. null이면 무시.
+        /// <paramref name="scale"/> = 비주얼 크기 배수(M3-3, 모델별 편차 보정) — 모델 원본 로컬스케일에 곱함. 히트박스(셸)는 불변.</summary>
+        public void AttachVisual(GameObject prefab, float scale)
         {
             ClearVisual();
             if (prefab == null) return;
@@ -69,6 +70,8 @@ namespace VD.Enemy
             _visual.transform.SetParent(transform, false);   // false=로컬 스케일 보존(셸 스케일에 곱)
             _visual.transform.localPosition = Vector3.zero;
             _visual.transform.localRotation = Quaternion.identity;
+            if (scale > 0f && !Mathf.Approximately(scale, 1f))
+                _visual.transform.localScale *= scale;   // 비주얼만 배수(히트박스=셸 고정)
         }
 
         /// <summary>반납 teardown — 부착된 비주얼 인스턴스 파괴(M2-5c). 프리팹(캐시)은 건드리지 않음.</summary>

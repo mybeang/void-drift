@@ -3069,11 +3069,29 @@ MonoBehaviour:
   bulletPool: {fileID: 758803586}
   difficulty: {fileID: 1239163164}
   spawnTable:
-  - def: {fileID: 11400000, guid: 6d11fde40f7556543bcab1be552cee54, type: 2}
+  - def: {fileID: 11400000, guid: 78c078a5bea74ec45a2e50ec82ed6d52, type: 2}
     weight: 3
-  - def: {fileID: 11400000, guid: f765d955b99ea0b4695e26f6bdddb493, type: 2}
+  - def: {fileID: 11400000, guid: 723eee322ba1f15468da73560768bd52, type: 2}
     weight: 2
-  - def: {fileID: 11400000, guid: c6b119543768cf948bd28395a5065aed, type: 2}
+  - def: {fileID: 11400000, guid: 23ef483a4f6aff046b2529e6528dc4f7, type: 2}
+    weight: 1
+  - def: {fileID: 11400000, guid: 4bf27845dbb1f90488bbbf08f90a3ed1, type: 2}
+    weight: 3
+  - def: {fileID: 11400000, guid: 93f74bd4da438fb47b217f81230ac774, type: 2}
+    weight: 2
+  - def: {fileID: 11400000, guid: a5408ea08dfab0941a1d5aa45aaa5e52, type: 2}
+    weight: 1
+  - def: {fileID: 11400000, guid: ef726d11fdf17f34a9a7346ab4dcde7a, type: 2}
+    weight: 3
+  - def: {fileID: 11400000, guid: b0944dd6317de9843944d05cebf669f3, type: 2}
+    weight: 2
+  - def: {fileID: 11400000, guid: aa47bbec94bb3ac45b287f5721492770, type: 2}
+    weight: 1
+  - def: {fileID: 11400000, guid: 64bc732599c842b44a77dd55cadc13ce, type: 2}
+    weight: 3
+  - def: {fileID: 11400000, guid: 1c2377907aaf95645851d8586e9c665c, type: 2}
+    weight: 2
+  - def: {fileID: 11400000, guid: 56199daa81f0d114ab15b8dc7a1ea74a, type: 2}
     weight: 1
   spawnInterval: 1
   spawnZ: 120

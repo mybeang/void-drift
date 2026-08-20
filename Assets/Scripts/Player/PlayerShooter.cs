@@ -1,32 +1,34 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VD.Core;
 
 namespace VD.Player
 {
     /// <summary>
-    /// 오토 사격 — <see cref="GameState.Playing"/> 상태에서 일정 간격으로 <see cref="firePoint"/> 방향으로 투사체를 발사한다(뱀서라이크).
-    /// 발사 원점·방향 = FirePoint(= <see cref="PlayerAim"/>이 정렬한 조준 축). 무타겟이면 축 직사(원뿔 내 적 타겟 스냅은 M1-4).
-    /// 데미지/충돌은 M1-4. (M1-3 3단계 신설)
+    /// 오토 사격 오케스트레이터(M4-1) — 보유 <see cref="IWeapon"/> 리스트를 <see cref="GameState.Playing"/>에서 매 프레임 틱해
+    /// 각 무기가 자기 연사속도로 <b>동시 오토발사</b>하게 한다(weapon-acquisition §1). 공용 조준·풀·base 데미지는 <see cref="WeaponContext"/>로 주입.
+    /// <para>M4-1 스코프: 3무기 동시발사 골격. <b>Step1 = 기관총 전략 모듈 리팩터(동작 무변화)</b> — 유도/레일건=Step2/3, 획득/마일스톤 전환=Step5/M4-3.
+    /// 인스펙터 수치(기관총 튜닝)는 그대로 유지, Awake에서 <see cref="StraightGun"/> 구성에 주입한다.</para>
     /// </summary>
     public sealed class PlayerShooter : MonoBehaviour
     {
         [Header("참조")]
         [Tooltip("발사 원점·방향(조준 축). 보통 Player/FirePoint")]
         [SerializeField] Transform firePoint;
-        [Tooltip("투사체 풀. 비우면 씬에서 자동 탐색(프리팹은 씬 참조 불가라 런타임 탐색)")]
+        [Tooltip("직진 투사체 풀(기관총). 비우면 씬에서 자동 탐색")]
         [SerializeField] ProjectilePool pool;
 
-        [Header("발사 (탄속·발사속도 등 튜닝은 여기 한 곳에)")]
+        [Header("기관총 (탄속·발사속도 등 튜닝은 여기 한 곳에)")]
         [Tooltip("발사 간격(초). 작을수록 빠른 연사. 수치는 Day5 튜닝")]
         [SerializeField] float fireInterval = 0.15f;
         [Tooltip("탄속(월드 유닛/초). 발사 시 투사체에 주입. 수치는 Day5 튜닝")]
         [SerializeField] float projectileSpeed = 40f;
-        [Tooltip("투사체 수명(초). 지나면 풀 반납. 발사 시 투사체에 주입")]
+        [Tooltip("투사체 수명(초). 지나면 풀 반납")]
         [SerializeField] float projectileLifetime = 3f;
-        [Tooltip("투사체 데미지. 히트 시 IDamageable에 전달. 수치는 Day5 튜닝")]
+        [Tooltip("기초 공격력(무기 공통 base). M3-4 강화가 가산, M4-8 무기 배율이 곱함. 수치는 Day5 튜닝")]
         [SerializeField] float projectileDamage = 10f;
 
-        [Header("조준 (원뿔 타겟 스냅)")]
+        [Header("조준 (원뿔 타겟 스냅 — 기관총)")]
         [Tooltip("조준 원뿔 반각(도). 이 안의 적에게 스냅해 발사. 밖이면 조준 축(FirePoint.forward) 직사")]
         [SerializeField] float aimConeHalfAngle = 25f;
         [Tooltip("타겟 탐색 사거리(월드)")]
@@ -36,16 +38,27 @@ namespace VD.Player
         [Tooltip("[임시] 조준 원뿔 기즈모 표시(Scene/Game). 검증·튜닝 후 제거")]
         [SerializeField] bool drawAimGizmo = true;
 
-        float _cooldown;
-        static readonly Collider[] _overlap = new Collider[32];
+        readonly List<IWeapon> _weapons = new();
+        WeaponContext _ctx;
 
         void Awake()
         {
             if (firePoint == null) firePoint = transform;
             if (pool == null) pool = FindAnyObjectByType<ProjectilePool>();
+
+            _ctx = new WeaponContext
+            {
+                FirePoint = firePoint,
+                TargetMask = targetMask,
+                StraightPool = pool,
+                BaseDamage = projectileDamage,
+            };
+
+            // M4-1 Step1: 기관총만(리팩터·동작 무변화). 유도/레일건=Step2/3에서 _weapons에 추가.
+            _weapons.Add(new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange));
         }
 
-        /// <summary>기초 공격력(투사체 데미지) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>
+        /// <summary>기초 공격력(무기 공통 base) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>
         public void AddAttackPower(float amount)
         {
             projectileDamage += amount;
@@ -53,41 +66,17 @@ namespace VD.Player
 
         void Update()
         {
-            if (!IsPlaying() || pool == null || firePoint == null) return;
+            if (!IsPlaying() || firePoint == null) return;
 
-            _cooldown -= Time.deltaTime;
-            if (_cooldown > 0f) return;
-            _cooldown = fireInterval;
+            // 컨텍스트를 매 프레임 최신화(base 데미지 강화·풀 재탐색 반영) 후 보유 무기 전부 틱 → 동시 오토발사.
+            _ctx.FirePoint = firePoint;
+            _ctx.TargetMask = targetMask;
+            _ctx.StraightPool = pool;
+            _ctx.BaseDamage = projectileDamage;
 
-            // 조준 방향 = 조준 축(FirePoint.forward). 원뿔 안에 적 있으면 그 적으로 스냅.
-            Vector3 dir = firePoint.forward;
-            if (TryAcquireTarget(out Vector3 aimPoint))
-                dir = (aimPoint - firePoint.position).normalized;
-
-            Projectile p = pool.Get();
-            p.transform.SetPositionAndRotation(firePoint.position, Quaternion.LookRotation(dir, Vector3.up));
-            p.Launch(projectileSpeed, projectileLifetime, projectileDamage);
-        }
-
-        /// <summary>원뿔(반각 aimConeHalfAngle·사거리 aimRange) 안에서 가장 가까운 IDamageable을 조준점으로.</summary>
-        bool TryAcquireTarget(out Vector3 aimPoint)
-        {
-            aimPoint = default;
-            int n = Physics.OverlapSphereNonAlloc(firePoint.position, aimRange, _overlap, targetMask, QueryTriggerInteraction.Collide);
-            Vector3 axis = firePoint.forward;
-            float bestDist = float.MaxValue;
-            bool found = false;
-            for (int i = 0; i < n; i++)
-            {
-                var col = _overlap[i];
-                if (col == null || col.GetComponentInParent<IDamageable>() == null) continue;
-                Vector3 c = col.bounds.center;
-                Vector3 to = c - firePoint.position;
-                float dist = to.magnitude;
-                if (dist < 0.01f || Vector3.Angle(axis, to) > aimConeHalfAngle) continue;
-                if (dist < bestDist) { bestDist = dist; aimPoint = c; found = true; }
-            }
-            return found;
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _weapons.Count; i++)
+                _weapons[i].Tick(dt, _ctx);
         }
 
         static bool IsPlaying()
@@ -97,7 +86,7 @@ namespace VD.Player
             return gm == null || gm.State == GameState.Playing;
         }
 
-        // [임시] 조준 원뿔 시각화 — 축 + 사거리 끝 링 + 스포크. 검증·튜닝 후 제거.
+        // [임시] 조준 원뿔 시각화(기관총) — 축 + 사거리 끝 링 + 스포크. 검증·튜닝 후 제거.
         void OnDrawGizmos()
         {
             if (!drawAimGizmo || firePoint == null) return;

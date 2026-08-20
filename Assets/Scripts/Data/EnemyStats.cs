@@ -37,5 +37,12 @@ namespace VD.Core
 
         [Tooltip("자폭 폭발 반경(월드). 자폭에서 사용")]
         public float suicideRadius;
+
+        [Header("이동AI별 (해당 이동AI일 때만 의미)")]
+        [Tooltip("견제(Hover): 멈추는 선호 Z간격(플레이어 앞 이 거리에서 정지). 견제에서 사용")]
+        public float hoverDistance;
+
+        [Tooltip("견제(Hover): 머무는 시간(초). 이 시간 동안 사격 후 이탈. 견제에서 사용")]
+        public float hoverDuration;
     }
 }

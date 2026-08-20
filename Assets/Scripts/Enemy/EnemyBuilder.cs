@@ -54,12 +54,13 @@ namespace VD.Enemy
             shell.SetArchetype(def.archetype);
         }
 
-        /// <summary>def.moveAI → 이동 모듈. Weave는 위상 상태라 인스턴스별 new. Hover(M4-7)만 직진 폴백.</summary>
+        /// <summary>def.moveAI → 이동 모듈. Weave/Hover는 per-instance 상태(위상·페이즈)라 스폰마다 new. 직진/추적은 싱글톤.</summary>
         IMoveBehaviour ResolveMove(MoveAIType type) => type switch
         {
             MoveAIType.Chase => _chase,
             MoveAIType.Weave => new WeaveMove(),
-            _ => _straight,   // Straight + Hover(미구현, M4-7) 폴백
+            MoveAIType.Hover => new HoverMove(),
+            _ => _straight,   // Straight 폴백
         };
 
         /// <summary>def.attackAI → 공격 모듈. 탄막/조준단발은 쿨다운 상태라 인스턴스별 new. 그 외는 싱글톤.</summary>

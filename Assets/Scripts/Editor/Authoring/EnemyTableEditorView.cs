@@ -22,6 +22,9 @@ namespace VD.Editor
         static readonly string[] AttackStatPaths =
             { "stats.fireInterval", "stats.projectileSpeed", "stats.barrageCount", "stats.suicideRadius" };
 
+        static readonly string[] MoveStatPaths =
+            { "stats.hoverDistance", "stats.hoverDuration" };
+
         // 값 변경 시 경고를 재판정할 필드(R1·R2 입력).
         static readonly string[] ValidationFields = { "moveAI", "attackAI", "archetype", "visual" };
 
@@ -72,10 +75,11 @@ namespace VD.Editor
             detail.Insert(0, warnBox);
             RefreshValidation(detail, warnBox, item);
 
-            // 공격AI별 스탯 필드 비활성(③) — 중첩 필드 비동기 빌드라 준비될 때까지 재시도
+            // 공격AI별/이동AI별 스탯 필드 비활성(③) — 중첩 필드 비동기 빌드라 준비될 때까지 재시도
             ApplyAttackFieldStates(detail, so, 8);
+            ApplyMoveFieldStates(detail, so, 8);
 
-            // moveAI/attackAI/archetype 변경 → 경고·하이라이트·행 재판정 (attackAI는 필드 비활성도 갱신)
+            // moveAI/attackAI/archetype 변경 → 경고·하이라이트·행 재판정 (attackAI/moveAI는 필드 비활성도 갱신)
             foreach (var path in ValidationFields)
             {
                 var pf = detail.Query<PropertyField>().Where(p => p.bindingPath == path).First();
@@ -84,6 +88,7 @@ namespace VD.Editor
                 {
                     RefreshValidation(detail, warnBox, item);
                     if (path == "attackAI") ApplyAttackFieldStates(detail, so, 0);
+                    if (path == "moveAI") ApplyMoveFieldStates(detail, so, 0);
                 });
             }
         }
@@ -204,6 +209,35 @@ namespace VD.Editor
                 case AttackAIType.Barrage:   return new HashSet<string> { "stats.fireInterval", "stats.projectileSpeed", "stats.barrageCount" };
                 case AttackAIType.Suicide:   return new HashSet<string> { "stats.suicideRadius" };
                 default:                     return new HashSet<string>();   // Contact(충돌): 없음
+            }
+        }
+
+        void ApplyMoveFieldStates(VisualElement detail, SerializedObject so, int retries)
+        {
+            var pfs = detail.Query<PropertyField>().ToList();
+
+            int found = 0;
+            foreach (var p in pfs)
+                if (p.bindingPath != null && Array.IndexOf(MoveStatPaths, p.bindingPath) >= 0) found++;
+            if (found < MoveStatPaths.Length && retries > 0)   // 아직 안 빌드됨 → 다음 틱 재시도
+            {
+                detail.schedule.Execute(() => ApplyMoveFieldStates(detail, so, retries - 1)).ExecuteLater(16);
+                return;
+            }
+
+            var relevant = RelevantMoveStats((MoveAIType)so.FindProperty("moveAI").enumValueIndex);
+            foreach (var p in pfs)
+                if (p.bindingPath != null && Array.IndexOf(MoveStatPaths, p.bindingPath) >= 0)
+                    p.SetEnabled(relevant.Contains(p.bindingPath));
+        }
+
+        /// <summary>MoveAI가 실제로 쓰는 stats 필드 집합(enemy-design §3). 견제만 있음(직진/추적/사행=없음).</summary>
+        static HashSet<string> RelevantMoveStats(MoveAIType ai)
+        {
+            switch (ai)
+            {
+                case MoveAIType.Hover: return new HashSet<string> { "stats.hoverDistance", "stats.hoverDuration" };
+                default:               return new HashSet<string>();   // 직진/추적/사행: 이동 스탯 필드 없음
             }
         }
     }

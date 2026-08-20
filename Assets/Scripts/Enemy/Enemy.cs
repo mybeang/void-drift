@@ -41,6 +41,12 @@ namespace VD.Enemy
         /// <summary>자폭 폭발 반경.</summary>
         public float SuicideRadius => stats.suicideRadius;
 
+        // 이동 AI 모듈(M3-1)이 읽는 스탯.
+        /// <summary>견제(Hover): 멈추는 선호 Z간격.</summary>
+        public float HoverDistance => stats.hoverDistance;
+        /// <summary>견제(Hover): 머무는 시간(초).</summary>
+        public float HoverDuration => stats.hoverDuration;
+
         IMoveBehaviour _move;       // 빌더가 주입(M3-1). null이면 정지.
         IAttackBehaviour _attack;   // 빌더가 주입(M3-2). null이면 공격 없음.
         Action<Enemy> _return;
@@ -49,15 +55,20 @@ namespace VD.Enemy
         float _despawnZ;
         float _hp;
         bool _dead;
+        bool _attackSuppressed;   // 이동 모듈이 공격을 막는 프레임(예: Hover 접근/이탈 중엔 사격 정지, M4-7)
 
-        /// <summary>풀이 Get 시 호출 — 반납 콜백 배선 + 체력/사망상태/드랍핸들러 리셋.</summary>
+        /// <summary>풀이 Get 시 호출 — 반납 콜백 배선 + 체력/사망상태/드랍핸들러/공격억제 리셋.</summary>
         public void OnSpawned(Action<Enemy> returnToPool)
         {
             _return = returnToPool;
             _hp = stats.maxHp;
             _dead = false;
             _dropOnDeath = null;
+            _attackSuppressed = false;   // 기본=공격 허용(비-Hover 적은 항상 사격). Hover만 매 프레임 갱신.
         }
+
+        /// <summary>이동 모듈이 공격 허용/차단을 제어(M4-7 Hover) — true면 이 프레임 공격 틱 스킵. 매 프레임 이동 모듈이 세팅.</summary>
+        public void SetAttackSuppressed(bool suppressed) => _attackSuppressed = suppressed;
 
         /// <summary>빌더가 스폰 시 호출 — effective 스탯(base×전역배율) 주입. 체력도 새 maxHp로 리셋(OnSpawned 이후 호출 대비).</summary>
         public void ApplyStats(EnemyStats effective)
@@ -126,7 +137,7 @@ namespace VD.Enemy
 
             // 이동·공격을 주입된 AI 모듈에 위임(M3-1/M3-2). 공격이 자폭으로 자멸시키면 _dead=true → 이후 스킵.
             _move?.Tick(this, dt);
-            if (!_dead) _attack?.Tick(this, dt);
+            if (!_dead && !_attackSuppressed) _attack?.Tick(this, dt);   // Hover 접근/이탈 중엔 억제(멈춰있을 때만 사격)
 
             if (!_dead && transform.position.z <= _despawnZ) Despawn();
         }

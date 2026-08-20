@@ -1725,6 +1725,52 @@ MonoBehaviour:
   m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &795635499
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 795635501}
+  - component: {fileID: 795635500}
+  m_Layer: 0
+  m_Name: RailProjectilePool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &795635500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 795635499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 582113b674185ac47be5e590424403d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VD.Runtime::VD.Player.RailProjectilePool
+  prefab: {fileID: 675761222453114539, guid: 4cb89d4840cabef44b8c2264c1fcd58a, type: 3}
+  prewarmCount: 16
+--- !u!4 &795635501
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 795635499}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &803080323
 GameObject:
   m_ObjectHideFlags: 0
@@ -5104,9 +5150,37 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: railAmmo
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: railPool
+      value: 
+      objectReference: {fileID: 795635500}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: railSpeed
+      value: 120
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: homingAmmo
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: homingPool
       value: 
       objectReference: {fileID: 1685120847}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: homingLifetime
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: homingAcceleration
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: homingFireInterval
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: homingHardpoints.Array.size
       value: 4
@@ -5198,3 +5272,4 @@ SceneRoots:
   - {fileID: 2051566936}
   - {fileID: 758803587}
   - {fileID: 1685120848}
+  - {fileID: 795635501}

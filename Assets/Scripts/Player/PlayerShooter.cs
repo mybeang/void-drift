@@ -61,6 +61,31 @@ namespace VD.Player
         [Tooltip("유도 Aim 사거리(월드). 이 안에서 타입 1순위(원거리 우선)→가장 먼 적을 조준. 나중에 플레이어 셋팅 툴로 이관")]
         [SerializeField] float homingAimRange = 90f;
 
+        [Header("레일건 (Step3)")]
+        [Tooltip("레일건 투사체 전용 풀. 비우면 씬에서 자동 탐색")]
+        [SerializeField] RailProjectilePool railPool;
+        [Tooltip("레일 발사 간격(초). 느리게. 수치 Day5")]
+        [SerializeField] float railFireInterval = 1.0f;
+        [Tooltip("레일 탄속(월드/초). 초고속. 수치 Day5")]
+        [SerializeField] float railSpeed = 90f;
+        [Tooltip("레일 수명(초)")]
+        [SerializeField] float railLifetime = 2f;
+        [Tooltip("최대 관통 수(한 줄기가 뚫는 몹 수). 레벨 무관 별도 스택, 최대 5 지향. 기본값")]
+        [Range(1, 5)]
+        [SerializeField] int railMaxPierce = 2;
+        [Tooltip("관통당 데미지 곱(0.7 = -30%). Lv5 관통효율(M5-4)이 완화")]
+        [Range(0.1f, 1f)]
+        [SerializeField] float railDamageDecay = 0.7f;
+        [Tooltip("레일 조준 원뿔 반각(도). 이 안 최근접에 스냅, 밖이면 축 직사")]
+        [SerializeField] float railConeHalfAngle = 20f;
+        [Tooltip("레일 조준 사거리(월드)")]
+        [SerializeField] float railAimRange = 90f;
+        [Tooltip("[임시] 레일 탄약(동시 발사 줄기 수, 1~4). 조준 축에 수직으로 나란히. 레벨업 연동은 M4-2 — 지금은 테스트용 수동값")]
+        [Range(1, 4)]
+        [SerializeField] int railAmmo = 1;
+        [Tooltip("레일 줄기 간 간격(월드). 탄약>1일 때 나란한 레일 사이 폭")]
+        [SerializeField] float railStreamSpacing = 1.5f;
+
         readonly List<IWeapon> _weapons = new();
         WeaponContext _ctx;
 
@@ -69,6 +94,7 @@ namespace VD.Player
             if (firePoint == null) firePoint = transform;
             if (pool == null) pool = FindAnyObjectByType<ProjectilePool>();
             if (homingPool == null) homingPool = FindAnyObjectByType<HomingProjectilePool>();
+            if (railPool == null) railPool = FindAnyObjectByType<RailProjectilePool>();
 
             _ctx = new WeaponContext
             {
@@ -77,12 +103,14 @@ namespace VD.Player
                 StraightPool = pool,
                 HomingPool = homingPool,
                 HomingHardpoints = homingHardpoints,
+                RailPool = railPool,
                 BaseDamage = projectileDamage,
             };
 
-            // M4-1: 일단 3종 전부 보유(패턴 시연, 획득 전환=Step5/M4-3). 기관총(Step1) + 유도(Step2). 레일건=Step3.
+            // M4-1: 일단 3종 전부 보유(패턴 시연, 획득 전환=Step5/M4-3). 기관총(Step1) + 유도(Step2) + 레일건(Step3).
             _weapons.Add(new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange));
             _weapons.Add(new HomingMissile(homingFireInterval, homingInitialSpeed, homingAcceleration, homingMaxSpeed, homingLifetime, homingTurnRate, homingAimRange, homingAmmo));
+            _weapons.Add(new Railgun(railFireInterval, railSpeed, railLifetime, railMaxPierce, railDamageDecay, railConeHalfAngle, railAimRange, railStreamSpacing, railAmmo));
         }
 
         /// <summary>기초 공격력(무기 공통 base) 가산 강화 — M3-4(3choice). 무기별 배율은 M4-8에서 이 base에 곱함.</summary>
@@ -101,6 +129,7 @@ namespace VD.Player
             _ctx.StraightPool = pool;
             _ctx.HomingPool = homingPool;
             _ctx.HomingHardpoints = homingHardpoints;
+            _ctx.RailPool = railPool;
             _ctx.BaseDamage = projectileDamage;
 
             float dt = Time.deltaTime;

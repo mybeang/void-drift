@@ -28,6 +28,9 @@ namespace VD.Player
         /// <summary>유도 미사일 발사대(날개 하드포인트). 배열 순서 = 발사 순서(1→2→3→4 순환). 비면 <see cref="FirePoint"/> 폴백.</summary>
         public Transform[] HomingHardpoints;
 
+        /// <summary>레일건 투사체 전용 풀(Step3).</summary>
+        public RailProjectilePool RailPool;
+
         static readonly Collider[] _overlap = new Collider[32];
 
         /// <summary>

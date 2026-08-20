@@ -3,7 +3,7 @@
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
 - **상태**: 🟡 Should. **있으면 확실히 강해지는 것들. 마감 압박 시 아래→위로 잘라낸다.**
-- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신). ✅ **M4-3 완료**(시작 로드아웃 기관총만 + 5레벨 마일스톤 3choice 무기 카드 — `PlayerShooter` 무기 슬롯 API + `UpgradeSystem` 마일스톤 롤 + 무기 SO 3종). 다음 = **M4-4**(실드 스킬). 이슈 **I-4**(탄막 무제한 발사) 열림.
+- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신). ✅ **M4-3 완료**(시작 로드아웃 기관총만 + 5레벨 마일스톤 3choice 무기 카드). ✅ **M4-4 완료**(실드 액티브 스킬 — 자체HP 방어막·에스컬 쿨다운 15+5·코너버튼+Space·강화 3종). ✅ **PC 보조 입력**(WASD 이동, Space 실드). 다음 = **M4-7**(적 AI 견제/Hover). 이슈 **I-4**(탄막 무제한 발사) 열림.
 - **전제(이전 M에서 옴)**: M1 코어(사격 M1-3·3choice M1-7·HUD M1-10·게임오버 M1-9), M2 툴(M2-4/M2-5), **M3 전부 완료**(이동/공격 AI M3-1/M3-2 · 적 12종 로스터 M3-3 · 3choice 데이터화+오서링 툴 M3-4). 각 태스크 **의존** 참조.
 - ⚠️ **M3에서 M4 일부 선구현됨(재작업 금지)**:
   - **M4-7**: 사행(`WeaveMove`)·조준단발(`AimedShot`)은 **M3-3에서 선반영** → **M4-7 잔여 = 견제(Hover)뿐**(현재 직진 폴백).
@@ -61,9 +61,17 @@
   - **데이터/씬**: `Upgrade_Weapon_{Straight,Homing,Railgun}` SO 3종(`ScriptableObjects/Data/`, weight 1, 값 필드 미사용) + `UpgradeSystem.pool` **9개**(스탯 6 + 무기 3) 배선.
   - **잔여**: 무기 카드 가중치 초기값·마일스톤 자격 3개 미만 엣지(§8)는 Day5. 무기 파워(연사/탄속/관통) 별도 카드 = M4-8.
 
-### M4-4 · 실드 스킬 (전용 버튼) + 강화 3종 🟡
-- **작업**: controls-design §4. 코너 전용 버튼, 실드 발동(무적/방어), 쿨다운/지속/HP 강화 3종.
-- **DoD**: 버튼 탭으로 실드 발동·쿨다운 동작, 강화가 3choice에 등장. **의존**: M1-7, M1-10 · **문서**: controls-design.md
+### M4-4 · 실드 스킬 (전용 버튼) + 강화 3종 ✅ 완료(2026-08-21)
+- **작업**: controls-design §4. 코너 전용 버튼, 실드 발동, 쿨다운/지속/HP 강화 3종. → **충족**(Play 검증).
+- **DoD**: 버튼 탭으로 실드 발동·쿨다운 동작, 강화가 3choice에 등장. **의존**: M1-7, M1-10 · **문서**: controls-design.md, upgrade-pool §5
+- **성격 확정(upgrade-pool §5)**: **자체 HP를 가진 방어막**(무적 프레임 아님) — 활성 중 데미지를 실드 HP가 우선 흡수, **지속 만료 또는 HP 소진** 시 종료→쿨다운.
+- **쿨다운 결정(사용자, 2026-08-21)**: **첫 15초, 이후 사용마다 +5초 연장**(에스컬레이팅; 2회차 20s, 3회차 25s…). `PlayerShield.baseCooldown`/`cooldownPerUse`.
+- **결정(사용자)**: ①버블 비주얼 = 간단 구체 지금(질감 폴리시=M4-9 파킹). ②HUD 버튼 = 쿨다운 방사형 필 + **남은 초 카운트 표시**.
+- **구현 요약(단계 A/B/C)**:
+  - **A 코어**: `PlayerShield`(`Assets/Scripts/Player/`) — 발동/지속/흡수/에스컬 쿨다운 + 강화 훅(`AddShieldHp`/`AddDuration`/`AddCooldownReduction`, 쿨감 상한 90%). `PlayerHealth.ApplyDamage` 초크포인트에서 `TryAbsorb` 우선(활성 시 무피해). 발동=버튼+**Space**(`Keyboard.current`). `GameEvents.Shield`(`ShieldState`: active/ready/cooldown01/**cooldownRemaining**) 채널. Player 프리팹에 `PlayerShield` + `ShieldBubble` 자식(반투명 구체, 콜라이더 없음, 기본 off) + 재질 `ShieldBubble_Mat`.
+  - **B HUD**: `ShieldButtonView`(`Assets/Scripts/UI/`) — 코너 버튼 탭→`TryActivate`, `GameEvents.Shield` 구독→interactable/방사형 필/**남은 초 카운트**. HUD Canvas에 `ShieldButton`(버튼+`CooldownFill` Filled+`Label`). (버튼 비주얼 = 사용자 UI 에셋 교체.)
+  - **C 강화**: `UpgradeType`에 `ShieldCooldown`/`ShieldDuration`/`ShieldHp` + `UpgradeSystem` 라우팅(`PlayerShield` 참조) + SO 3종(`Upgrade_Shield_*`) + `pool` 12개. **항상 등장**(마일스톤 무관, 일반 스탯 취급).
+  - **잔여(Day5)**: 쿨다운 감소 카드 표기가 `+15%`(감소인데 +) — 표시 플래그 폴리시 파킹. 실드 수치(HP/지속/쿨감폭)·표시 뉘앙스 = Day5.
 
 ### M4-5 · 난이도 페이즈 (구간 전환 + 안내 문구) 🟡
 - **작업**: progression §2. 시간축 페이즈 분할, 페이즈 내 미세 배율 상승 + 경계에서 스폰 프로파일 교체 + 배율 점프 + "공허 속 적이 더욱 강해졌습니다" HUD 안내.
@@ -87,6 +95,7 @@
 ### M4-9 · 피격/파괴 VFX (빨간 깜빡) 🟡
 - **작업**: onepage 차별점. 파괴 가능 오브젝트 피격 시 빨간 깜빡임, 파괴 이펙트(JMO Assets VFX 활용 검토).
 - **DoD**: 적/오브젝트 피격 시 빨간 피드백, 파괴 시 이펙트. **의존**: M1-4
+- **파킹(M4-4서 옴)**: **실드 버블 비주얼 폴리시**(현재 임시 반투명 구체 `ShieldBubble`+`ShieldBubble_Mat`) — 질감/이펙트를 이 VFX 패스에서 다듬기.
 
 ### M4-10 · 로컬 하이스코어 저장 🟡
 - **작업**: progression §3. PlayerPrefs 하이스코어 저장/표시.

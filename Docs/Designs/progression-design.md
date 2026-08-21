@@ -46,6 +46,8 @@
 - **기록 저장**: **로컬만** (PlayerPrefs 수준 하이스코어).
   - **Firebase 연동(리더보드)**: 시간 되면 — **Nice 티어**.
 
+> **구현 완료(M4-10, 2026-08-21)**: 로컬 저장 = **암호화 파일**(`persistentDataPath/.vdsys.dat`, AES-256 + 무결성 해시 — "PlayerPrefs 수준"보다 은닉·변조 방지). **교체 이음새** `IHighScoreStore`→로컬 `LocalObscureStore`, **DB 역할 SO** `HighScoreRepository`(`Best`/`LastScore`/`Commit`) — **Firebase(M5-7)는 store 구현체만 교체**. 표시 = **ResultScene**(현재 점수 + 최고점 + 신기록). 게임오버 연출 = 프리즈+폭발(`CFXR Explosion 1`)·플레이어 소멸 → **이클립스 와이프**(검은 원 좌→우) 전환, [다시하기]/[타이틀]. 상세 = [backlog-M4.md](../Dev/backlog-M4.md) M4-10.
+
 ## 4. 확정 요약 (현재까지)
 
 - 오브 = 경험치, **점증형 임계값**, 레벨업 시 3choice, **선택 중 일시정지**

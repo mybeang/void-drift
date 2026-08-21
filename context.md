@@ -48,7 +48,7 @@
 
 > 다음 작업은 **다른(새) 세션**에서 진행될 수 있음. 이 섹션이 인계 기준.
 
-### ▶ 다음 세션 인계 — 🔶 M4 진행 중(M4-1·M4-2·M4-3 완료), 다음 = M4-4 (2026-08-21)
+### ▶ 다음 세션 인계 — ✅ M4 기능 구현 전부 완료(M4-1~10), 다음 = 밸런싱 데이터 일괄 + 이슈 (2026-08-21)
 
 - **완료 상태**: **M1 코어루프 + M2 적 파이프라인 + M3 전부(적 12종 로스터·이동/공격 AI·3choice 데이터화) 완료 ⇒ Must 코어 충족.** 적 = **조합형**(공통 로직 셸 + `EnemyBuilder` 조립: 비주얼+스탯+**AI 모듈**). 파이프라인 = **[06_EnemyPipeline.md](Docs/Dev/06_EnemyPipeline.md)**, M3 상세 = [backlog-M3.md](Docs/Dev/backlog-M3.md) ⚡.
 - **M4 진행 순서(사용자 확정 2026-08-20)**: `M4-1→2→3→4→7→8→5→6→9→10`. M5-1 빌드는 뒤로.
@@ -62,7 +62,8 @@
 - **✅ M4-5 구현 완료(2026-08-21, 페이즈 수치 튜닝 보류)**: 난이도 페이즈. `DifficultyProvider`(Core) 스텁 1.0 → **경과시간 배율 곡선**(`phases` 순서배열, 페이즈 내 start→end lerp·경계 점프, 마지막=end 유지, (재)Playing 리셋). `StatScaler`가 이 배율을 적 체력/속도/데미지에 곱함(실배율 전환=밸런싱 기준점). `DifficultyPhaseDefinition` SO(지속·시작/끝배율·문구) 기본 4종(Day5 placeholder) 배선. HUD 배너 `PhaseBannerView`(경계 문구 페이드, SUIT-Heavy) — **자기 GO 비활성 금지**(구독이 그 컴포넌트, alpha로만 표시). 오서링 툴 `Difficulty Authoring`(`SoTableEditorView<T>` 세 번째, 순서는 씬 phases 배열·값은 툴). `GameEvents.DifficultyBanner` 채널. **스폰 프로파일 교체=M4-6**, 페이즈 수치 채우기=나중 일괄.
 - **✅ M4-6 구현 완료(2026-08-21, 2층 보류·데이터 나중 일괄)**: 에디터 툴 **3층 스폰 풀 타임라인**. `SpawnProfileDefinition` SO(적 조합 `Entry[]`+밀도) → `DifficultyPhaseDefinition.spawnProfile`(페이즈에 연결) → `DifficultyProvider.CurrentPhase`/`Profiles()` → `EnemySpawner`가 현재 페이즈 프로파일로 스폰(조합+밀도), **비면 기존 spawnTable 폴백(비파괴)**. 툴 `Spawn Profile Authoring`(`SoTableEditorView<T>` 네 번째). **2층(아키타입 반쯤 묶기)=보류**(결정론 SO 모델 상충). 프로파일 데이터 0→현 스폰 그대로, 연동 실검증은 데이터 채울 때. **M4-5 곡선+M4-6 프로파일=페이즈 통합**(통합 튜닝 창 계열).
 - **✅ M4-9 완료(2026-08-21)**: 피격/히트 VFX. **VFX는 사용자 지정만**(임의 추가 금지 방침). `HitFlash`(`Core/`, MPB `_BaseColor` 틴트 ~0.08s) → Enemy·Player 프리팹, `Enemy.TakeDamage`·`PlayerHealth.ApplyDamage`(실드 흡수 제외) 훅. 투사체 `hitVfx` 필드 + 히트 위치 CFXR 스폰: 기관총=CFXR Hit A (Red)·레일건=CFXR3 Hit Ice B (Air)(관통마다)·유도=CFXR3 Fire Explosion B. 옵션 **후방 블러스터** = 범용 `ThrusterFX.prefab`(CFXR 애디티브 파티클) Enemy·Player 후방 부착(위치 튜닝 대상). **HUD 재배치 병행**: 시간=상단중앙·레벨/HP/XP=좌상단 스택·점수=우상단(RectTransform 앵커/피벗만). 파킹: 실드 버블 폴리시·블러스터 위치.
-- **다음 = M4-10**(로컬 하이스코어 PlayerPrefs 저장/표시 — M4 마지막). 이후 **밸런싱 데이터 일괄**(난이도 페이즈 수치 + 스폰 프로파일 큐레이션).
+- **✅ M4-10 완료(2026-08-21)**: 로컬 하이스코어 + **게임오버 결과 화면(프로젝트 첫 씬 전환)**. 저장=**교체 이음새** `IHighScoreStore`(`Core/Interface/`) → 로컬 `LocalObscureStore`(`Core/`, `persistentDataPath/.vdsys.dat`에 **AES-256 암호화+SHA256 무결성 해시**, 부재·변조 시 0 폴백) → **DB 역할 SO** `HighScoreRepository`(`Data/`: `Best`(store 위임·캐시)·`LastScore`(인메모리, 씬 전환 간 현재점수 전달)·`Commit`→`LastWasRecord`). **Firebase(M5-7)=store 구현체만 교체**. 흐름: `GameOverFlow`(`Core/`, GameScene 배선)=GameOver 구독→플레이어 위치 폭발 **CFXR Explosion 1**(×1.5=`explosionScale`, 프리즈 중 파티클 unscaled)+**플레이어 SetActive(false)**→1.5s 프리즈→`Commit`→`SceneTransition`. `SceneTransition`(`Core/`, DontDestroyOnLoad 싱글톤·UI 코드생성)=**이클립스 와이프**(화면보다 큰 절차적 검은 원 좌→우 커버→`LoadSceneAsync`→리빌, 전부 unscaled·sortOrder 32760). ResultScene=Camera+EventSystem(InputSystem)+Canvas(GAME OVER/신기록!/SCORE/BEST/다시하기·타이틀)+`ResultView`(`UI/`, 공유 SO 참조). 다시하기=GameScene·타이틀=(빈)TitleScene 둘 다 와이프. SO 에셋=`ScriptableObjects/Data/HighScoreRepository.asset`(GameScene·ResultScene 공유). **수치(프리즈·와이프·레이아웃)=시작값 조정 대상.** Play 검증(사용자). 상세=[backlog-M4.md](Docs/Dev/backlog-M4.md) ⚡·M4-10.
+- **다음 = 밸런싱 데이터 일괄**(난이도 페이즈 수치 M4-5 + 스폰 프로파일 큐레이션 M4-6) + **M4-8 플레이 검증** + 열린 이슈(**I-4** 탄막 교전 라인 게이팅·**I-5** 라인 통과 오브젝트 페이드아웃). **M4 기능 구현은 전부 완료** — 이후 마일스톤은 M5(Nice: 빌드 M5-1·Firebase 리더보드 M5-7 등).
 - **3choice 데이터화(M3-4)**: `UpgradeDefinition` SO(`Assets/Scripts/Data/`, type/수치/가중치/maxStacks/표시) + **Upgrade Authoring 창**(`Window/Void Drift/Upgrade Authoring`, `SoTableEditorView` 재사용 — 두 번째 Table Tool). `UpgradeSystem`=SO 풀 가중치 롤·중복없음·type 라우팅. 강화 6종 SO(`Upgrade_*`): 이동/최대체력/자석 + 신규 체력재생·오브가치·공격력(=기초 공격력, M4-8 배율 base). 적용 훅=`PlayerHealth.AddRegen`·`ExperienceSystem.AddOrbValueBonus`·`PlayerShooter.AddAttackPower`. HUD=`GameEvents.HpValues`(HP 절대값) 채널 추가로 HP 숫자 표기.
 - **AI = 순수 C# 전략 모듈**(사용자 결정, MonoBehaviour 아님): `IMoveBehaviour`(`StraightMove`/`ChaseMove`/`WeaveMove`)·`IAttackBehaviour`(`ContactAttack`/`BarrageAttack`/`AimedShot`/`SuicideAttack`), 위치=`Assets/Scripts/Enemy/AI/`. `Enemy`가 Update에서 `Tick` 위임, `EnemyBuilder.ResolveMove`/`ResolveAttack`가 `def.moveAI`/`def.attackAI`로 주입(무상태=싱글톤 공유, 상태 있는 탄막/조준단발/사행=인스턴스별). 플레이어 조회=`PlayerLocator`(Player 태그). **직진 하드코딩은 M3-1이 제거함.** **`WeaveMove`·`AimedShot`은 M3-3에서 M4-7 선반영 — 견제(Hover)만 미구현(직진 폴백).**
 - **적 로스터(M3-3) = 4라인 × 3티어 = 12 SO**: `Enemy_{LightCharger,HeavyCharger,Shooter,Bomber}_T{1,2,3}`(구 `Enemy_Sample_*` 삭제). Light/Heavy는 둘 다 archetype=`Charger`, 네이밍·스탯으로 분리. 티어 = 이동 복잡도(직진→추적→사행)+공격밀도+스탯 에스컬레이션. **모델 크기 편차 보정 = `EnemyDefinition.visualScale`(신설)** — 빌더 ①이 `Enemy.AttachVisual(prefab, scale)`로 비주얼 자식에만 곱(히트박스=셸 고정). 7개 모델 전부 사용(라벨 유효).
@@ -70,7 +71,7 @@
 - **레이어(M3-2 신설)**: `EnemyBullet`(11) 추가 — 물리 매트릭스 **EnemyBullet×Player만 ON**. 기존 Player(8)/Enemy(9)/PlayerBullet(10)에 더함.
 - **밸런싱 파킹(M4-5 이후)**: 적 스탯·탄막 밀도·초반 과다 스폰은 전부 **시작점** — **난이도 그래프(M4-5)** 만든 뒤 튜닝. 시간 게이팅(초반=저티어)=**M4-6**. **[I-3] 플레이어 체력 회복 수단 부재**도 그때 함께.
 - **M2-5 스코프 밖(이후)**: 드랍오브 데이터화(`dropOrb.visual`/`xpValue` 주입) · 적탄 비주얼 교체·부채꼴 각/탄 수명·`WeaveMove` 진폭·`AimedShot` 등 코드 기본값의 SO화.
-- **이슈**: [issues.md](Docs/Dev/issues.md) **I-3**(체력 회복 부재, 보류) · **I-2**(플레이어 Aim 어색, 보류) · **I-1**(이동 관성감, 보류).
+- **이슈**: [issues.md](Docs/Dev/issues.md) **I-5**(라인 통과 오브젝트 페이드아웃, 열림) · **I-4**(탄막 무제한 발사·교전 라인 게이팅, 열림) · **I-3**(체력 회복 부재, 보류) · **I-2**(플레이어 Aim 어색, 보류) · **I-1**(이동 관성감, 보류).
 - **주의**: 레이어 물리 매트릭스는 **에디터 재부팅 시 재적용** 필요(신설 `EnemyBullet`×Player 포함).
 
 ---

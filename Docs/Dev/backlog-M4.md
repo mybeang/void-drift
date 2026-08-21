@@ -3,7 +3,7 @@
 
 ## ⚡ 특이사항 (이 헤더만 읽어도 크로스 마일스톤 파악)
 - **상태**: 🟡 Should. **있으면 확실히 강해지는 것들. 마감 압박 시 아래→위로 잘라낸다.**
-- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신). ✅ **M4-3 완료**(시작 로드아웃 기관총만 + 5레벨 마일스톤 3choice 무기 카드). ✅ **M4-4 완료**(실드 액티브 스킬 — 자체HP 방어막·에스컬 쿨다운 15+5·코너버튼+Space·강화 3종). ✅ **PC 보조 입력**(WASD 이동, Space 실드). ✅ **M4-7 완료**(견제/Hover). ✅ **M4-8 구현 완료**(무기별 파워, 검증 보류). ✅ **M4-5 구현 완료**(난이도 페이즈, 수치 튜닝 보류). ✅ **M4-6 구현 완료**(3층 스폰 풀 타임라인, 2층 보류·데이터 나중). ✅ **M4-9 완료**(빨간 깜빡 `HitFlash` + 무기별 히트 CFXR + 옵션 후방 블러스터 `ThrusterFX`; HUD 재배치 병행). 다음 = **M4-10**(로컬 하이스코어). 이슈 **I-4**(탄막 무제한 발사) 열림.
+- **진행(2026-08-21)**: ✅ **M4-1 완료**(무기 3종 전략모듈+전용풀+동시발사). ✅ **M4-2 완료**(무기 레벨 Lv1~4 = 탄약↑ — 공통 `WeaponBase` 레벨 머신). ✅ **M4-3 완료**(시작 로드아웃 기관총만 + 5레벨 마일스톤 3choice 무기 카드). ✅ **M4-4 완료**(실드 액티브 스킬 — 자체HP 방어막·에스컬 쿨다운 15+5·코너버튼+Space·강화 3종). ✅ **PC 보조 입력**(WASD 이동, Space 실드). ✅ **M4-7 완료**(견제/Hover). ✅ **M4-8 구현 완료**(무기별 파워, 검증 보류). ✅ **M4-5 구현 완료**(난이도 페이즈, 수치 튜닝 보류). ✅ **M4-6 구현 완료**(3층 스폰 풀 타임라인, 2층 보류·데이터 나중). ✅ **M4-9 완료**(빨간 깜빡 `HitFlash` + 무기별 히트 CFXR + 옵션 후방 블러스터 `ThrusterFX`; HUD 재배치 병행). ✅ **M4-10 완료**(로컬 하이스코어 암호화 파일 저장 + 게임오버 결과 화면·이클립스 와이프 전환·플레이어 소멸·폭발). **⇒ M4 기능 구현 전부 완료(M4-1~10).** 남은 후속 = **밸런싱 데이터 일괄**(M4-5 페이즈 수치·M4-6 스폰 프로파일) + **M4-8 플레이 검증**. 이슈 **I-4**(탄막 무제한 발사)·**I-5**(라인 통과 페이드아웃) 열림.
 - **전제(이전 M에서 옴)**: M1 코어(사격 M1-3·3choice M1-7·HUD M1-10·게임오버 M1-9), M2 툴(M2-4/M2-5), **M3 전부 완료**(이동/공격 AI M3-1/M3-2 · 적 12종 로스터 M3-3 · 3choice 데이터화+오서링 툴 M3-4). 각 태스크 **의존** 참조.
 - ⚠️ **M3에서 M4 일부 선구현됨(재작업 금지)**:
   - **M4-7**: 사행(`WeaveMove`)·조준단발(`AimedShot`)은 **M3-3에서 선반영** → **M4-7 잔여 = 견제(Hover)뿐**(현재 직진 폴백).
@@ -124,6 +124,14 @@
 - **HUD 재배치(같이)**: 시간=상단 중앙, 레벨·HP·XP=좌상단 스택, 점수=우상단(HudView 참조 그대로, RectTransform 앵커/피벗만 변경).
 - **잔여 파킹**: 실드 버블 비주얼 폴리시(임시 `ShieldBubble`+`ShieldBubble_Mat`)는 후속(질감/이펙트). 블러스터 위치 튜닝.
 
-### M4-10 · 로컬 하이스코어 저장 🟡
-- **작업**: progression §3. PlayerPrefs 하이스코어 저장/표시.
+### M4-10 · 로컬 하이스코어 저장 + 게임오버 결과 화면 ✅ 완료(2026-08-21)
+- **작업**: progression §3. 하이스코어 로컬 저장/표시. → **충족 + 확장**(게임오버 결과 화면·프로젝트 첫 씬 전환 포함). Play 검증(사용자).
 - **DoD**: 게임오버 점수가 저장되고 최고점 표시. **의존**: M1-9
+- **결정(사용자, 2026-08-21)**: ①표시 위치 = **ResultScene**(현재 점수 + 최고점). ②저장 = **DB 역할 SO + 교체 이음새** — 지금 로컬, 나중에 Firebase(M5-7)로 store만 교체. ③저장 매체 = **암호화 파일**(JSON처럼 못 열어보게, 유저가 찾기 어렵게). ④게임오버 연출 = 짧은 프리즈+폭발(`CFXR Explosion 1`)·**플레이어 소멸** → 이클립스 와이프(검은 원 좌→우) → ResultScene → 리빌. ⑤버튼 = 다시하기 + 타이틀.
+- **구현 요약(Step ① 저장소 계층 → ②전환 → ③결과 UI)**:
+  - **저장소 계층**: `IHighScoreStore`(`Core/Interface/`, 교체 이음새 `LoadBest`/`SaveBest`) → `LocalObscureStore`(`Core/`, `persistentDataPath/.vdsys.dat`에 **AES-256 암호화(랜덤 IV) + SHA256 무결성 해시**, 부재·복호화 실패·변조 시 0 폴백) → **DB 역할 SO** `HighScoreRepository`(`Data/`, `Best`=store 위임·캐시 / `LastScore`=인메모리(에셋이 세션 내 로드 유지 → 씬 전환 간 현재점수 전달, PlayerPrefs 불필요) / `Commit(score)`→신기록 여부·`LastWasRecord`). ⚠️ **SO 자체는 빌드에서 영속 안 됨** → 실제 저장은 store가 담당(SO=접근 지점). 난독화 한계(키 바이너리 포함)=주석 명시, 권위 기록은 Firebase.
+  - **전환**: `SceneTransition`(`Core/`, DontDestroyOnLoad 싱글톤, UI 코드 생성=프리팹 불필요) — **이클립스 와이프**: 화면보다 큰 절차적 검은 원이 좌→우 1회 통과(커버→`LoadSceneAsync`→리빌), 모든 트윈 **unscaled**(게임오버 timeScale 0 대응), sortOrder 32760, 전환 중 레이캐스트 차단.
+  - **게임오버 흐름**: `GameOverFlow`(`Core/`, GameScene에 배선) — `State==GameOver` 구독 → 플레이어 위치 폭발 스폰(×`explosionScale`=1.5, 프리즈 중 보이게 파티클 unscaled) + **플레이어 `SetActive(false)`** → `preTransitionDelay`(1.5s) 프리즈 → `HighScoreRepository.Commit(현재점수)` → `SceneTransition.TransitionTo("ResultScene")`.
+  - **결과 UI**: ResultScene에 Camera + EventSystem(InputSystemUIInputModule) + Canvas(GAME OVER / 신기록! / SCORE / BEST / [다시하기] / [타이틀]) + `ResultView`(`UI/`, 공유 SO 참조로 `LastScore`/`Best`/`LastWasRecord` 표시). 다시하기=GameScene·타이틀=(빈)TitleScene, 둘 다 와이프.
+  - **데이터/씬**: `HighScoreRepository.asset`(`ScriptableObjects/Data/`) = GameScene(`GameOverFlow`)·ResultScene(`ResultView`) 공유 배선. 폭발 프리팹 = `CFXR Explosion 1`.
+  - **잔여(조정 대상)**: 프리즈 1.5s·와이프 0.7s·ResultScene 레이아웃(폰트/위치/색)·이클립스 원 룩 = 시작값, 필요 시 튜닝. **Firebase 리더보드 = M5-7**(이 SO/store 위에).

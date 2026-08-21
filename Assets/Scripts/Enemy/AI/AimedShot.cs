@@ -11,12 +11,17 @@ namespace VD.Enemy
     {
         readonly EnemyBulletPool _pool;
         readonly float _bulletLifetime;   // 적탄 수명(초). Day5 튜닝 / SO화 후보
+        readonly float _engageNearZ;      // 교전 라인(플레이어 앞 Z갭) 근접 경계 — 통과 시 발사 중지. Day5
+        readonly float _engageFarZ;       // 교전 라인 원거리 경계 — 이보다 멀면 발사 안 함(I-4). Day5
         float _cooldown;
 
-        public AimedShot(EnemyBulletPool pool, float bulletLifetime = 6f)
+        public AimedShot(EnemyBulletPool pool, float bulletLifetime = 6f,
+            float engageNearZ = 10f, float engageFarZ = 60f)
         {
             _pool = pool;
             _bulletLifetime = bulletLifetime;
+            _engageNearZ = engageNearZ;
+            _engageFarZ = engageFarZ;
         }
 
         public void OnSpawned()
@@ -30,6 +35,11 @@ namespace VD.Enemy
 
             _cooldown -= dt;
             if (_cooldown > 0f) return;
+
+            // 교전 라인 게이팅(I-4): 플레이어 앞 [nearZ, farZ] 구간에서만 발사.
+            // 밖이면 쿨다운 유지 → 윈도우 진입 즉시 발사.
+            if (!InEngageWindow(self)) return;
+
             _cooldown = Mathf.Max(0.05f, self.FireInterval);
 
             Vector3 origin = self.transform.position;
@@ -40,6 +50,15 @@ namespace VD.Enemy
             EnemyBullet b = _pool.Get();
             b.transform.position = origin;
             b.Launch(dir, self.ProjectileSpeed, _bulletLifetime, self.Damage);
+        }
+
+        // 플레이어 앞 Z갭이 교전 윈도우 안일 때만 발사(I-4).
+        bool InEngageWindow(Enemy self)
+        {
+            Transform p = PlayerLocator.Get();
+            if (p == null) return true;
+            float dz = self.transform.position.z - p.position.z;
+            return dz >= _engageNearZ && dz <= _engageFarZ;
         }
     }
 }

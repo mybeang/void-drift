@@ -8,7 +8,7 @@ namespace VD.Core
     /// 비주얼은 자식 <c>Model</c>(Crystal effect VFX). 풀은 <see cref="OrbPool"/>(<see cref="PooledObjectPool{T}"/> 상속).
     /// <para>거동(사용자 결정 2026-08-18):
     /// <list type="bullet">
-    /// <item><b>반경 밖</b> — 전방(월드 -Z, 플레이어 쪽)으로 <b>일정 속도로 흘러 지나침</b>. 플레이어가 근처(반경 내)에 없으면 뒤로 빠져 despawn(못 먹음).</item>
+    /// <item><b>반경 밖</b> — 전방(월드 -Z, 플레이어 쪽)으로 <b>일정 속도로 흘러 지나침</b>. 플레이어가 근처(반경 내)에 없으면 뒤로 빠져 despawn(못 먹음). 플레이어 평면(z)을 지난 뒤부터는 <b>페이드아웃</b>(통과 거리 비례 알파↓, I-5) — 캡처되면 복원.</item>
     /// <item><b>반경 내</b> — 플레이어가 <see cref="magnetRadius"/> 이내로 들어오면 <b>캡처</b>되어 플레이어로 <b>가속 끌림</b>(가까울수록 빠름). 한 번 캡처되면 래치(놓치지 않음).</item>
     /// <item><b>습득</b> — 캡처된 오브가 <see cref="pickupRadius"/> 이내로 도달하면 <see cref="GameEvents.PublishOrbCollected"/>로 경험치 발행(M1-6) 후 풀 반납.</item>
     /// </list>
@@ -32,10 +32,36 @@ namespace VD.Core
         [Tooltip("습득 시 주는 경험치. 지금은 고정 1(→ M2-2 SO로 데이터화). 수치 Day5")]
         [SerializeField] int xpValue = 1;
 
+        [Header("페이드아웃 (플레이어 평면 통과 후 흐려짐, I-5)")]
+        [Tooltip("페이드 시작선을 플레이어 z보다 앞으로(+Z, 오브가 도달하기 전) 당기는 거리. 0=플레이어 평면부터, 양수면 그만큼 앞에서 흐려지기 시작. 수치 Day5")]
+        [SerializeField] float fadeStartOffset = 5f;
+        [Tooltip("페이드 시작선을 지난 뒤 이 거리만큼 흐르는 동안 알파를 1→0으로 선형 감소. despawn(z<=despawnZ) 전에 완전투명이 될 필요는 없음 — '흐려짐이 인지될' 수준으로만 튜닝하면 됨(반납은 despawnZ 기준 유지). 0 이하면 페이드 비활성. 수치 Day5")]
+        [SerializeField] float fadeDistance = 20f;
+
         Transform _target;
         Action<Orb> _return;
         float _magnetBonus;   // 자석범위 강화 보너스(OrbPool 주입, M1-8)
         bool _captured;
+
+        // 페이드아웃(I-5): 비주얼=파티클 4종(이미 Transparent) → MPB로 _BaseColor 알파만 낮춘다(공유 재질 안전, 복제 없음).
+        static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
+        ParticleSystemRenderer[] _fadeRenderers;   // 자식 파티클 렌더러(Crystal/Glow/Sparks/Flares). 프리팹 고정이라 Awake 1회 수집
+        Color[] _baseColors;                       // 렌더러별 원본 _BaseColor(알파 포함) — 페이드는 이 알파에 배수
+        MaterialPropertyBlock _mpb;
+        float _lastAlpha = -1f;                    // 마지막 적용 알파(중복 세팅 회피)
+
+        void Awake()
+        {
+            // 페이드용 파티클 렌더러 + 원본 _BaseColor 캐시(I-5). 오브 비주얼은 프리팹 고정(적처럼 주입/교체 없음)이라 1회면 충분.
+            _fadeRenderers = GetComponentsInChildren<ParticleSystemRenderer>(true);
+            _baseColors = new Color[_fadeRenderers.Length];
+            for (int i = 0; i < _fadeRenderers.Length; i++)
+            {
+                var m = _fadeRenderers[i] != null ? _fadeRenderers[i].sharedMaterial : null;
+                _baseColors[i] = (m != null && m.HasProperty(BaseColorID)) ? m.GetColor(BaseColorID) : Color.white;
+            }
+            _mpb = new MaterialPropertyBlock();
+        }
 
         /// <summary>풀 Get 시 호출 — 타깃(플레이어)·반납 콜백·자석 보너스 배선 + 캡처 상태 리셋.</summary>
         public void OnSpawned(Transform target, Action<Orb> returnToPool, float magnetBonus)
@@ -44,6 +70,27 @@ namespace VD.Core
             _return = returnToPool;
             _magnetBonus = magnetBonus;
             _captured = false;
+            _lastAlpha = -1f;   // 재사용 풀: 이전 사이클의 페이드 잔상 제거
+            SetAlpha(1f);       // 또렷한 상태로 시작
+        }
+
+        /// <summary>파티클 4종의 _BaseColor 알파를 원본×<paramref name="a"/>로 세팅(MPB, 공유 재질 안전). I-5 페이드.</summary>
+        void SetAlpha(float a)
+        {
+            if (_fadeRenderers == null) return;
+            a = Mathf.Clamp01(a);
+            if (Mathf.Approximately(a, _lastAlpha)) return;   // 중복 세팅 회피
+            _lastAlpha = a;
+            for (int i = 0; i < _fadeRenderers.Length; i++)
+            {
+                var r = _fadeRenderers[i];
+                if (r == null) continue;
+                r.GetPropertyBlock(_mpb);
+                Color c = _baseColors[i];
+                c.a *= a;
+                _mpb.SetColor(BaseColorID, c);
+                r.SetPropertyBlock(_mpb);
+            }
         }
 
         void Update()
@@ -58,6 +105,8 @@ namespace VD.Core
 
                 if (_captured)
                 {
+                    SetAlpha(1f);   // 캡처=플레이어로 끌려옴 → 뒤로 지나며 흐려졌더라도 다시 또렷하게(I-5)
+
                     if (dist <= pickupRadius)   // 습득(거리 기반) → 경험치 이벤트 발행 + 풀 반납 (M1-6)
                     {
                         GameManager.Instance?.Events?.PublishOrbCollected(xpValue);
@@ -76,6 +125,15 @@ namespace VD.Core
 
             // 반경 밖(또는 타깃 없음): 전방(-Z)으로 그냥 흘러 지나침 → 뒤로 빠지면 반납
             transform.position += Vector3.back * (driftSpeed * Time.deltaTime);
+
+            // 페이드아웃(I-5): 미캡처 오브가 페이드 시작선(플레이어 z + 앞당김 오프셋)을 지나면 거리에 비례해 흐려짐.
+            // fadeDistance는 완만함만 조절 — despawnZ 도달 시 알파가 0이 아니어도 아래에서 반납(완전투명 불요).
+            if (_target != null && fadeDistance > 0f)
+            {
+                float past = (_target.position.z + fadeStartOffset) - transform.position.z;   // 양수 = 시작선 통과
+                SetAlpha(past <= 0f ? 1f : 1f - past / fadeDistance);
+            }
+
             if (transform.position.z <= despawnZ) _return?.Invoke(this);
         }
     }

@@ -14,13 +14,18 @@ namespace VD.Enemy
         readonly EnemyBulletPool _pool;
         readonly float _spreadAngle;    // 부채꼴 전체 각(도). Day5 튜닝 / SO화 후보
         readonly float _bulletLifetime; // 적탄 수명(초). Day5 튜닝 / SO화 후보
+        readonly float _engageNearZ;    // 교전 라인(플레이어 앞 Z갭) 근접 경계 — 이보다 가까우면(통과) 발사 중지. Day5
+        readonly float _engageFarZ;     // 교전 라인 원거리 경계 — 이보다 멀면 발사 안 함(먼 거리 난사 방지, I-4). Day5
         float _cooldown;
 
-        public BarrageAttack(EnemyBulletPool pool, float spreadAngle = 50f, float bulletLifetime = 6f)
+        public BarrageAttack(EnemyBulletPool pool, float spreadAngle = 50f, float bulletLifetime = 6f,
+            float engageNearZ = 10f, float engageFarZ = 60f)
         {
             _pool = pool;
             _spreadAngle = spreadAngle;
             _bulletLifetime = bulletLifetime;
+            _engageNearZ = engageNearZ;
+            _engageFarZ = engageFarZ;
         }
 
         public void OnSpawned()
@@ -34,9 +39,24 @@ namespace VD.Enemy
 
             _cooldown -= dt;
             if (_cooldown > 0f) return;
+
+            // 교전 라인 게이팅(I-4): 플레이어 앞 [nearZ, farZ] 구간에서만 발사.
+            // 밖이면 쿨다운을 리셋하지 않아 윈도우 진입 즉시 발사된다.
+            if (!InEngageWindow(self)) return;
+
             _cooldown = Mathf.Max(0.05f, self.FireInterval);   // 간격 0 방지
 
             Fire(self);
+        }
+
+        // 플레이어 앞 Z갭(enemy.z - player.z)이 교전 윈도우 안일 때만 발사 허용(I-4).
+        // 너무 멀면(> farZ) 침묵, 라인 통과해 너무 가까우면(< nearZ) 발사 중지.
+        bool InEngageWindow(Enemy self)
+        {
+            Transform p = PlayerLocator.Get();
+            if (p == null) return true;   // 플레이어 없으면 제한 없음(단독 테스트)
+            float dz = self.transform.position.z - p.position.z;
+            return dz >= _engageNearZ && dz <= _engageFarZ;
         }
 
         void Fire(Enemy self)

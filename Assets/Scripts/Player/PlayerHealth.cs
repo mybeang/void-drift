@@ -98,9 +98,10 @@ namespace VD.Player
             if (_dead) return;
 
             var e = other.GetComponentInParent<EnemyEntity>();
-            if (e == null) return;   // 적이 아님(자기 총알 등) → 무시
+            if (e == null || e.IsExiting) return;   // 적이 아니거나(자기 총알 등) 이미 접촉 퇴장 중이면 무시(중복 데미지 차단)
 
             ApplyDamage(e.ContactDamage);
+            e.OnContactPlayer();   // 접촉 이펙트 + 명멸 퇴장 개시(I-6)
         }
     }
 }

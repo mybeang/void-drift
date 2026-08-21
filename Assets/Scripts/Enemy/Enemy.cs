@@ -17,6 +17,22 @@ namespace VD.Enemy
         [Tooltip("능력치(체력/이동속도/데미지/처치점수 + 공격AI별). 스폰 시 빌더가 ApplyStats로 effective 주입 — 이 인스펙터 값은 미주입 시 폴백 기본값. 수치 Day5")]
         [SerializeField] EnemyStats stats;
 
+        [Header("접촉 퇴장 (I-6: 돌진형이 플레이어에 닿으면 이펙트 + 명멸하며 퇴장)")]
+        [Tooltip("플레이어 접촉 시 재생할 VFX 프리팹(CFXR3 Hit Electric C (Air) 등 자가소멸). 미배선이면 이펙트 없이 퇴장만")]
+        [SerializeField] GameObject contactExitVfx;
+        [Tooltip("접촉 후 명멸하며 사라지기까지 시간(초). 수치 Day5")]
+        [SerializeField] float contactExitDuration = 0.5f;
+        [Tooltip("명멸 주기(초) — 이 간격마다 비주얼 표시/숨김 토글. 수치 Day5")]
+        [SerializeField] float contactBlinkInterval = 0.06f;
+
+        [Header("자폭 (I-6: 근처서 멈춤 → 빨간 깜박 → 폭발 → 범위 감쇠 데미지)")]
+        [Tooltip("폭발 시 재생할 VFX 프리팹(CFXR3 Fire Explosion B 등 자가소멸). 미배선이면 데미지만")]
+        [SerializeField] GameObject suicideExplosionVfx;
+        [Tooltip("폭발 VFX 크기 배수(프리팹 원본 스케일에 곱). 수치 Day5")]
+        [SerializeField] float suicideExplosionScale = 5f;
+        [Tooltip("자폭 무장(Arm) 중 빨간 깜박 주기(초). 수치 Day5")]
+        [SerializeField] float armBlinkInterval = 0.12f;
+
         /// <summary>플레이어 접촉 데미지(PlayerHealth가 읽음).</summary>
         public float ContactDamage => stats.damage;
 
@@ -57,6 +73,14 @@ namespace VD.Enemy
         bool _dead;
         bool _attackSuppressed;   // 이동 모듈이 공격을 막는 프레임(예: Hover 접근/이탈 중엔 사격 정지, M4-7)
         HitFlash _hitFlash;       // 피격 빨간 깜빡(M4-9). 셸에 부착, 주입 비주얼 렌더러를 틴트
+        bool _exiting;            // 접촉 퇴장 연출 중(I-6): 명멸하다 Despawn. 이 동안 접촉 데미지·공격 억제
+        float _exitTimer;         // 남은 퇴장 시간
+        float _blinkTimer;        // 다음 명멸 토글까지 남은 시간
+        bool _armSuicide;         // 자폭 무장 중(I-6): 이동 정지 + 빨간 깜박. SuicideAttack이 제어
+        float _armBlinkTimer;     // 다음 빨간 깜박까지 남은 시간
+
+        /// <summary>접촉 퇴장 연출 중인지(I-6). PlayerHealth가 재접촉 데미지 중복을 피하려 조회.</summary>
+        public bool IsExiting => _exiting;
 
         /// <summary>풀이 Get 시 호출 — 반납 콜백 배선 + 체력/사망상태/드랍핸들러/공격억제 리셋.</summary>
         public void OnSpawned(Action<Enemy> returnToPool)
@@ -66,6 +90,8 @@ namespace VD.Enemy
             _dead = false;
             _dropOnDeath = null;
             _attackSuppressed = false;   // 기본=공격 허용(비-Hover 적은 항상 사격). Hover만 매 프레임 갱신.
+            _exiting = false;            // 접촉 퇴장 상태 리셋(I-6)
+            _armSuicide = false;         // 자폭 무장 상태 리셋(I-6)
             if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();   // 셸에 부착된 깜빡 컴포넌트 캐시(M4-9)
         }
 
@@ -134,15 +160,66 @@ namespace VD.Enemy
             if (_hp <= 0f) Die();
         }
 
+        /// <summary>플레이어 접촉 시 호출(I-6, 돌진형) — 접촉 이펙트 재생 + 명멸 퇴장 개시. 이미 퇴장/사망 중이면 무시.</summary>
+        public void OnContactPlayer()
+        {
+            if (_dead || _exiting) return;
+            if (contactExitVfx != null)
+                Instantiate(contactExitVfx, transform.position, Quaternion.identity);   // 자가소멸 VFX
+            _exiting = true;
+            _exitTimer = contactExitDuration;
+            _blinkTimer = 0f;   // 즉시 첫 토글
+        }
+
         void Update()
         {
             float dt = Time.deltaTime;   // timeScale 0이면 0 → 자연 정지.
 
+            // 접촉 퇴장 중(I-6): 명멸만 하고 시간 다 되면 Despawn. 이동/공격은 계속(뒤로 흘러가며 깜박) 두되 공격은 억제.
+            if (_exiting)
+            {
+                _move?.Tick(this, dt);   // 관성적으로 계속 흐르게(추적은 짧은 시간이라 무해)
+                _exitTimer -= dt;
+                _blinkTimer -= dt;
+                if (_blinkTimer <= 0f && _visual != null)
+                {
+                    _visual.SetActive(!_visual.activeSelf);   // 표시/숨김 토글 = 명멸
+                    _blinkTimer = contactBlinkInterval;
+                }
+                if (_exitTimer <= 0f) Despawn();
+                return;
+            }
+
             // 이동·공격을 주입된 AI 모듈에 위임(M3-1/M3-2). 공격이 자폭으로 자멸시키면 _dead=true → 이후 스킵.
-            _move?.Tick(this, dt);
-            if (!_dead && !_attackSuppressed) _attack?.Tick(this, dt);   // Hover 접근/이탈 중엔 억제(멈춰있을 때만 사격)
+            // 자폭 무장 중(I-6)이면 이동 정지 + 빨간 깜박, 아니면 정상 이동.
+            if (_armSuicide)
+            {
+                _armBlinkTimer -= dt;
+                if (_armBlinkTimer <= 0f) { _hitFlash?.Flash(); _armBlinkTimer = armBlinkInterval; }
+            }
+            else
+            {
+                _move?.Tick(this, dt);
+            }
+            if (!_dead && !_attackSuppressed) _attack?.Tick(this, dt);   // 자폭 Tick(상태 진행)은 계속 / Hover는 억제
 
             if (!_dead && transform.position.z <= _despawnZ) Despawn();
+        }
+
+        /// <summary>자폭 무장 개시/해제(I-6) — 무장 중엔 이동 정지 + 주기적 빨간 깜박. SuicideAttack이 Arm 진입/폭발 시 제어.</summary>
+        public void SetSuicideArming(bool on)
+        {
+            _armSuicide = on;
+            _armBlinkTimer = 0f;   // 즉시 첫 깜박
+        }
+
+        /// <summary>자폭 폭발 VFX 재생(I-6) — SuicideAttack이 폭발 시점에 호출. 위치=현재(멈춘) 위치.</summary>
+        public void PlaySuicideExplosion()
+        {
+            if (suicideExplosionVfx == null) return;
+            var fx = Instantiate(suicideExplosionVfx, transform.position, Quaternion.identity);
+            if (suicideExplosionScale > 0f && !Mathf.Approximately(suicideExplosionScale, 1f))
+                fx.transform.localScale *= suicideExplosionScale;
         }
 
         void Die()

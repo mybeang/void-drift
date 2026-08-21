@@ -19,8 +19,8 @@
 | [I-2](#i-2--플레이어-조준aim-어색함) | 해결 | 플레이어 조준(Aim) 어색함 | M1-3 / `PlayerAim`·`PlayerBanking` |
 | [I-3](#i-3--플레이어-체력-회복-수단-부재) | 해결 | 플레이어 체력 회복 수단 부재 | M3-4 / `PlayerHealth` |
 | [I-4](#i-4--탄막-적-무제한-발사교전-라인-게이팅-필요) | 해결 | 탄막 적 무제한 발사(교전 라인 게이팅 필요) | M3-2 / `BarrageAttack`·`AimedShot` |
-| [I-5](#i-5--플레이어-라인-통과-오브젝트-페이드아웃-필요) | 열림 | 플레이어 라인 통과 오브젝트 페이드아웃 필요 | 적·적탄·오브 |
-| [I-6](#i-6--자폭-적-이동공격-ai-변경-및-자폭-vfx-필요) | 열림 | 자폭 적 이동·공격 AI 변경 및 자폭 VFX 필요 | M3-2 / `SuicideAttack`·자폭(Bomber) |
+| [I-5](#i-5--플레이어-라인-통과-오브젝트-페이드아웃-필요) | 열림(오브 구현·튜닝 파킹) | 플레이어 라인 통과 오브젝트 페이드아웃 필요 | `Orb` |
+| [I-6](#i-6--자폭-적-이동공격-ai-변경-및-자폭-vfx-필요) | 해결 | 자폭 적 이동·공격 AI 변경 및 자폭 VFX 필요 (+돌진 접촉 거동) | M3-2 / `SuicideAttack`·`Enemy`·자폭(Bomber) |
 
 ---
 
@@ -86,24 +86,33 @@
 
 ## I-5 · 플레이어 라인 통과 오브젝트 페이드아웃 필요
 
-- **상태**: 열림 (수정 대기 · 후속)
-- **관련**: 적(`Enemy`)·적탄(`EnemyBullet`)·오브(`Orb`) 등 플레이어를 지나쳐 뒤로 흐르는 오브젝트
+- **상태**: 열림 (오브 페이드 구현 완료 · 시작선/완만함 튜닝은 나중 파킹 — 사용자 "되면 좋고 안되면 그냥")
+- **관련**: `Assets/Scripts/Core/Orb.cs`. (**대상 = 오브만으로 축소 확정** — 적·적탄은 페이드 없이 유지, 대신 돌진 접촉 퇴장은 [I-6](#i-6--자폭-적-이동공격-ai-변경-및-자폭-vfx-필요)에서 별도 처리.)
 - **발견**: 2026-08-21, 사용자 요청으로 이슈화.
-- **증상/원하는 동작(사용자)**: 적·적의 탄환·오브 등이 **플레이어가 있는 선(라인)을 지나면** 그대로 또렷하게 남아 화면 뒤로 빠지는데, 이를 **점점 흐려지게(페이드아웃)** 처리해야 한다. 플레이어 평면을 통과한 뒤부터 서서히 투명화.
-- **처리 방향(후보, 미확정)**: 플레이어 z(또는 카메라 기준 라인) 통과 이후 거리·시간에 비례해 알파 감소. 대상별로 머티리얼/렌더러 접근 방식이 다름(적=비주얼 자식, 적탄=단순 메시, 오브=크리스탈 VFX) → 공통 페이드 컴포넌트로 묶을지 개별 처리할지 결정 필요. 페이드 시작 라인·속도는 데이터화 지향, 값은 Day5.
-- **조치 계획**: 후속. 구현 방법·기준은 미확정 — 착수 전 사용자와 방식 확정.
+- **증상/원하는 동작(사용자)**: 오브가 **플레이어가 있는 선(라인)을 지나면** 그대로 또렷하게 남아 화면 뒤로 빠지는데, 이를 **점점 흐려지게(페이드아웃)** 처리. 완전투명까지 갈 필요는 없고 "흐려짐이 인지될" 수준이면 됨.
+- **머티리얼 조사 결과**: 적 비주얼=URP/Lit **Opaque**(알파 페이드 불가, 복제·투명전환 필요) → 비용 큼. 오브 비주얼=파티클 4종(Crystal/Glow/Sparks/Flares) 전부 **이미 Transparent**(URP/Particles) → MPB `_BaseColor` 알파로 즉시 페이드 가능. **이 난이도 차이가 "오브만" 축소 결정의 근거.**
+- **구현(오브, z비례)**: `Orb.cs`에 통합 — 미캡처 드리프트 중 `orb.z < player.z + fadeStartOffset`부터 `alpha = 1 − past/fadeDistance`(`MaterialPropertyBlock`로 4개 파티클 렌더러 `_BaseColor` 알파, 원본×배수, 공유재질 안전). **캡처되면 `SetAlpha(1)` 복원**(자석에 끌려오면 다시 또렷). 반납은 기존 `z ≤ despawnZ` 유지(완전투명 불요). `OnSpawned`에서 알파 리셋(풀 재사용 잔상 제거).
+- **튜닝값(인스펙터, Day5)**: `fadeStartOffset` 5(시작선을 플레이어보다 앞으로 당김)·`fadeDistance` 20(완만함). 0 이하면 페이드 비활성.
+- **조치 계획**: 구현 완료. 흐려짐 시작 지점·정도는 위 두 값으로 나중 튜닝(사용자 파킹).
 - **로그**:
   - 2026-08-21 — 이슈 등록(열림). 사용자 요청으로 이슈화. 구현은 후속.
+  - 2026-08-22 — **대상 = 오브만 확정**(적 Opaque라 비용 큼, 오브는 이미 Transparent) + 오브 z비례 페이드 구현. 사용자 Play 관찰 "먼가 이상"하나 나중 튜닝으로 파킹(상태=열림 유지). `fadeStartOffset` 추가(시작선 앞당김).
 
 ---
 
 ## I-6 · 자폭 적 이동·공격 AI 변경 및 자폭 VFX 필요
 
-- **상태**: 열림 (수정 대기 · 후속)
-- **관련**: M3-2(공격 AI), `Assets/Scripts/Enemy/AI/SuicideAttack.cs` + 자폭 이동 AI, 자폭 라인(Bomber) 적 SO. 자폭 VFX.
-- **발견**: 2026-08-21, 사용자 플레이 관찰("지금 이상해").
-- **증상/원하는 동작(사용자)**: 자폭(Suicide) 적의 **이동 AI·공격(자폭) AI 거동이 현재 어색함 → 변경 필요**. 또한 **자폭(터질 때) VFX가 없어 추가 필요**.
-- **처리 방향(미확정)**: 이동/자폭 거동(접근 방식·트리거 조건·폭발 반경 등)과 자폭 연출을 **착수 전 사용자와 확정**. VFX는 **사용자 지정 에셋만**(임의 추가 금지 방침 — M4-9와 동일). 값·반경은 데이터화 지향, Day5.
-- **조치 계획**: 후속. 방식 확정 후 착수.
+- **상태**: 해결 (구현·사용자 Play 검증 완료 2026-08-22)
+- **관련**: M3-2(공격 AI), `Assets/Scripts/Enemy/AI/SuicideAttack.cs`·`Assets/Scripts/Enemy/Enemy.cs`·`Assets/Scripts/Player/PlayerHealth.cs`·`Assets/Scripts/Enemy/EnemyBuilder.cs`. 자폭 라인(Bomber) 적 SO. VFX 2종(CFXR3).
+- **발견**: 2026-08-21, 사용자 플레이 관찰("지금 이상해"). + 돌진 접촉 거동은 사용자가 I-6과 함께 처리 요청(2026-08-22).
+- **증상/원하는 동작(사용자, 정의 2026-08-22)**:
+  - **돌진(Charger)**: 이전엔 플레이어에 닿아도 데미지 1회 후 **그대로 관통·통과**. → 닿으면 `CFXR3 Hit Electric C (Air)` 재생 + 해당 적이 **명멸하며 퇴장**.
+  - **자폭(Suicide)**: 이전엔 반경 진입 즉시 데미지+소멸(연출 없음). → **근처서 멈춤 → 1초 빨간 깜박 → 폭발(`CFXR3 Fire Explosion B`) → 작은 범위 감쇠 데미지(중심 최대, 가장자리 최소 50%)**.
+- **처리(구현)**:
+  - **돌진 접촉 퇴장**: `Enemy.OnContactPlayer`(`contactExitVfx` 재생 + 명멸 퇴장, `contactExitDuration`/`contactBlinkInterval`) — 비주얼 `SetActive` 토글로 명멸(Opaque 재질 무관), 퇴장 중 공격 억제·재접촉 차단(`Enemy.IsExiting`). `PlayerHealth.OnTriggerEnter`가 데미지 1회 후 호출. **접촉하는 모든 적 공통**(자폭은 접촉 전 반경서 터지고 사격형은 Hover라 거의 접촉 안 함 → 실질 돌진 거동).
+  - **자폭 상태머신**: `SuicideAttack` 상태화(Approach→Arming→Explode, **상태 보유라 스폰마다 `new`** — `EnemyBuilder` 싱글톤 제거). Arm 진입 시 `Enemy.SetSuicideArming(true)`=이동 정지 + 주기 빨간 깜박(`HitFlash` 재사용, `armBlinkInterval`). `armDuration`(1초) 후 `Enemy.PlaySuicideExplosion`(VFX ×`suicideExplosionScale`) + 범위 감쇠 데미지(`explosionRadius` 가장자리로 `minFactor`까지 `Lerp`, 반경 밖 무피해) + 자멸.
+  - **VFX = 사용자 지정 에셋만**(M4-9 방침). Enemy.prefab에 CFXR3 2종 배선.
+- **튜닝값(시작점, Day5)**: 인스펙터(Enemy) `contactExitDuration` 0.5·`contactBlinkInterval` 0.06·`armBlinkInterval` 0.12·`suicideExplosionScale` 5. SO(Bomber) `suicideRadius`(무장 거리) 3~3.5. 코드(`SuicideAttack` 생성자 — I-4 z게이트와 동일 방침, 필요 시 `EnemyBuilder`에서 명시 전달) `armDuration` 1·`explosionRadius` 6·`minFactor` 0.5.
 - **로그**:
   - 2026-08-21 — 이슈 등록(열림). 사용자 요청으로 이슈화. 구현은 후속.
+  - 2026-08-22 — **해결**. 사용자 정의 확정 후 2조각(돌진 접촉 퇴장 / 자폭 상태머신)으로 구현, Play 검증 정상. 폭발 시각 크기 사용자 피드백으로 `suicideExplosionScale` 5 반영. **자폭 이동 자체는 기존 Chase/Weave 유지**(제목의 "이동 AI 변경"은 Arm 시 정지 추가로 귀결). 자폭 데미지 반경(`explosionRadius`)은 시각 크기와 별개 — 필요 시 별도 튜닝.

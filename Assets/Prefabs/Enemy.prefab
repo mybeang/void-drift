@@ -58,6 +58,11 @@ MonoBehaviour:
     suicideRadius: 0
     hoverDistance: 0
     hoverDuration: 0
+  contactExitVfx: {fileID: 1141330259687333427, guid: 6718dc24203da53468af9ada8fef7d6d, type: 3}
+  contactExitDuration: 0.5
+  contactBlinkInterval: 0.06
+  suicideExplosionVfx: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
+  armBlinkInterval: 0.12
 --- !u!65 &890836818039706536
 BoxCollider:
   m_ObjectHideFlags: 0

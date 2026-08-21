@@ -22,9 +22,8 @@ namespace VD.Enemy
         readonly IMoveBehaviour _straight = new StraightMove();
         readonly IMoveBehaviour _chase = new ChaseMove();
 
-        // 공격 AI 모듈(M3-2). 무상태(충돌/자폭)만 싱글톤 공유. 탄막은 쿨다운 상태라 스폰마다 new(ResolveAttack).
+        // 공격 AI 모듈(M3-2). 무상태(충돌)만 싱글톤 공유. 탄막/조준단발/자폭(I-6 상태화)은 스폰마다 new(ResolveAttack).
         readonly IAttackBehaviour _contact = new ContactAttack();
-        readonly IAttackBehaviour _suicide = new SuicideAttack();
 
         public EnemyBuilder(EnemyVisualCache cache, DifficultyProvider difficulty, EnemyBulletPool bulletPool)
         {
@@ -68,7 +67,7 @@ namespace VD.Enemy
         {
             AttackAIType.Barrage => new BarrageAttack(_bulletPool),
             AttackAIType.AimedShot => new AimedShot(_bulletPool),
-            AttackAIType.Suicide => _suicide,
+            AttackAIType.Suicide => new SuicideAttack(),   // I-6: Arm 상태(멈춤+깜박+타이머)라 인스턴스별
             _ => _contact,   // Contact no-op 폴백
         };
     }

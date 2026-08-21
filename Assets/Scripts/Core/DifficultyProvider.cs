@@ -22,6 +22,18 @@ namespace VD.Core
         /// <summary>현재 전역 스탯 배율(체력/속도/데미지). 스폰 시 빌더가 질의.</summary>
         public float StatMultiplier => _currentMult;
 
+        /// <summary>현재 페이즈 정의(스폰 프로파일 질의용, M4-6). 페이즈 없으면 null.</summary>
+        public DifficultyPhaseDefinition CurrentPhase =>
+            (phases != null && _phaseIndex >= 0 && _phaseIndex < phases.Length) ? phases[_phaseIndex] : null;
+
+        /// <summary>모든 페이즈의 스폰 프로파일 열거(M4-6 프리로드용). null 프로파일은 스킵.</summary>
+        public System.Collections.Generic.IEnumerable<SpawnProfileDefinition> Profiles()
+        {
+            if (phases == null) yield break;
+            foreach (var p in phases)
+                if (p != null && p.spawnProfile != null) yield return p.spawnProfile;
+        }
+
         void Update()
         {
             bool playing = GameManager.Instance == null || GameManager.Instance.State == GameState.Playing;

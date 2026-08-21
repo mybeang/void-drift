@@ -29,5 +29,9 @@ namespace VD.Core
         [Header("경계 안내 (HUD)")]
         [Tooltip("이 페이즈 진입 시 표시할 문구. 비우면 배너 없음(예: 첫 페이즈)")]
         [TextArea] public string bannerText;
+
+        [Header("스폰 프로파일 (M4-6)")]
+        [Tooltip("이 페이즈 동안 쓸 스폰 프로파일(적 조합+밀도). 비우면 스포너 기본 표로 폴백")]
+        public SpawnProfileDefinition spawnProfile;
     }
 }

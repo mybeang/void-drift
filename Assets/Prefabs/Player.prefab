@@ -165,7 +165,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4702749117833622993}
-  - {fileID: 390835791811086734}
   - {fileID: 4083980283719728540}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -485,6 +484,7 @@ Transform:
   - {fileID: 2923335444944125666}
   - {fileID: 6426508294804910261}
   - {fileID: 6763846593600504251}
+  - {fileID: 390835791811086734}
   m_Father: {fileID: 7633828983400381945}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &6534024889465832184
@@ -557,12 +557,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: VD.Runtime::VD.Player.PlayerBanking
   targetCamera: {fileID: 0}
-  maxPitch: 28
-  maxYaw: 28
+  maxPitch: 12
+  maxYaw: 12
   maxRoll: 12
   bankLerpSpeed: 8
   invertPitch: 0
-  invertYaw: 0
+  invertYaw: 1
   edgeInset: {x: 0.06, y: 0.06}
 --- !u!1 &8651325892175020980
 GameObject:
@@ -589,12 +589,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8651325892175020980}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.00000047683716, z: 5.426963}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7633828983400381945}
+  m_Father: {fileID: 4702749117833622993}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9014577371961486511
 MonoBehaviour:
@@ -603,18 +603,18 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8651325892175020980}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0041f4dbcfd05f9489269ee0024158dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: VD.Runtime::VD.Player.PlayerAim
   targetCamera: {fileID: 0}
-  maxPitch: 28
-  maxYaw: 28
+  maxPitch: 12
+  maxYaw: 12
   invertPitch: 0
-  invertYaw: 0
+  invertYaw: 1
   edgeInset: {x: 0.06, y: 0.06}
-  drawAimGizmo: 1
+  drawAimGizmo: 0
   gizmoLength: 20
   gizmoColor: {r: 1, g: 0.35, b: 0.15, a: 1}
 --- !u!1001 &3284780223192477164

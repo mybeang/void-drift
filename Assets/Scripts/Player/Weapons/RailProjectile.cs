@@ -13,6 +13,9 @@ namespace VD.Player
     /// </summary>
     public sealed class RailProjectile : MonoBehaviour
     {
+        [Tooltip("적 히트 시 재생할 VFX 프리팹(M4-9, 관통 히트마다). CFXR 등 자가소멸 이펙트")]
+        [SerializeField] GameObject hitVfx;
+
         Action<RailProjectile> _return;
         float _speed;
         float _lifetime;
@@ -72,6 +75,7 @@ namespace VD.Player
             if (!_hit.Add(id)) return;
 
             dmg.TakeDamage(_damage);
+            if (hitVfx != null) Instantiate(hitVfx, other.ClosestPoint(transform.position), Quaternion.identity);   // 히트 VFX(M4-9)
             Debug.Log($"[TEMP] 레일 관통 히트 → {other.name} (dmg {_damage:F1}, {_hitCount + 1}/{_maxPierce})", other);   // TODO: 임시 로그, 검증 후 제거
             _hitCount++;
             _damage *= _damageDecay;   // 관통할수록 감쇠

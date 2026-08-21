@@ -56,6 +56,7 @@ namespace VD.Enemy
         float _hp;
         bool _dead;
         bool _attackSuppressed;   // 이동 모듈이 공격을 막는 프레임(예: Hover 접근/이탈 중엔 사격 정지, M4-7)
+        HitFlash _hitFlash;       // 피격 빨간 깜빡(M4-9). 셸에 부착, 주입 비주얼 렌더러를 틴트
 
         /// <summary>풀이 Get 시 호출 — 반납 콜백 배선 + 체력/사망상태/드랍핸들러/공격억제 리셋.</summary>
         public void OnSpawned(Action<Enemy> returnToPool)
@@ -65,6 +66,7 @@ namespace VD.Enemy
             _dead = false;
             _dropOnDeath = null;
             _attackSuppressed = false;   // 기본=공격 허용(비-Hover 적은 항상 사격). Hover만 매 프레임 갱신.
+            if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();   // 셸에 부착된 깜빡 컴포넌트 캐시(M4-9)
         }
 
         /// <summary>이동 모듈이 공격 허용/차단을 제어(M4-7 Hover) — true면 이 프레임 공격 틱 스킵. 매 프레임 이동 모듈이 세팅.</summary>
@@ -126,6 +128,7 @@ namespace VD.Enemy
         public void TakeDamage(float amount)
         {
             if (_dead) return;
+            _hitFlash?.Flash();   // 피격 빨간 깜빡(M4-9)
             _hp -= amount;
             Debug.Log($"[TEMP] 적 피격 -{amount} → HP {_hp}/{stats.maxHp}", this);   // TODO: 임시 로그, 검증 후 제거
             if (_hp <= 0f) Die();

@@ -21,11 +21,13 @@ namespace VD.Player
         bool _dead;
         float _regenPerSec;   // 체력재생 강화(M3-4) — 초당 회복량
         PlayerShield _shield;  // 실드 액티브 스킬(M4-4) — 있으면 데미지 우선 흡수
+        HitFlash _hitFlash;    // 피격 빨간 깜빡(M4-9)
 
         void Awake()
         {
             _hp = maxHp;
             _shield = GetComponent<PlayerShield>();
+            _hitFlash = GetComponent<HitFlash>();
         }
 
         void Update()
@@ -74,9 +76,10 @@ namespace VD.Player
         {
             if (_dead) return;
 
-            // 실드 활성 시 데미지 우선 흡수 → 플레이어 HP 무피해(M4-4).
+            // 실드 활성 시 데미지 우선 흡수 → 플레이어 HP 무피해(M4-4). 흡수 시엔 깜빡 없음.
             if (_shield != null && _shield.TryAbsorb(amount)) return;
 
+            _hitFlash?.Flash();   // 실제 HP 피해 시 빨간 깜빡(M4-9)
             _hp -= amount;
             if (_hp < 0f) _hp = 0f;
             Debug.Log($"[TEMP] 플레이어 피격 -{amount} → HP {_hp}/{maxHp}", this);   // TODO: 임시 로그, 검증 후 제거

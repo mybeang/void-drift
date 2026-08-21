@@ -12,6 +12,9 @@ namespace VD.Player
     /// </summary>
     public sealed class Projectile : MonoBehaviour
     {
+        [Tooltip("적 히트 시 재생할 VFX 프리팹(M4-9). CFXR 등 자가소멸 이펙트")]
+        [SerializeField] GameObject hitVfx;
+
         Action<Projectile> _return;
         float _speed;
         float _lifetime;
@@ -51,6 +54,7 @@ namespace VD.Player
             if (target == null) return;   // 적이 아님(플레이어·다른 투사체 등) → 무시
 
             target.TakeDamage(_damage);
+            if (hitVfx != null) Instantiate(hitVfx, other.ClosestPoint(transform.position), Quaternion.identity);   // 히트 VFX(M4-9)
             Debug.Log($"[TEMP] 투사체 히트 → {other.name} (dmg {_damage})", other);   // TODO: 임시 로그, 검증 후 제거
             Despawn();
         }

@@ -8,7 +8,7 @@ namespace VD.UI
 {
     /// <summary>
     /// 인게임 HUD (M1-10, uGUI+TMP). <see cref="GameEvents"/> 구독 → 생존시간/점수/HP/레벨/경험치 실시간 표시.
-    /// 우측 상단 스택(레이아웃은 "최소 투자" 방침, Day5 조정). 표시 전용(입력 없음).
+    /// 배치(M4-9 재배치): 시간=상단 중앙, 레벨·HP·XP=좌상단 스택, 점수=우상단. 표시 전용(입력 없음). 수치/간격 Day5.
     /// 상태는 전부 GameEvents에서 옴(진행=05 문서). 참조는 씬에서 배선.
     /// </summary>
     public sealed class HudView : MonoBehaviour

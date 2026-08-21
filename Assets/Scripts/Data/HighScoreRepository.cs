@@ -18,12 +18,16 @@ namespace VD.Core
     {
         int _lastScore;
         int _best = -1;            // -1 = 아직 store에서 미로드
+        bool _lastWasRecord;
         IHighScoreStore _store;
 
         IHighScoreStore Store => _store ??= new LocalObscureStore();
 
         /// <summary>직전 판(런) 최종 점수 — GameOver에서 <see cref="Commit"/>로 세팅, ResultScene이 읽는다.</summary>
         public int LastScore => _lastScore;
+
+        /// <summary>직전 <see cref="Commit"/>가 신기록이었는지 — ResultScene "신기록!" 연출용.</summary>
+        public bool LastWasRecord => _lastWasRecord;
 
         /// <summary>저장된 최고점. 최초 접근 시 store에서 로드(이후 캐시).</summary>
         public int Best
@@ -49,8 +53,10 @@ namespace VD.Core
             {
                 _best = score;
                 Store.SaveBest(score);
+                _lastWasRecord = true;
                 return true;
             }
+            _lastWasRecord = false;
             return false;
         }
 
@@ -67,6 +73,7 @@ namespace VD.Core
         {
             _lastScore = 0;
             _best = -1;
+            _lastWasRecord = false;
             _store = null;
         }
     }

@@ -37,7 +37,7 @@
 
 수치(페이즈 길이 / 내부 상승률 / 경계 점프폭)는 Day5 튜닝.
 
-## 3. 종료 조건 / 점수 — 확정
+> **구현 완료(M4-5, 2026-08-21)**: 전역 스탯 배율 = `DifficultyProvider`(경과시간 곡선, 페이즈 내 미세상승+경계 점프) → `StatScaler`가 적 체력/속도/데미지에 곱함. 경계 안내 = HUD `PhaseBannerView`(페이드). 데이터 = `DifficultyPhaseDefinition` SO + **오서링 툴**(`Window/Void Drift/Difficulty Authoring`). **스폰 프로파일 타임라인은 M4-6**(별개). 페이즈 수치는 아직 placeholder(나중에 일괄 튜닝).
 
 - **종료**: HP 0 → 게임오버 → 결과 기록.
 - **점수 = 생존시간 + 적 처치별 점수** (간단하게).

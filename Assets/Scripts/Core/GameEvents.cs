@@ -89,6 +89,17 @@ namespace VD.Core
         /// <summary>실드 상태 갱신 — PlayerShield에서만.</summary>
         internal void SetShieldState(ShieldState state) => _shield.Value = state;
 
+        // ── 난이도 페이즈 — M4-5 ─────────────────────────────────────
+        // 페이즈 경계 진입(출력 이벤트): DifficultyProvider가 발행 → HUD 배너가 구독.
+
+        readonly Subject<string> _difficultyBanner = new();
+
+        /// <summary>난이도 페이즈 경계 진입 안내 문구 스트림. 발행은 DifficultyProvider(internal RaiseDifficultyBanner)만.</summary>
+        public Observable<string> DifficultyBanner => _difficultyBanner;
+
+        /// <summary>페이즈 경계 안내 발행 — DifficultyProvider에서만.</summary>
+        internal void RaiseDifficultyBanner(string text) => _difficultyBanner.OnNext(text);
+
         public void Dispose()
         {
             _state.Dispose();
@@ -102,6 +113,7 @@ namespace VD.Core
             _score.Dispose();
             _survivalTime.Dispose();
             _shield.Dispose();
+            _difficultyBanner.Dispose();
         }
     }
 

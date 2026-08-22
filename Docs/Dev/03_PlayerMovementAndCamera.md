@@ -37,10 +37,13 @@
 
 ## 프리팹 구조 (물리 ↔ 비주얼 분리)
 
-```
-Player (root)   ← Rigidbody(useGravity off, FreezePositionZ|FreezeRotation) + PlayerMovement + PlayerShooter + BoxCollider(피격용, 단일)
-├── FirePoint   ← PlayerAim (조준 축, 오프셋→각도 즉시 정렬)         ← M1-3 2단계
-└── Model       ← MeshFilter + MeshRenderer (StarSparrow_1_LP_Red) + PlayerBanking (뱅킹 연출)
+```mermaid
+graph TD
+    Player["Player (root)<br/>Rigidbody(useGravity off, FreezePositionZ·FreezeRotation)<br/>+ PlayerMovement + PlayerShooter + BoxCollider(피격용, 단일)"]
+    FirePoint["FirePoint — PlayerAim (조준 축, 오프셋→각도 즉시 정렬) · M1-3 2단계"]
+    Model["Model — MeshFilter + MeshRenderer (StarSparrow_1_LP_Red) + PlayerBanking (뱅킹 연출)"]
+    Player --> FirePoint
+    Player --> Model
 ```
 
 > 위는 **M1-3 완료 시점** 구조. (M1-2 때는 `Model`만 있었고 뱅킹은 `PlayerMovement`가 `bankTarget`로 참조했으나,

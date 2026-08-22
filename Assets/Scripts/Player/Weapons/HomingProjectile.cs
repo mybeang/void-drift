@@ -80,7 +80,9 @@ namespace VD.Player
             if (target == null) return;   // 적이 아님 → 무시
 
             target.TakeDamage(_damage);
-            if (hitVfx != null) Instantiate(hitVfx, other.ClosestPoint(transform.position), Quaternion.identity);   // 히트 VFX(M4-9)
+            Vector3 hitPos = other.ClosestPoint(transform.position);
+            if (hitVfx != null) Instantiate(hitVfx, hitPos, Quaternion.identity);   // 히트 VFX(M4-9)
+            AudioManager.Instance?.PlaySfx(SfxId.MissileHit, hitPos);   // 명중음(M5-5)
             Debug.Log($"[TEMP] 유도 히트 → {other.name} (dmg {_damage})", other);   // TODO: 임시 로그, 검증 후 제거
             Despawn();
         }

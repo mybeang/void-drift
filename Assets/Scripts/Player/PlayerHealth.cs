@@ -72,12 +72,16 @@ namespace VD.Player
         /// 데미지 적용(공용) — 적 접촉(<see cref="OnTriggerEnter"/>)과 적탄(<see cref="VD.Enemy.EnemyBullet"/>)/자폭이 호출.
         /// 아군 오사 방지를 위해 <c>IDamageable</c>는 여전히 미구현 — 이 메서드는 적 계열만 명시적으로 호출한다.
         /// </summary>
-        public void ApplyDamage(float amount)
+        public void ApplyDamage(float amount, DamageSource source = DamageSource.Contact)
         {
             if (_dead) return;
 
-            // 실드 활성 시 데미지 우선 흡수 → 플레이어 HP 무피해(M4-4). 흡수 시엔 깜빡 없음.
+            // 실드 활성 시 데미지 우선 흡수 → 플레이어 HP 무피해(M4-4). 흡수 시엔 깜빡·피격음 없음.
             if (_shield != null && _shield.TryAbsorb(amount)) return;
+
+            // 실제 피해 발생 시에만 피격음(M5-5): 접촉(돌진)=chargeAttack, 탄환·자폭=hitPlayer.
+            SfxId hitSfx = source == DamageSource.Contact ? SfxId.ChargeAttack : SfxId.HitPlayer;
+            AudioManager.Instance?.PlaySfx(hitSfx, transform.position);
 
             _hitFlash?.Flash();   // 실제 HP 피해 시 빨간 깜빡(M4-9)
             _hp -= amount;

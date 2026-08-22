@@ -1,4 +1,5 @@
 using UnityEngine;
+using VD.Core;
 using VD.Player;
 
 namespace VD.Enemy
@@ -63,6 +64,7 @@ namespace VD.Enemy
         {
             self.SetSuicideArming(false);      // 무장 해제(깜박 중지)
             self.PlaySuicideExplosion();       // 폭발 VFX(멈춘 위치)
+            AudioManager.Instance?.PlaySfx(SfxId.SelfExplosion, self.transform.position);   // 자폭 폭발음(M5-5)
 
             // 범위 감쇠 데미지: 중심(dist=0)=Damage → 가장자리(dist=반경)=Damage×_minFactor. 반경 밖은 무피해.
             Transform target = PlayerLocator.Get();
@@ -72,7 +74,7 @@ namespace VD.Enemy
                 if (dist <= _explosionRadius)
                 {
                     float factor = Mathf.Lerp(1f, _minFactor, dist / _explosionRadius);
-                    target.GetComponentInParent<PlayerHealth>()?.ApplyDamage(self.Damage * factor);
+                    target.GetComponentInParent<PlayerHealth>()?.ApplyDamage(self.Damage * factor, DamageSource.Suicide);
                 }
             }
 

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VD.Core;
 using VD.Player;
 
 namespace VD.Enemy
@@ -53,7 +54,7 @@ namespace VD.Enemy
             var ph = other.GetComponentInParent<PlayerHealth>();
             if (ph == null) return;   // 레이어상 Player만 오지만 방어적으로 확인
 
-            ph.ApplyDamage(_damage);
+            ph.ApplyDamage(_damage, DamageSource.Bullet);   // 피격음=hitPlayer(M5-5)
             Despawn();
         }
 

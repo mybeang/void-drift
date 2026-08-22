@@ -62,7 +62,10 @@ MonoBehaviour:
   contactExitDuration: 0.5
   contactBlinkInterval: 0.06
   suicideExplosionVfx: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
+  suicideExplosionScale: 5
   armBlinkInterval: 0.12
+  deathVfx: {fileID: 8194992990867289339, guid: 99bc28c0d45f51c4fbac01080b73edc7, type: 3}
+  deathVfxScale: 1.2
 --- !u!65 &890836818039706536
 BoxCollider:
   m_ObjectHideFlags: 0

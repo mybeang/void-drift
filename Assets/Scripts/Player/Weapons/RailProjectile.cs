@@ -75,7 +75,9 @@ namespace VD.Player
             if (!_hit.Add(id)) return;
 
             dmg.TakeDamage(_damage);
-            if (hitVfx != null) Instantiate(hitVfx, other.ClosestPoint(transform.position), Quaternion.identity);   // 히트 VFX(M4-9)
+            Vector3 hitPos = other.ClosestPoint(transform.position);
+            if (hitVfx != null) Instantiate(hitVfx, hitPos, Quaternion.identity);   // 히트 VFX(M4-9)
+            AudioManager.Instance?.PlaySfx(SfxId.RailgunHit, hitPos);   // 명중음(M5-5, 관통마다)
             Debug.Log($"[TEMP] 레일 관통 히트 → {other.name} (dmg {_damage:F1}, {_hitCount + 1}/{_maxPierce})", other);   // TODO: 임시 로그, 검증 후 제거
             _hitCount++;
             _damage *= _damageDecay;   // 관통할수록 감쇠

@@ -37,11 +37,13 @@ M1-1은 "씬 진입~플레이~게임오버"의 **상태 흐름**과, 다른 시�
 
 ## 상태 모델
 
-```
-Boot ──StartGame()──▶ Playing ◀──Resume()── Paused
-                        │  │         ▲
-                        │  └─Pause()─┘
-                        └─────GameOver()────▶ GameOver
+```mermaid
+stateDiagram-v2
+    [*] --> Boot
+    Boot --> Playing: StartGame()
+    Playing --> Paused: Pause()
+    Paused --> Playing: Resume()
+    Playing --> GameOver: GameOver()
 ```
 
 - `GameState` = `Boot / Playing / Paused / GameOver`.

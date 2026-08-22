@@ -62,13 +62,14 @@ OrbCollected(xp) 수신
 
 ## 데이터 흐름 (전체)
 
-```
-Enemy 사망 → Orb 드랍 → (자석) 플레이어 근접 습득
-          → GameEvents.PublishOrbCollected(xpValue)
-          → OrbCollected 스트림 → ExperienceSystem 누적
-          → (임계값 도달) SetLevel / RaiseLevelUp / SetXpNormalized
-              ├▶ GameEvents.LevelUp   → 3choice 팝업 (M1-7)
-              └▶ GameEvents.Level / XpNormalized → HUD 게이지 (M1-10)
+```mermaid
+graph TD
+    A["Enemy 사망 → Orb 드랍"] --> B["(자석) 플레이어 근접 습득"]
+    B --> C["GameEvents.PublishOrbCollected(xpValue)"]
+    C --> D["OrbCollected 스트림 → ExperienceSystem 누적"]
+    D --> E["(임계값 도달) SetLevel / RaiseLevelUp / SetXpNormalized"]
+    E --> F["GameEvents.LevelUp → 3choice 팝업 (M1-7)"]
+    E --> G["GameEvents.Level / XpNormalized → HUD 게이지 (M1-10)"]
 ```
 
 ---
@@ -107,11 +108,12 @@ State→GameOver: 최종값 임시 로그   // "[TEMP] 게임오버 — 생존 �
 
 ### 종료 흐름
 
-```
-Enemy 실사망 → PublishEnemyKilled → ScoreSystem 합산
-플레이어 피격 누적 → HP 0 → GameManager.GameOver() → timeScale 0 (프리즈)
-    └ ScoreSystem: State→GameOver 최종 점수 로그
-    └ 결과값(Score/SurvivalTime) GameEvents에 보관 → (M1-10 HUD / 이후 ResultScene 표시)
+```mermaid
+graph TD
+    K["Enemy 실사망"] --> L["PublishEnemyKilled → ScoreSystem 합산"]
+    M["플레이어 피격 누적 → HP 0"] --> N["GameManager.GameOver() → timeScale 0 (프리즈)"]
+    N --> O["ScoreSystem: State→GameOver 최종 점수 로그"]
+    N --> P["결과값(Score/SurvivalTime) GameEvents 보관 → M1-10 HUD / 이후 ResultScene 표시"]
 ```
 
 ---

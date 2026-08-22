@@ -1,4 +1,5 @@
 using UnityEngine;
+using VD.Core;
 
 namespace VD.Player
 {
@@ -48,6 +49,7 @@ namespace VD.Player
             if (_cooldown > 0f) return;
             if (ctx.RailPool == null || ctx.FirePoint == null) return;
             _cooldown = _fireInterval / FireRateMult;   // 연사 강화(M4-8)
+            AudioManager.Instance?.PlaySfx(SfxId.Railgun, ctx.FirePoint.position);   // 발사음(M5-5)
 
             int pierce = Mathf.Min(_maxPierce + _bonusPierce, MaxPierceCap);   // 관통수 강화(M4-8, 상한 클램프)
 

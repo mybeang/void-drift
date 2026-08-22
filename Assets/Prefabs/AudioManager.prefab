@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2284850091822931091
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4994822165850913506}
+  - component: {fileID: 8904616009795517872}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4994822165850913506
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2284850091822931091}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8904616009795517872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2284850091822931091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 151fbe1affb4c6a499b81ef518b1d7a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VD.Runtime::VD.Core.AudioManager
+  mixer: {fileID: 24100000, guid: b0aae62bb769c4f4b8577c63429d0408, type: 2}
+  bgmGroupName: BGM
+  sfxGroupName: SFX
+  titleBgm: {fileID: 8300000, guid: 267ebe246333f544d9961609b2f63797, type: 3}
+  gameBgm: {fileID: 8300000, guid: 604473628b84b0747ab03dba6e0117de, type: 3}
+  gameSceneName: GameScene
+  basicGun: {fileID: 8300000, guid: 41655f2ff7712754b97f20b3d0663eed, type: 3}
+  missile: {fileID: 8300000, guid: 347fc69a8c5328f4aadcb905e7c6050f, type: 3}
+  railgun: {fileID: 8300000, guid: 4b7b2918d48ed5348af04e1f55d70d56, type: 3}
+  chargeAttack: {fileID: 8300000, guid: e79517aa1e356ab45a24fcb90b89560a, type: 3}
+  selfExplosion: {fileID: 8300000, guid: c0665db3926f8724ba16701af9a0021e, type: 3}
+  playerDead: {fileID: 8300000, guid: 7f06afb9cb5910e42a97b662ae929ad6, type: 3}
+  enemyDead: {fileID: 8300000, guid: bedebeedaa3ea23478e2bcbc25a2152d, type: 3}
+  hitPlayer: {fileID: 8300000, guid: 878ecc742bc529f479be882b88e68b0b, type: 3}
+  missileHit: {fileID: 8300000, guid: 580b9859cddb6bf4cb49cbbd3d653069, type: 3}
+  railgunHit: {fileID: 8300000, guid: bfede3355c727f241b8708798d8310bf, type: 3}
+  shieldOn: {fileID: 8300000, guid: 6d38495a8d7a5fe4a8e5b46001caa370, type: 3}
+  buttonClick: {fileID: 8300000, guid: 2834f2ca6ca39cf4abff3e5c86d7f2bb, type: 3}
+  buttonHover: {fileID: 8300000, guid: d8923526fb7e5484aafbf430b9e75d92, type: 3}
+  sfxMinDistance: 6
+  sfxMaxDistance: 70
+  sfxVoices: 24

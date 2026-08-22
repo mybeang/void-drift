@@ -1,4 +1,5 @@
 using UnityEngine;
+using VD.Core;
 
 namespace VD.Player
 {
@@ -37,6 +38,7 @@ namespace VD.Player
             if (_cooldown > 0f) return;
             if (ctx.StraightPool == null || ctx.FirePoint == null) return;
             _cooldown = _fireInterval / FireRateMult;   // 연사 강화(M4-8)
+            AudioManager.Instance?.PlaySfx(SfxId.BasicGun, ctx.FirePoint.position);   // 발사음(M5-5)
 
             // 조준 방향 = 조준 축(FirePoint.forward). 원뿔 안에 적 있으면 그 적으로 스냅.
             Vector3 dir = ctx.FirePoint.forward;

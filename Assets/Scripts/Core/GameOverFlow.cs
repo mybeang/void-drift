@@ -68,6 +68,7 @@ namespace VD.Core
 
             var player = GameObject.FindGameObjectWithTag("Player");
             Vector3 pos = player != null ? player.transform.position : Vector3.zero;
+            AudioManager.Instance?.PlaySfx(SfxId.PlayerDead, pos);   // 사망 폭발음(M5-5)
             var go = Instantiate(deathExplosionPrefab, pos, Quaternion.identity);
             if (explosionScale > 0f) go.transform.localScale *= explosionScale;
 

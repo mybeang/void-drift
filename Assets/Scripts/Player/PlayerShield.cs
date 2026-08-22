@@ -81,6 +81,7 @@ namespace VD.Player
             _curShieldHp = shieldHp;
             _useCount++;
             if (bubbleVisual != null) bubbleVisual.SetActive(true);
+            AudioManager.Instance?.PlaySfx(SfxId.ShieldOn, transform.position);   // 발동음(M5-5)
             Debug.Log($"[TEMP] 실드 발동 #{_useCount} (HP {shieldHp}, 지속 {duration}s)", this);   // TODO: 임시 로그
             Publish();
             return true;

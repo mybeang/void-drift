@@ -33,6 +33,12 @@ namespace VD.Enemy
         [Tooltip("자폭 무장(Arm) 중 빨간 깜박 주기(초). 수치 Day5")]
         [SerializeField] float armBlinkInterval = 0.12f;
 
+        [Header("사망 (M5-5: 실사망 시 폭발 VFX + 사운드)")]
+        [Tooltip("실사망(HP 0) 시 재생할 VFX 프리팹(CFXR3 Fire Explosion B 재활용, 자가소멸). 미배선이면 사운드만")]
+        [SerializeField] GameObject deathVfx;
+        [Tooltip("사망 VFX 크기 배수(프리팹 원본 스케일에 곱)")]
+        [SerializeField] float deathVfxScale = 1.2f;
+
         /// <summary>플레이어 접촉 데미지(PlayerHealth가 읽음).</summary>
         public float ContactDamage => stats.damage;
 
@@ -228,6 +234,16 @@ namespace VD.Enemy
             // 실사망 위치에 오브 드랍(M1-5) + 처치 점수 발행(M1-9). 화면 밖 Despawn은 둘 다 안 함. 파괴 VFX(M4-9)는 이후.
             _dropOnDeath?.Invoke(transform.position);
             GameManager.Instance?.Events?.PublishEnemyKilled(stats.killScore);
+
+            // 사망 폭발 VFX(CFXR3 Fire Explosion B 재활용) + 사운드(M5-5). VFX는 매번 새 인스턴스라 타 사용처와 무간섭.
+            if (deathVfx != null)
+            {
+                var fx = Instantiate(deathVfx, transform.position, Quaternion.identity);
+                if (deathVfxScale > 0f && !Mathf.Approximately(deathVfxScale, 1f))
+                    fx.transform.localScale *= deathVfxScale;
+            }
+            AudioManager.Instance?.PlaySfx(SfxId.EnemyDead, transform.position);
+
             Despawn();
         }
 

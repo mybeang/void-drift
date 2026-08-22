@@ -109,17 +109,27 @@ M0-4의 목표는 "런타임/에디터 코드 분리 기반을 마련"하는 것
 
 폴더 골격 (`Assets/Scripts/`):
 
-```
-Scripts/
-├── VD.Runtime.asmdef        ← 루트에 두어 하위 전체를 한 어셈블리로
-├── Core/                    ← 유틸, 게임/결과 매니저, Interface 등 (namespace VD.Core)
-│   └── (Interface/ 는 인터페이스가 생길 때 생성)
-├── Player/                  ← 플레이어 + 플레이어용 총알 (namespace VD.Player)
-├── Enemy/                   ← 적 + 적용 총알 (namespace VD.Enemy)
-├── UI/                      ← 런타임 UI(uGUI): HUD·타이틀·결과 (namespace VD.UI)
-├── Data/                    ← 적 데이터 SO: EnemyDefinition/OrbDefinition/EnemyStats, M2-2 신설 (namespace VD.Core)
-└── Editor/
-    └── VD.Editor.asmdef     ← 여기부터 별도 에디터 어셈블리
+```mermaid
+graph TD
+    Scripts["Scripts/"]
+    RtAsmdef["VD.Runtime.asmdef — 루트에 두어 하위 전체를 한 어셈블리로"]
+    Core["Core/ — 유틸, 게임/결과 매니저, Interface 등 (ns VD.Core)"]
+    Interface["Interface/ — 인터페이스가 생길 때 생성"]
+    Player["Player/ — 플레이어 + 플레이어용 총알 (ns VD.Player)"]
+    Enemy["Enemy/ — 적 + 적용 총알 (ns VD.Enemy)"]
+    UIf["UI/ — 런타임 UI(uGUI): HUD·타이틀·결과 (ns VD.UI)"]
+    Data["Data/ — 적 데이터 SO: EnemyDefinition/OrbDefinition/EnemyStats, M2-2 신설 (ns VD.Core)"]
+    Editor["Editor/"]
+    EdAsmdef["VD.Editor.asmdef — 여기부터 별도 에디터 어셈블리"]
+    Scripts --> RtAsmdef
+    Scripts --> Core
+    Core --> Interface
+    Scripts --> Player
+    Scripts --> Enemy
+    Scripts --> UIf
+    Scripts --> Data
+    Scripts --> Editor
+    Editor --> EdAsmdef
 ```
 
 > 파일 규칙(사용자 결정): 인터페이스는 1파일 1개(`Core/Interface/`), 클래스는 1파일 1클래스

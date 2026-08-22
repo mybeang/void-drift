@@ -30,22 +30,26 @@ AI 모듈 (M3-1/M3-2/M3-3, `VD.Runtime` / ns `VD.Enemy`, `Assets/Scripts/Enemy/A
 
 ## 개요 — 아키텍처 한눈에
 
-```
-                        ┌───────────────── 오서링 (VD.Editor) ─────────────────┐
-                        │  EnemyAuthoringWindow                                │
-                        │   └ EnemyTableEditorView : SoTableEditorView<T>      │  편집 + 유효성 경고
-                        └──────────────────────┬───────────────────────────────┘
-                                               │ 편집/저장
-                                     ┌─────────▼──────────┐
-   데이터 축(VD.Core) ───────────▶  │  EnemyDefinition SO │  ◀── 유효성 판정 입력(EnemyValidation)
-   비주얼×이동AI×공격AI×아키타입×    └─────────┬──────────┘
-   스탯×드랍오브                              │ 소비(읽기 전용)
-                        ┌──────────────────────▼─────────────── 런타임 (VD.Enemy) ───────────┐
-                        │  EnemySpawner(DB=SpawnEntry[] 가중랜덤) ─pick─▶ EnemyBuilder        │
-                        │      ①비주얼(EnemyVisualCache) ②스탯(StatScaler×DifficultyProvider) │
-                        │      ③AI(def.moveAI/attackAI → IMove/IAttackBehaviour 모듈, M3)      │
-                        │      ─assemble─▶ Enemy(로직 셸, Update가 모듈 Tick 위임) ─launch─▶ 씬 │
-                        └────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Authoring["오서링 (VD.Editor)"]
+        Win["EnemyAuthoringWindow<br/>└ EnemyTableEditorView : SoTableEditorView&lt;T&gt; (편집 + 유효성 경고)"]
+    end
+    subgraph DataAxis["데이터 축 (VD.Core)"]
+        Def["EnemyDefinition SO<br/>비주얼×이동AI×공격AI×아키타입×스탯×드랍오브"]
+        Val["EnemyValidation (유효성 판정 입력)"]
+    end
+    subgraph RuntimeAxis["런타임 (VD.Enemy)"]
+        Spawner["EnemySpawner (DB=SpawnEntry 배열, 가중랜덤)"]
+        Builder["EnemyBuilder<br/>①비주얼(EnemyVisualCache) ②스탯(StatScaler×DifficultyProvider)<br/>③AI(def.moveAI/attackAI → IMove/IAttackBehaviour 모듈, M3)"]
+        Shell["Enemy (로직 셸, Update가 모듈 Tick 위임)"]
+    end
+    Win -->|편집/저장| Def
+    Val -.판정 입력.-> Def
+    Def -->|소비(읽기 전용)| Spawner
+    Spawner -->|pick| Builder
+    Builder -->|assemble| Shell
+    Shell -->|launch| Scene["씬"]
 ```
 
 **핵심 원칙**: 비주얼·AI·스탯은 아키타입/모델에 고정되지 않고 **조합마다 주입**된다([enemy-design.md](../Designs/enemy-design.md) §2). 프리팹을 종류마다 만들지 않고 — **공통 로직 셸 하나 + 조립(빌더)** 로 다양성을 낸다. AI도 **재사용 순수 C# 전략 모듈**을 SO enum으로 골라 주입(§4.7).
@@ -184,9 +188,10 @@ public static string RangeLabelOf(Archetype a) => a switch {
 
 ### 4.3 수명 (셸 재사용)
 
-```
-Get    ──▶ EnemyPool.OnGet → Enemy.OnSpawned(반납콜백)  ──▶ Builder.Build(비주얼·스탯·AI 조립)  ──▶ launch
-Return ──▶ EnemyPool.OnReturn → Enemy.ClearVisual()  ──▶ 풀엔 '순수 셸'만
+```mermaid
+graph LR
+    Get["Get"] --> G1["EnemyPool.OnGet → Enemy.OnSpawned(반납콜백)"] --> G2["Builder.Build (비주얼·스탯·AI 조립)"] --> G3["launch"]
+    Return["Return"] --> R1["EnemyPool.OnReturn → Enemy.ClearVisual()"] --> R2["풀엔 '순수 셸'만"]
 ```
 
 **teardown은 Return에서**(비주얼 자식 파괴) → 풀엔 항상 순수 셸만 있어 빌더는 "빈 셸에 새로 조립"만 하면 된다(이전 조립을 되돌릴 필요 없음). `EnemyPool : PooledObjectPool<Enemy>`.
@@ -243,18 +248,16 @@ SO별 다른 비주얼을 Addressables로 로드·재사용. `PreloadAsync(IEnum
 
 ## 5. 데이터 흐름 — 한 적이 태어나기까지
 
-```
-디자이너 ─(Enemy Authoring 창)─▶ EnemyDefinition.asset  (moveAI·attackAI·archetype·stats·visual·dropOrb)
-                                        │  (모순 조합엔 경고, 저장은 허용)
-씬 시작 ─▶ EnemySpawner.Warmup: DB의 유니크 visual 프리로드(EnemyVisualCache) + EnemyBuilder 준비
-매 틱   ─▶ PickWeighted() → def
-         └▶ EnemyPool.Get() → 순수 셸
-             └▶ EnemyBuilder.Build:
-                 ① AttachVisual( cache.Resolve(def.visual), def.visualScale ) ← 모델이 셸에 붙음(크기 배수)
-                 ② ApplyStats( StatScaler.Scale(def.stats, 배율) )        ← effective 스탯 주입
-                 ③ SetMove/AttackBehaviour( def.moveAI/attackAI )         ← AI 모듈 주입(M3)
-             └▶ Launch(despawnZ) + SetDropHandler → 씬에 등장·이동(Update가 모듈 Tick)
-사망/이탈 ─▶ EnemyPool.Return → Enemy.ClearVisual() → 순수 셸로 복귀
+```mermaid
+graph TD
+    D1["디자이너 —(Enemy Authoring 창)→ EnemyDefinition.asset<br/>(moveAI·attackAI·archetype·stats·visual·dropOrb; 모순 조합엔 경고, 저장은 허용)"]
+    D2["씬 시작 → EnemySpawner.Warmup:<br/>DB의 유니크 visual 프리로드(EnemyVisualCache) + EnemyBuilder 준비"]
+    D3["매 틱 → PickWeighted() → def"]
+    D4["EnemyPool.Get() → 순수 셸"]
+    D5["EnemyBuilder.Build:<br/>① AttachVisual(cache.Resolve(def.visual), def.visualScale) — 모델이 셸에 붙음(크기 배수)<br/>② ApplyStats(StatScaler.Scale(def.stats, 배율)) — effective 스탯 주입<br/>③ SetMove/AttackBehaviour(def.moveAI/attackAI) — AI 모듈 주입(M3)"]
+    D6["Launch(despawnZ) + SetDropHandler → 씬에 등장·이동(Update가 모듈 Tick)"]
+    D7["사망/이탈 → EnemyPool.Return → Enemy.ClearVisual() → 순수 셸로 복귀"]
+    D1 --> D2 --> D3 --> D4 --> D5 --> D6 --> D7
 ```
 
 ---

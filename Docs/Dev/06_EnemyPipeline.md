@@ -115,10 +115,11 @@ public static string RangeLabelOf(Archetype a) => a switch {
 `class SoTableEditorView<T> : VisualElement where T : ScriptableObject` — 특정 SO 타입의 에셋 전체를 한 패널에서 **목록 + 상세 편집 + CRUD**로 다루는 제네릭 뷰.
 
 - **`EditorWindow`가 아니라 `VisualElement`** — 별창이든 허브 탭이든 동일 패널을 꽂아 재사용(확장성의 실체·관심사 분리). 도메인 에디터는 이 뷰를 상속해 컬럼/폴더/훅만 지정.
-- 구성: 툴바(`New`/`Delete`/`Reload`) · 좌 목록(`MultiColumnListView`) | 우 상세(`ScrollView`), `TwoPaneSplitView` 분할.
+- 구성: 툴바(`New`/`Delete`/`Reload` · `Export CSV`/`Import CSV`) · 좌 목록(`MultiColumnListView`) | 우 상세(`ScrollView`), `TwoPaneSplitView` 분할.
 - 상세 = 선택 에셋의 `SerializedObject`를 `PropertyField`로 나열(자동 바인딩) + 에셋명 편집(`RenameAsset`).
 - 저장 = 명시 버튼 없이 `SaveCurrent()`(`SetDirty`+`SaveAssetIfDirty`)가 **선택 전환/창 닫힘 시** 자동. **유효성과 무관**(경고 있어도 저장).
 - 확장 지점(override/훅): `AssetFolder` · `NewAssetBaseName` · `ConfigureColumns` · `CustomizeDetail` · `Items` · `RefreshRows`.
+- **CSV export/import(밸런싱 편의, 전 툴 공통)**: `SerializedProperty`로 **숫자·bool·enum 리프**(+ 중첩 struct 스칼라, 예 `stats.maxHp`)만 평탄화. 첫 열=에셋명(행 키), enum=이름, 소수점=`.`(InvariantCulture). **제외**=배열(`Entry[]` 등)·오브젝트참조(`dropOrb`)·Addressables 참조(`visual`)·문자열. **Import=에셋명 매칭 업데이트만**(없는 이름=경고·건너뜀, 신규 생성/삭제 없음). 스프레드시트에서 수치 일괄 편집 → 재임포트 워크플로우.
 
 > 편집 UI = `PropertyField` 직행(중간 추상 생략). 스키마가 완성돼 애매함이 없고, 소비층(런타임)이 데이터를 읽기만 하므로 버릴 코드를 만들 이유가 없다.
 

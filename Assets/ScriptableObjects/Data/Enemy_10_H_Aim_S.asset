@@ -10,25 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ca5509b0948339a448504d063d479ca1, type: 3}
-  m_Name: Enemy_Bomber_T2
+  m_Name: Enemy_10_H_Aim_S
   m_EditorClassIdentifier: VD.Runtime::VD.Core.EnemyDefinition
   visual:
-    m_AssetGUID: 700781f82af9ca944b8deb4f200ad36b
+    m_AssetGUID: a7a72d70ca99cb0489b8bd8bbef5d676
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  visualScale: 1.213
-  moveAI: 1
-  attackAI: 3
-  archetype: 2
+  visualScale: 1.2
+  moveAI: 0
+  attackAI: 1
+  archetype: 0
+  healthClass: 1
   stats:
-    maxHp: 16
-    moveSpeed: 13
-    damage: 18
-    killScore: 20
-    fireInterval: 0
-    projectileSpeed: 0
+    maxHp: 500
+    moveSpeed: 9
+    damage: 5
+    killScore: 30
+    fireInterval: 1.2
+    projectileSpeed: 20
     barrageCount: 0
-    suicideRadius: 3
-  dropOrb: {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}
+    suicideRadius: 0
+    hoverDistance: 0
+    hoverDuration: 0
+  dropOrb: {fileID: 0}

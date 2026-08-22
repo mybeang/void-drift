@@ -29,6 +29,9 @@ namespace VD.Core
         [Tooltip("아키타입. 교전거리(range)는 여기서 파생 — 별도 필드로 두지 않음(단일 소스)")]
         public Archetype archetype;
 
+        [Tooltip("체력 등급(3-3). HP 곡선(저/고)·속도 체력배율·모델 스케일을 결정. HP 실수치는 웨이브 곡선(3-2)에서 등급별로 나옴")]
+        public HealthClass healthClass;
+
         [Header("스탯")]
         [Tooltip("능력치(체력/이동속도/데미지/처치점수 + 공격AI별). 수치 Day5")]
         public EnemyStats stats;

@@ -14,10 +14,17 @@ namespace VD.Core
     [CreateAssetMenu(fileName = "Orb_", menuName = "Void Drift/Orb Definition")]
     public sealed class OrbDefinition : ScriptableObject
     {
-        [Tooltip("습득 시 주는 경험치. 오브 종류를 가르는 값. 수치 Day5(green baseline = 1)")]
-        public int xpValue = 1;
+        [Tooltip("습득 시 주는 경험치. 오브 종류를 가르는 값. 밸런싱 패스 3-5: 녹2·빨3·파4(비율 1:1.5:2). 튜닝값")]
+        public int xpValue = 2;
 
-        [Tooltip("이 오브 종류의 비주얼 프리팹(크리스탈 VFX, 색만 다름). 동작은 공유 Orb가 담당 — 드랍 시 이 비주얼을 주입(배선은 이후)")]
+        [Tooltip("이 오브 종류의 비주얼 프리팹(크리스탈 VFX, 색만 다름). 동작은 공유 Orb가 담당")]
         public GameObject visual;
+
+        [Header("웨이브 색 드랍 (3-5, 데이터 게이팅)")]
+        [Tooltip("이 색이 출현하기 시작하는 웨이브. 녹0·빨30·파50. 현재 웨이브 < 이 값이면 롤에서 제외")]
+        [Min(0)] public int minWave = 0;
+
+        [Tooltip("드랍 가중치(가능한 색끼리 재정규화). 녹5·빨3·파1")]
+        [Min(0f)] public float weight = 5f;
     }
 }

@@ -10,25 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ca5509b0948339a448504d063d479ca1, type: 3}
-  m_Name: Enemy_Bomber_T3
+  m_Name: Enemy_06_L_Suicide_S
   m_EditorClassIdentifier: VD.Runtime::VD.Core.EnemyDefinition
   visual:
-    m_AssetGUID: cf9cf29e3843684429990563cb01aea7
+    m_AssetGUID: 3573afb1138428247bb9e078fef4aee4
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  visualScale: 1.221
-  moveAI: 2
+  visualScale: 0.8
+  moveAI: 0
   attackAI: 3
   archetype: 2
+  healthClass: 0
   stats:
-    maxHp: 20
-    moveSpeed: 14
-    damage: 20
-    killScore: 25
+    maxHp: 30
+    moveSpeed: 15
+    damage: 10
+    killScore: 10
     fireInterval: 0
     projectileSpeed: 0
     barrageCount: 0
-    suicideRadius: 3.5
-  dropOrb: {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}
+    suicideRadius: 3
+    hoverDistance: 0
+    hoverDuration: 0
+  dropOrb: {fileID: 0}

@@ -29,8 +29,12 @@ namespace VD.Core
         [SerializeField] float magnetMaxSpeed = 40f;
         [Tooltip("플레이어에 이 거리 이내로 도달하면 습득(거리 기반). magnetRadius보다 작게. 수치 Day5")]
         [SerializeField] float pickupRadius = 0.6f;
-        [Tooltip("습득 시 주는 경험치. 지금은 고정 1(→ M2-2 SO로 데이터화). 수치 Day5")]
-        [SerializeField] int xpValue = 1;
+        [Tooltip("습득 시 주는 경험치. 드랍 시 색 롤로 주입(3-5, Configure). 인스펙터값은 폴백")]
+        [SerializeField] int xpValue = 2;
+
+        [Header("색 비주얼 (3-5, 인덱스=색: 0=녹 1=빨 2=파)")]
+        [Tooltip("색별 크리스탈 자식. 드랍 색 롤에 따라 하나만 활성. 페이드는 전 자식 캐시라 무관")]
+        [SerializeField] GameObject[] colorVisuals;
 
         [Header("페이드아웃 (플레이어 평면 통과 후 흐려짐, I-5)")]
         [Tooltip("페이드 시작선을 플레이어 z보다 앞으로(+Z, 오브가 도달하기 전) 당기는 거리. 0=플레이어 평면부터, 양수면 그만큼 앞에서 흐려지기 시작. 수치 Day5")]
@@ -61,6 +65,15 @@ namespace VD.Core
                 _baseColors[i] = (m != null && m.HasProperty(BaseColorID)) ? m.GetColor(BaseColorID) : Color.white;
             }
             _mpb = new MaterialPropertyBlock();
+        }
+
+        /// <summary>드랍 색 적용(3-5) — 해당 색 비주얼만 활성 + 습득 경험치 설정. OnSpawned 후 드랍 측이 호출.</summary>
+        public void Configure(int colorIndex, int xp)
+        {
+            xpValue = xp;
+            if (colorVisuals == null) return;
+            for (int i = 0; i < colorVisuals.Length; i++)
+                if (colorVisuals[i] != null) colorVisuals[i].SetActive(i == colorIndex);
         }
 
         /// <summary>풀 Get 시 호출 — 타깃(플레이어)·반납 콜백·자석 보너스 배선 + 캡처 상태 리셋.</summary>

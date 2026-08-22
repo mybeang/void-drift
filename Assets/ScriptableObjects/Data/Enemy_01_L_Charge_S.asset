@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ca5509b0948339a448504d063d479ca1, type: 3}
-  m_Name: Enemy_LightCharger_T2
+  m_Name: Enemy_01_L_Charge_S
   m_EditorClassIdentifier: VD.Runtime::VD.Core.EnemyDefinition
   visual:
     m_AssetGUID: 700781f82af9ca944b8deb4f200ad36b
@@ -18,17 +18,20 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  visualScale: 1.079
-  moveAI: 1
+  visualScale: 0.8
+  moveAI: 0
   attackAI: 0
   archetype: 1
+  healthClass: 0
   stats:
-    maxHp: 20
-    moveSpeed: 12
+    maxHp: 30
+    moveSpeed: 15
     damage: 8
-    killScore: 12
+    killScore: 10
     fireInterval: 0
     projectileSpeed: 0
     barrageCount: 0
     suicideRadius: 0
-  dropOrb: {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}
+    hoverDistance: 0
+    hoverDuration: 0
+  dropOrb: {fileID: 0}

@@ -10,27 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ca5509b0948339a448504d063d479ca1, type: 3}
-  m_Name: Enemy_Shooter_T1
+  m_Name: Enemy_12_H_Barrage_W
   m_EditorClassIdentifier: VD.Runtime::VD.Core.EnemyDefinition
   visual:
-    m_AssetGUID: a7a72d70ca99cb0489b8bd8bbef5d676
+    m_AssetGUID: 0d76bd6ffaac6c444b8ca8efc4dda38e
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  visualScale: 1.162
-  moveAI: 3
-  attackAI: 1
+  visualScale: 1.2
+  moveAI: 2
+  attackAI: 2
   archetype: 0
+  healthClass: 1
   stats:
-    maxHp: 20
-    moveSpeed: 8
-    damage: 5
-    killScore: 15
+    maxHp: 500
+    moveSpeed: 7.2
+    damage: 2
+    killScore: 30
     fireInterval: 1.2
     projectileSpeed: 20
-    barrageCount: 1
+    barrageCount: 3
     suicideRadius: 0
-    hoverDistance: 36
-    hoverDuration: 10
-  dropOrb: {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}
+    hoverDistance: 0
+    hoverDuration: 0
+  dropOrb: {fileID: 0}

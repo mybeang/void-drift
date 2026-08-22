@@ -6036,30 +6036,34 @@ MonoBehaviour:
   bulletPool: {fileID: 758803586}
   difficulty: {fileID: 1239163164}
   spawnTable:
-  - def: {fileID: 11400000, guid: 78c078a5bea74ec45a2e50ec82ed6d52, type: 2}
+  - def: {fileID: 11400000, guid: e78ebeb67dd02024daa43625a4de429e, type: 2}
+    weight: 12
+  - def: {fileID: 11400000, guid: 1001ed95d1da1cd4e9e2fb647ef7db2a, type: 2}
+    weight: 12
+  - def: {fileID: 11400000, guid: d8e1a39daaeb30d43bce9a0b10819c98, type: 2}
+    weight: 9
+  - def: {fileID: 11400000, guid: 45ccfd02965f9954db6917871328a565, type: 2}
+    weight: 6
+  - def: {fileID: 11400000, guid: 27b6168770b605f41825e466ecb7cf44, type: 2}
+    weight: 6
+  - def: {fileID: 11400000, guid: 3e996525b9e42ab4a8e9d91e958ff1b3, type: 2}
     weight: 3
-  - def: {fileID: 11400000, guid: 723eee322ba1f15468da73560768bd52, type: 2}
-    weight: 2
-  - def: {fileID: 11400000, guid: 23ef483a4f6aff046b2529e6528dc4f7, type: 2}
-    weight: 1
-  - def: {fileID: 11400000, guid: 4bf27845dbb1f90488bbbf08f90a3ed1, type: 2}
+  - def: {fileID: 11400000, guid: bfb992ced3e7bde49915a5e59fcb91ef, type: 2}
     weight: 3
-  - def: {fileID: 11400000, guid: 93f74bd4da438fb47b217f81230ac774, type: 2}
-    weight: 2
-  - def: {fileID: 11400000, guid: a5408ea08dfab0941a1d5aa45aaa5e52, type: 2}
-    weight: 1
-  - def: {fileID: 11400000, guid: ef726d11fdf17f34a9a7346ab4dcde7a, type: 2}
+  - def: {fileID: 11400000, guid: 8d5d68c85aa23e645a18591e579ace96, type: 2}
+    weight: 4
+  - def: {fileID: 11400000, guid: 327a15687c5dce74d9ef77b57ac54c61, type: 2}
+    weight: 4
+  - def: {fileID: 11400000, guid: 086c42b52d281d541bb12128ca085faf, type: 2}
     weight: 3
-  - def: {fileID: 11400000, guid: b0944dd6317de9843944d05cebf669f3, type: 2}
+  - def: {fileID: 11400000, guid: b4802f09cc196584590f04723e174716, type: 2}
     weight: 2
-  - def: {fileID: 11400000, guid: aa47bbec94bb3ac45b287f5721492770, type: 2}
-    weight: 1
-  - def: {fileID: 11400000, guid: 64bc732599c842b44a77dd55cadc13ce, type: 2}
-    weight: 3
-  - def: {fileID: 11400000, guid: 1c2377907aaf95645851d8586e9c665c, type: 2}
+  - def: {fileID: 11400000, guid: 0e102b707aeb8f54ea5f410efa1ad0c9, type: 2}
     weight: 2
-  - def: {fileID: 11400000, guid: 56199daa81f0d114ab15b8dc7a1ea74a, type: 2}
-    weight: 1
+  orbColors:
+  - {fileID: 11400000, guid: 61076d112d11b984098b907f4122c26e, type: 2}
+  - {fileID: 11400000, guid: 98b707ead8258d548b693c268e67e0d9, type: 2}
+  - {fileID: 11400000, guid: 60ec1a85f477a054faabe69a5b0735be, type: 2}
   spawnInterval: 1
   spawnZ: 120
   despawnZ: -50

@@ -37,6 +37,9 @@ namespace VD.Enemy
         [Tooltip("스폰 후보 = EnemyDefinition + 가중치. 인스펙터에서 SO 드래그 + weight 지정")]
         [SerializeField] SpawnEntry[] spawnTable = Array.Empty<SpawnEntry>();
 
+        [Tooltip("오브 색 드랍(3-5) — 순서=색 인덱스(0녹·1빨·2파, Orb.colorVisuals와 일치). 각 SO의 minWave/weight/xp가 데이터.")]
+        [SerializeField] OrbDefinition[] orbColors = Array.Empty<OrbDefinition>();
+
         [Header("스폰 (수치는 Day5 튜닝)")]
         [Tooltip("스폰 간격(초)")]
         [SerializeField] float spawnInterval = 1.0f;
@@ -135,12 +138,34 @@ namespace VD.Enemy
             return n;
         }
 
-        /// <summary>적 실사망 콜백 — 사망 위치에 오브를 하나 드랍(M1-5 1단계: 스폰+존재만).</summary>
+        /// <summary>적 실사망 콜백 — 사망 위치에 오브 드랍 + 웨이브 기반 색 롤(3-5).</summary>
         void DropOrb(Vector3 pos)
         {
             if (orbPool == null) return;
             Orb orb = orbPool.Get();
             orb.transform.position = pos;
+            RollOrbColor(orb);
+        }
+
+        /// <summary>현재 웨이브에 가능한 색(wave ≥ minWave)만으로 가중 재정규화해 롤 → 오브에 색·xp 주입. 데이터 없으면 프리팹 기본 유지.</summary>
+        void RollOrbColor(Orb orb)
+        {
+            if (orbColors == null || orbColors.Length == 0) return;
+            int wave = difficulty != null ? difficulty.CurrentWave : 1;
+
+            float total = 0f;
+            foreach (var d in orbColors)
+                if (d != null && wave >= d.minWave && d.weight > 0f) total += d.weight;
+            if (total <= 0f) return;
+
+            float r = UnityEngine.Random.Range(0f, total);
+            for (int i = 0; i < orbColors.Length; i++)
+            {
+                var d = orbColors[i];
+                if (d == null || wave < d.minWave || d.weight <= 0f) continue;
+                r -= d.weight;
+                if (r <= 0f) { orb.Configure(i, d.xpValue); return; }
+            }
         }
 
         void OnDestroy()

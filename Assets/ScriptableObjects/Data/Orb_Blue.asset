@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 707b8f0aecfbe1c40b034351e896dcb2, type: 3}
-  m_Name: Orb_Green
+  m_Name: Orb_Blue
   m_EditorClassIdentifier: VD.Runtime::VD.Core.OrbDefinition
-  xpValue: 2
-  visual: {fileID: 3928998189374746443, guid: 985dd376726c2f042a756a45e7f5a640, type: 3}
-  minWave: 0
-  weight: 5
+  xpValue: 4
+  visual: {fileID: 683182934616091483, guid: 2cdbb9ae1f1333941bfc975fe851d465, type: 3}
+  minWave: 45
+  weight: 1

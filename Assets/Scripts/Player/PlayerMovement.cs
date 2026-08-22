@@ -1,12 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using VD.Core;
+using VD.UI;
 
 namespace VD.Player
 {
     /// <summary>
     /// 플레이어 기체 "이동" 전담. 오로지 위치 이동만 담당한다(뱅킹 연출은 <see cref="PlayerBanking"/>로 분리).
-    /// - 입력: New Input System 포인터/터치 델타(상대 드래그, 해상도 무관). 레거시 Input.* 미사용.
+    /// - 입력: <b>방향형 조이스틱</b>(<see cref="JoystickView"/>가 소유, 포인터/터치) + [PC] 키보드. 레거시 Input.* 미사용.
+    ///   조이스틱 <see cref="JoystickView.Value"/>(단위 원반, 방향+세기)를 속도로 사용 — 스틱 유지=계속 이동, 떼면 정지.
+    ///   조이스틱은 에디터/모바일에서만 활성(PC 스탠드얼론은 Value=0 → 마우스 이동 차단, 키보드만).
     /// - 이동: 물리(Rigidbody) 속도 직접 매핑. XY 자유, Z 고정.
     ///         이동 목표를 뷰포트 경계 안으로 <b>선-클램프</b>해 바깥으로 미는 속도가 생기지 않게 함(경계 떨림 방지).
     /// - 경계: 카메라 뷰포트 기준 자동(해상도/기기 무관).
@@ -18,18 +21,16 @@ namespace VD.Player
         [Header("참조")]
         [Tooltip("비우면 Camera.main 사용")]
         [SerializeField] Camera targetCamera;
+        [Tooltip("방향형 조이스틱(가상 스틱). 비우면 Start에서 씬에서 탐색. 없으면 포인터 이동 비활성(키보드만).")]
+        [SerializeField] JoystickView joystick;
 
-        [Header("이동 (상대 드래그 → 속도 직접 매핑, 해상도 무관)")]
-        [Tooltip("게인: 손가락이 화면의 x% 만큼 움직이면 기체는 화면의 (x×게인)% 만큼 이동.\n" +
-                 "예) 3 → 화면의 1/3만 드래그해도 기체가 끝에서 끝까지. 클수록 조금만 움직여도 많이 감.\n" +
-                 "픽셀이 아닌 화면 분율 기준이라 에디터/폰 해상도가 달라도 동일하게 동작.")]
-        [SerializeField] float dragGain = 3f;
-        [Tooltip("이보다 작은 프레임 누적 드래그(화면 분율)는 무시(손떨림 데드존). 0.002 = 화면의 0.2%")]
-        [SerializeField] float deadZoneScreenFraction = 0.002f;
-        [Tooltip("속도 상한(월드 유닛/초). 0이면 무제한(게인에 완전 비례). 빠른 플릭 과속 방지용.")]
+        [Header("이동 (방향형 조이스틱 → 속도)")]
+        [Tooltip("조이스틱 최대 세기(Value=1)일 때 초당 이동량(뷰포트 분율). 1.2 → 약 0.8초에 화면 끝에서 끝.")]
+        [SerializeField] float pointerMoveSpeed = 1.2f;
+        [Tooltip("속도 상한(월드 유닛/초). 0이면 무제한. 빠른 이동 과속 방지용.")]
         [SerializeField] float maxSpeed = 0f;
 
-        [Header("[PC] 키보드 이동 (WASD/화살표 — 드래그와 공존·합산)")]
+        [Header("[PC] 키보드 이동 (WASD/화살표 — 조이스틱과 공존·합산)")]
         [Tooltip("초당 이동량(뷰포트 분율). 1.2 → 약 0.8초에 화면 끝에서 끝. 0이면 키보드 이동 비활성.")]
         [SerializeField] float keyboardMoveSpeed = 1.2f;
 
@@ -42,12 +43,15 @@ namespace VD.Player
         [SerializeField] Vector2 viewportMargin = new Vector2(0.06f, 0.06f);
 
         Rigidbody _rb;
-        Vector2 _accumulatedDelta;     // 드래그 픽셀 델타: Update에서 누적, FixedUpdate에서 소비
         Vector2 _accumulatedKeyFrac;   // [PC] 키보드 이동(뷰포트 분율): Update에서 누적, FixedUpdate에서 소비
         float _depth;                  // 카메라 → 기체 평면 거리(뷰포트 변환 z)
 
-        /// <summary>이동속도(드래그 게인) 배율 강화 — M1-8. pct=0.12 → +12%(누적).</summary>
-        public void AddMoveSpeedMultiplier(float pct) => dragGain *= (1f + pct);
+        /// <summary>이동속도 배율 강화 — M1-8. pct=0.12 → +12%(누적). 조이스틱·키보드 둘 다에 적용.</summary>
+        public void AddMoveSpeedMultiplier(float pct)
+        {
+            pointerMoveSpeed *= (1f + pct);
+            keyboardMoveSpeed *= (1f + pct);
+        }
 
         void Awake()
         {
@@ -60,6 +64,7 @@ namespace VD.Player
 
         void Start()
         {
+            if (joystick == null) joystick = FindAnyObjectByType<JoystickView>();
             if (targetCamera != null)
             {
                 _depth = Mathf.Abs(transform.position.z - targetCamera.transform.position.z);
@@ -71,17 +76,11 @@ namespace VD.Player
         {
             if (!IsPlaying())
             {
-                _accumulatedDelta = Vector2.zero;
                 _accumulatedKeyFrac = Vector2.zero;
                 return;
             }
 
-            // 상대 드래그: 누르고 있는 동안의 프레임 델타를 누적(포인터=마우스/터치 통합).
-            var pointer = Pointer.current;
-            if (pointer != null && pointer.press.isPressed)
-                _accumulatedDelta += pointer.delta.ReadValue();
-
-            // [PC] 키보드 이동: WASD/화살표 방향을 초당 이동량으로 누적(뷰포트 분율, 드래그와 합산).
+            // [PC] 키보드 이동: WASD/화살표 방향을 초당 이동량으로 누적(뷰포트 분율, 조이스틱과 합산).
             if (keyboardMoveSpeed > 0f)
             {
                 var kb = Keyboard.current;
@@ -108,22 +107,17 @@ namespace VD.Player
                 return;
             }
 
-            Vector2 pxDelta = _accumulatedDelta;
-            _accumulatedDelta = Vector2.zero;
             Vector2 keyFrac = _accumulatedKeyFrac;
             _accumulatedKeyFrac = Vector2.zero;
 
-            // 픽셀 델타 → 화면 분율(해상도/DPI 무관). 가로=폭, 세로=높이 기준.
-            Vector2 frac = new Vector2(
-                Screen.width > 0 ? pxDelta.x / Screen.width : 0f,
-                Screen.height > 0 ? pxDelta.y / Screen.height : 0f);
+            // 방향형 조이스틱: Value(단위 원반)×속도×dt = 이번 스텝 뷰포트 이동(스틱 유지=계속 이동).
+            Vector2 stick = joystick != null ? joystick.Value : Vector2.zero;
 
-            // 현재 뷰포트 → 목표 뷰포트(손가락 화면분율 × 게인).
+            // 현재 뷰포트 → 목표 뷰포트.
             Vector3 curVp = targetCamera.WorldToViewportPoint(_rb.position);
             Vector2 targetVp = new Vector2(curVp.x, curVp.y);
-            if (frac.magnitude >= deadZoneScreenFraction)
-                targetVp += new Vector2(frac.x * dragGain, frac.y * dragGain);
-            targetVp += keyFrac;   // [PC] 키보드 이동(이미 뷰포트 분율, 게인 미적용) — 드래그와 합산
+            targetVp += stick * (pointerMoveSpeed * Time.fixedDeltaTime);
+            targetVp += keyFrac;   // [PC] 키보드 이동(이미 뷰포트 분율) — 조이스틱과 합산
 
             // 목표를 경계 안으로 선-클램프 → 경계에서 바깥으로 미는 속도가 애초에 안 생김(부르르 떨림 방지).
             targetVp.x = Mathf.Clamp(targetVp.x, viewportMargin.x, 1f - viewportMargin.x);

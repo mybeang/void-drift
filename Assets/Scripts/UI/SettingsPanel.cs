@@ -1,72 +1,99 @@
-using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using VD.Core;
 
 namespace VD.UI
 {
     /// <summary>
-    /// 환경설정(사운드) 패널(M5-10). 마스터/BGM/SFX 볼륨 슬라이더 + 퍼센트 표기 + 닫기.
-    /// 값은 <see cref="AudioManager"/>의 볼륨 API로 실시간 반영·PlayerPrefs 영속. 프리팹 1개를 타이틀·인게임 양쪽에 배치.
-    /// <para><see cref="pauseGameWhileOpen"/> = true면 열 때 <see cref="GameManager.Pause"/>, 닫을 때 <see cref="GameManager.Resume"/>
-    /// (인게임 인스턴스용). 타이틀 인스턴스는 false.</para>
+    /// 인게임 <b>일시정지 메뉴</b>(밸런싱 패스). 기어 버튼 또는 <b>ESC</b>로 여닫으며, 열려 있는 동안 게임 정지.
+    /// 5버튼: <b>게임 재개 · 새로 시작 · 환경 설정 · 타이틀로 · 게임 종료</b>. "환경 설정"은 <see cref="SoundSettingsPanel"/>(사운드)을 띄운다.
+    /// <para>루트는 <b>항상 활성</b>(ESC 감지 위해) — 표시/숨김은 <see cref="content"/> 자식만 토글한다.
+    /// 씬 전환(새로 시작/타이틀)은 <see cref="SceneTransition"/> 이클립스 와이프.</para>
+    /// 인게임 전용(타이틀은 SoundSettingsPanel을 직접 사용).
     /// </summary>
     public sealed class SettingsPanel : MonoBehaviour
     {
-        [SerializeField] Slider masterSlider;
-        [SerializeField] Slider bgmSlider;
-        [SerializeField] Slider sfxSlider;
-        [SerializeField] TMP_Text masterValue;
-        [SerializeField] TMP_Text bgmValue;
-        [SerializeField] TMP_Text sfxValue;
-        [SerializeField] Button closeButton;
+        [Header("표시 (루트는 항상 활성, 이 자식만 토글)")]
+        [Tooltip("Dim+Window+버튼을 담은 컨테이너. 열림=활성, 닫힘=비활성.")]
+        [SerializeField] GameObject content;
 
-        [Tooltip("열려 있는 동안 게임 일시정지(인게임 인스턴스=true, 타이틀=false)")]
-        [SerializeField] bool pauseGameWhileOpen;
+        [Header("열기 트리거")]
+        [Tooltip("기어 버튼(선택). ESC도 동일 동작.")]
+        [SerializeField] Button openButton;
+
+        [Header("메뉴 버튼")]
+        [SerializeField] Button resumeButton;   // 게임 재개
+        [SerializeField] Button restartButton;  // 새로 시작
+        [SerializeField] Button soundButton;     // 환경 설정
+        [SerializeField] Button titleButton;     // 타이틀로
+        [SerializeField] Button quitButton;      // 게임 종료
+
+        [Header("참조")]
+        [Tooltip("환경 설정 = 이 사운드 패널을 오픈")]
+        [SerializeField] SoundSettingsPanel soundPanel;
+        [SerializeField] string gameSceneName = "GameScene";
+        [SerializeField] string titleSceneName = "TitleScene";
+
+        bool IsOpen => content != null && content.activeSelf;
 
         void Awake()
         {
-            if (masterSlider) masterSlider.onValueChanged.AddListener(OnMaster);
-            if (bgmSlider) bgmSlider.onValueChanged.AddListener(OnBgm);
-            if (sfxSlider) sfxSlider.onValueChanged.AddListener(OnSfx);
-            if (closeButton) closeButton.onClick.AddListener(Close);
+            if (openButton) openButton.onClick.AddListener(Open);
+            if (resumeButton) resumeButton.onClick.AddListener(Close);
+            if (restartButton) restartButton.onClick.AddListener(() => SceneTransition.Instance.TransitionTo(gameSceneName));
+            if (soundButton) soundButton.onClick.AddListener(() => soundPanel?.Open());
+            if (titleButton) titleButton.onClick.AddListener(() => SceneTransition.Instance.TransitionTo(titleSceneName));
+            if (quitButton) quitButton.onClick.AddListener(Quit);
+            if (content) content.SetActive(false);
         }
 
-        /// <summary>패널 열기 — 슬라이더를 저장값으로 동기화 후 표시.</summary>
+        void Update()
+        {
+            var kb = Keyboard.current;
+            if (kb == null || !kb.escapeKey.wasPressedThisFrame) return;
+
+            if (IsOpen)
+            {
+                // 사운드 패널이 위에 떠 있으면 그걸 먼저 닫는다(메뉴는 유지).
+                if (soundPanel != null && soundPanel.gameObject.activeSelf) soundPanel.Close();
+                else Close();
+            }
+            else if (IsPlaying())
+            {
+                Open();
+            }
+        }
+
+        /// <summary>메뉴 열기 — 표시 + 게임 일시정지.</summary>
         public void Open()
         {
-            gameObject.SetActive(true);       // Awake(리스너 배선) 보장
-            transform.SetAsLastSibling();     // 최상단 표시
-
-            var am = AudioManager.Instance;
-            Sync(masterSlider, masterValue, am != null ? am.GetMasterVolume() : 1f);
-            Sync(bgmSlider, bgmValue, am != null ? am.GetBgmVolume() : 1f);
-            Sync(sfxSlider, sfxValue, am != null ? am.GetSfxVolume() : 1f);
-
-            if (pauseGameWhileOpen) GameManager.Instance?.Pause();
+            if (IsOpen || !IsPlaying()) return;
+            if (content) { content.SetActive(true); transform.SetAsLastSibling(); }
+            GameManager.Instance?.Pause();
         }
 
-        /// <summary>패널 닫기 — 저장(디스크) 후 숨김.</summary>
+        /// <summary>메뉴 닫기(게임 재개) — 사운드 패널도 함께 닫고 정지 해제.</summary>
         public void Close()
         {
-            PlayerPrefs.Save();
-            gameObject.SetActive(false);
-            if (pauseGameWhileOpen) GameManager.Instance?.Resume();
+            if (soundPanel != null && soundPanel.gameObject.activeSelf) soundPanel.Close();
+            if (content) content.SetActive(false);
+            GameManager.Instance?.Resume();
         }
 
-        void Sync(Slider s, TMP_Text t, float v)
+        void Quit()
         {
-            if (s) s.SetValueWithoutNotify(v);   // 리스너 발화 없이 값만
-            SetText(t, v);
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
-        void OnMaster(float v) { AudioManager.Instance?.SetMasterVolume(v); SetText(masterValue, v); }
-        void OnBgm(float v) { AudioManager.Instance?.SetBgmVolume(v); SetText(bgmValue, v); }
-        void OnSfx(float v) { AudioManager.Instance?.SetSfxVolume(v); SetText(sfxValue, v); }
-
-        static void SetText(TMP_Text t, float v)
+        static bool IsPlaying()
         {
-            if (t) t.text = Mathf.RoundToInt(v * 100f) + "%";
+            var gm = GameManager.Instance;
+            return gm != null && gm.State == GameState.Playing;
         }
     }
 }

@@ -132,7 +132,11 @@ namespace VD.Core
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        void Start() => ApplyBgmForScene(SceneManager.GetActiveScene().name);
+        void Start()
+        {
+            ApplyBgmForScene(SceneManager.GetActiveScene().name);
+            ApplySavedVolumes();   // 저장된 볼륨(PlayerPrefs) 반영 (믹서 초기화 후=Start)
+        }
 
         void OnDestroy()
         {
@@ -189,17 +193,40 @@ namespace VD.Core
             _uiSource.PlayOneShot(clip);
         }
 
-        // ── 볼륨 API(M5-10 설정창) — 선형 0~1 → dB ─────────────────────
-        public void SetMasterVolume(float linear01) => SetVolume("MasterVol", linear01);
-        public void SetBgmVolume(float linear01) => SetVolume("BgmVol", linear01);
-        public void SetSfxVolume(float linear01) => SetVolume("SfxVol", linear01);
+        // ── 볼륨 API(M5-10 설정창) — 선형 0~1, PlayerPrefs 영속 + 믹서 dB 반영 ────
+        const string PrefMaster = "vol_master";
+        const string PrefBgm = "vol_bgm";
+        const string PrefSfx = "vol_sfx";
 
-        void SetVolume(string exposedParam, float linear01)
+        /// <summary>저장된 마스터 볼륨(0~1, 기본 1). 설정창 슬라이더 초기화용.</summary>
+        public float GetMasterVolume() => PlayerPrefs.GetFloat(PrefMaster, 1f);
+        public float GetBgmVolume() => PlayerPrefs.GetFloat(PrefBgm, 1f);
+        public float GetSfxVolume() => PlayerPrefs.GetFloat(PrefSfx, 1f);
+
+        public void SetMasterVolume(float linear01) => SetVolume(PrefMaster, "MasterVol", linear01);
+        public void SetBgmVolume(float linear01) => SetVolume(PrefBgm, "BgmVol", linear01);
+        public void SetSfxVolume(float linear01) => SetVolume(PrefSfx, "SfxVol", linear01);
+
+        void SetVolume(string prefKey, string exposedParam, float linear01)
+        {
+            float v = Mathf.Clamp01(linear01);
+            PlayerPrefs.SetFloat(prefKey, v);          // 영속(디스크 쓰기는 설정창 닫을 때 Save)
+            ApplyToMixer(exposedParam, v);
+        }
+
+        void ApplyToMixer(string exposedParam, float linear01)
         {
             if (mixer == null) return;
-            float v = Mathf.Clamp01(linear01);
-            float dB = v <= 0.0001f ? -80f : Mathf.Log10(v) * 20f;
+            float dB = linear01 <= 0.0001f ? -80f : Mathf.Log10(linear01) * 20f;
             mixer.SetFloat(exposedParam, dB);
+        }
+
+        /// <summary>저장된 볼륨 3종을 믹서에 반영(시작 시).</summary>
+        void ApplySavedVolumes()
+        {
+            ApplyToMixer("MasterVol", GetMasterVolume());
+            ApplyToMixer("BgmVol", GetBgmVolume());
+            ApplyToMixer("SfxVol", GetSfxVolume());
         }
     }
 }

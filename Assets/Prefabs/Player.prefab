@@ -161,7 +161,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4702749117833622993}
@@ -669,6 +669,46 @@ PrefabInstance:
       propertyPath: m_Name
       value: ThrusterFX
       objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 0.99141693
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 0.5707547
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.b
+      value: 0.9919087
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.r
+      value: 0.16509432
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.g
+      value: 0.27827674
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.r
+      value: 0.05098039
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.m_ColorSpace
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -731,6 +771,46 @@ PrefabInstance:
       propertyPath: m_Name
       value: ThrusterFX (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 0.99141693
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 0.5707547
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.b
+      value: 0.9919087
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.r
+      value: 0.16509432
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.g
+      value: 0.27827674
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.r
+      value: 0.05098039
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.m_ColorSpace
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -792,6 +872,46 @@ PrefabInstance:
     - target: {fileID: 2104640197590953465, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
       propertyPath: m_Name
       value: ThrusterFX (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 0.99141693
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 0.5707547
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.b
+      value: 0.9919087
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key0.r
+      value: 0.16509432
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.g
+      value: 0.27827674
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.key1.r
+      value: 0.05098039
+      objectReference: {fileID: 0}
+    - target: {fileID: 6329797831781158897, guid: 2eeaed6ef3d272b40871b600d8a59a57, type: 3}
+      propertyPath: ColorModule.gradient.maxGradient.m_ColorSpace
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

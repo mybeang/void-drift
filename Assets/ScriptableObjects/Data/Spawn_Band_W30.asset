@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdba933655a496e42a8bfa35203d5441, type: 3}
+  m_Name: Spawn_Band_W30
+  m_EditorClassIdentifier: VD.Runtime::VD.Core.SpawnProfileDefinition
+  profileName: ~W30
+  maxWave: 30
+  table:
+  - def: {fileID: 11400000, guid: 1001ed95d1da1cd4e9e2fb647ef7db2a, type: 2}
+    weight: 12
+  - def: {fileID: 11400000, guid: d8e1a39daaeb30d43bce9a0b10819c98, type: 2}
+    weight: 9
+  - def: {fileID: 11400000, guid: 3e996525b9e42ab4a8e9d91e958ff1b3, type: 2}
+    weight: 3
+  - def: {fileID: 11400000, guid: bfb992ced3e7bde49915a5e59fcb91ef, type: 2}
+    weight: 3
+  spawnInterval: 0

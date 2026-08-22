@@ -34,17 +34,19 @@ namespace VD.Player
         static readonly Collider[] _overlap = new Collider[32];
 
         /// <summary>
-        /// 조준 축(<see cref="FirePoint"/>.forward) 기준 반각 <paramref name="halfAngleDeg"/>·사거리 <paramref name="range"/>
-        /// 원뿔 안에서 가장 가까운 <see cref="IDamageable"/>를 조준점으로 반환(락 아님, 매 발 재탐색). 없으면 false.
-        /// (기존 <see cref="PlayerShooter"/>.TryAcquireTarget 로직 이관.)
+        /// 조준 축(<see cref="FirePoint"/>.forward) 기준 <b>프러스텀</b>(시작 반경 <paramref name="startRadius"/> + 반각 <paramref name="halfAngleDeg"/>)·
+        /// 사거리 <paramref name="range"/> 안에서 가장 가까운 <see cref="IDamageable"/>를 조준점으로 반환(락 아님, 매 발 재탐색). 없으면 false.
+        /// <para>축에서의 허용 수직거리 = <c>startRadius + tan(halfAngle)×축방향거리</c> — apex를 뾰족하게 두지 않고
+        /// 시작 직경을 넓혀 근접 오조준을 줄인다(<paramref name="startRadius"/>=0이면 순수 원뿔=기존 동작).</para>
         /// </summary>
-        public bool TryConeTarget(float range, float halfAngleDeg, out Vector3 aimPoint)
+        public bool TryConeTarget(float range, float halfAngleDeg, float startRadius, out Vector3 aimPoint)
         {
             aimPoint = default;
             if (FirePoint == null) return false;
 
             Vector3 origin = FirePoint.position;
             Vector3 axis = FirePoint.forward;
+            float tan = Mathf.Tan(halfAngleDeg * Mathf.Deg2Rad);
             int n = Physics.OverlapSphereNonAlloc(origin, range, _overlap, TargetMask, QueryTriggerInteraction.Collide);
             float bestDist = float.MaxValue;
             bool found = false;
@@ -54,8 +56,11 @@ namespace VD.Player
                 if (col == null || col.GetComponentInParent<IDamageable>() == null) continue;
                 Vector3 c = col.bounds.center;
                 Vector3 to = c - origin;
+                float axial = Vector3.Dot(to, axis);              // 축방향 성분
+                if (axial < 0f || axial > range) continue;         // 뒤/사거리 밖 제외
+                float perp = (to - axis * axial).magnitude;        // 축에서 수직 거리
+                if (perp > startRadius + tan * axial) continue;    // 프러스텀 밖
                 float dist = to.magnitude;
-                if (dist < 0.01f || Vector3.Angle(axis, to) > halfAngleDeg) continue;
                 if (dist < bestDist) { bestDist = dist; aimPoint = c; found = true; }
             }
             return found;

@@ -41,9 +41,17 @@ namespace VD.Enemy
             float vScale = def.visualScale > 0f ? def.visualScale : 1f;
             shell.AttachVisual(_cache != null ? _cache.Resolve(def.visual) : null, vScale);
 
-            // ② 스탯: 현재 base 그대로. 웨이브 곡선(healthClass/공격AI → WaveDifficultyConfig) 배선은 3-2.
-            //    (구 단일 전역배율 폐기 — DifficultyProvider는 웨이브·스탯곡선 소스로 개편됨.)
-            shell.ApplyStats(def.stats);
+            // ② 스탯(3-2): HP는 healthClass, 데미지는 attackAI로 웨이브 곡선값을 뽑아 스폰 시점 값으로 찍음.
+            //    속도·killScore·공격AI별 필드는 base 그대로(속도=웨이브 무관). 곡선 미등장(예: 고HP wave<40)이면 base 폴백.
+            EnemyStats s = def.stats;
+            if (_difficulty != null)
+            {
+                var hpKind = def.healthClass == HealthClass.High ? WaveStatKind.HighHp : WaveStatKind.LowHp;
+                if (_difficulty.TryStatValue(hpKind, out float hp)) s.maxHp = hp;
+
+                if (_difficulty.TryStatValue(DamageKindOf(def.attackAI), out float dmg)) s.damage = dmg;
+            }
+            shell.ApplyStats(s);
 
             // ③ AI 모듈 부착: 이동(M3-1) + 공격(M3-2).
             shell.SetMoveBehaviour(ResolveMove(def.moveAI));
@@ -60,6 +68,15 @@ namespace VD.Enemy
             MoveAIType.Weave => new WeaveMove(),
             MoveAIType.Hover => new HoverMove(),
             _ => _straight,   // Straight 폴백
+        };
+
+        /// <summary>공격AI → 웨이브 데미지 곡선 종류(3-2). 돌진=Charge·단발=Single·탄막=Barrage·자폭=Suicide.</summary>
+        static WaveStatKind DamageKindOf(AttackAIType type) => type switch
+        {
+            AttackAIType.AimedShot => WaveStatKind.DmgSingle,
+            AttackAIType.Barrage => WaveStatKind.DmgBarrage,
+            AttackAIType.Suicide => WaveStatKind.DmgSuicide,
+            _ => WaveStatKind.DmgCharge,   // Contact(돌진) 폴백
         };
 
         /// <summary>def.attackAI → 공격 모듈. 탄막/조준단발은 쿨다운 상태라 인스턴스별 new. 그 외는 싱글톤.</summary>

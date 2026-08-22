@@ -16,18 +16,20 @@ namespace VD.Player
         readonly float _projectileSpeed;
         readonly float _projectileLifetime;
         readonly float _coneHalfAngle;
+        readonly float _coneStartRadius;
         readonly float _aimRange;
         readonly float _streamSpacing;
 
         float _cooldown;
 
-        public StraightGun(float fireInterval, float projectileSpeed, float projectileLifetime, float coneHalfAngle, float aimRange, float streamSpacing, int startLevel)
+        public StraightGun(float fireInterval, float projectileSpeed, float projectileLifetime, float coneHalfAngle, float coneStartRadius, float aimRange, float streamSpacing, int startLevel)
             : base(startLevel)
         {
             _fireInterval = fireInterval;
             _projectileSpeed = projectileSpeed;
             _projectileLifetime = projectileLifetime;
             _coneHalfAngle = coneHalfAngle;
+            _coneStartRadius = coneStartRadius;
             _aimRange = aimRange;
             _streamSpacing = streamSpacing;
         }
@@ -42,7 +44,7 @@ namespace VD.Player
 
             // 조준 방향 = 조준 축(FirePoint.forward). 원뿔 안에 적 있으면 그 적으로 스냅.
             Vector3 dir = ctx.FirePoint.forward;
-            if (ctx.TryConeTarget(_aimRange, _coneHalfAngle, out Vector3 aimPoint))
+            if (ctx.TryConeTarget(_aimRange, _coneHalfAngle, _coneStartRadius, out Vector3 aimPoint))
                 dir = (aimPoint - ctx.FirePoint.position).normalized;
             Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
 

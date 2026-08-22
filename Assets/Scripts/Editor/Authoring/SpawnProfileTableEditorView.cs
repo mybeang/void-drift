@@ -17,8 +17,8 @@ namespace VD.Editor
         protected override void ConfigureColumns(MultiColumnListView table)
         {
             base.ConfigureColumns(table);   // Name 컬럼
+            AddTextColumn(table, "maxWave", "~Wave", d => "~" + d.maxWave);
             AddTextColumn(table, "count", "적종수", d => ValidCount(d).ToString());
-            AddTextColumn(table, "interval", "간격(s)", d => d.spawnInterval > 0f ? d.spawnInterval.ToString("0.##") : "기본");
         }
 
         static int ValidCount(SpawnProfileDefinition d)

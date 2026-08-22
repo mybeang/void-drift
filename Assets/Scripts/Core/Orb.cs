@@ -29,6 +29,8 @@ namespace VD.Core
         [SerializeField] float magnetMaxSpeed = 40f;
         [Tooltip("플레이어에 이 거리 이내로 도달하면 습득(거리 기반). magnetRadius보다 작게. 수치 Day5")]
         [SerializeField] float pickupRadius = 0.6f;
+        [Tooltip("[임시] 전방향 자석 반경 기즈모 표시(오브 중심 구체). 튜닝용")]
+        [SerializeField] bool drawMagnetGizmo = true;
         [Tooltip("습득 시 주는 경험치. 드랍 시 색 롤로 주입(3-5, Configure). 인스펙터값은 폴백")]
         [SerializeField] int xpValue = 2;
 
@@ -148,6 +150,17 @@ namespace VD.Core
             }
 
             if (transform.position.z <= despawnZ) _return?.Invoke(this);
+        }
+
+        // [임시] 전방향 자석 반경 시각화 — 오브 중심 구체(방향 무관 캡처 범위). 튜닝 후 제거.
+        void OnDrawGizmos()
+        {
+            if (!drawMagnetGizmo) return;
+            float r = magnetRadius + (Application.isPlaying ? _magnetBonus : 0f);
+            Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.7f);   // 자석 캡처 반경(노랑)
+            Gizmos.DrawWireSphere(transform.position, r);
+            Gizmos.color = new Color(0.3f, 1f, 0.45f, 0.85f);  // 습득 반경(초록)
+            Gizmos.DrawWireSphere(transform.position, pickupRadius);
         }
     }
 }

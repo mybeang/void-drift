@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdba933655a496e42a8bfa35203d5441, type: 3}
+  m_Name: Spawn_Band_W55
+  m_EditorClassIdentifier: VD.Runtime::VD.Core.SpawnProfileDefinition
+  profileName: ~W55
+  maxWave: 55
+  table:
+  - def: {fileID: 11400000, guid: 1001ed95d1da1cd4e9e2fb647ef7db2a, type: 2}
+    weight: 12
+  - def: {fileID: 11400000, guid: 27b6168770b605f41825e466ecb7cf44, type: 2}
+    weight: 6
+  - def: {fileID: 11400000, guid: 3e996525b9e42ab4a8e9d91e958ff1b3, type: 2}
+    weight: 3
+  - def: {fileID: 11400000, guid: 327a15687c5dce74d9ef77b57ac54c61, type: 2}
+    weight: 4
+  - def: {fileID: 11400000, guid: b4802f09cc196584590f04723e174716, type: 2}
+    weight: 2
+  spawnInterval: 0

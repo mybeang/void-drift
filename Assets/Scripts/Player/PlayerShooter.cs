@@ -36,6 +36,8 @@ namespace VD.Player
         [Header("조준 (원뿔 타겟 스냅 — 기관총)")]
         [Tooltip("조준 원뿔 반각(도). 이 안의 적에게 스냅해 발사. 밖이면 조준 축(FirePoint.forward) 직사")]
         [SerializeField] float aimConeHalfAngle = 25f;
+        [Tooltip("조준 원뿔 시작 반경(월드) — apex를 뾰족하게 두지 않고 시작 직경을 넓힘(근접 오조준 완화). 0=순수 원뿔")]
+        [SerializeField] float aimConeStartRadius = 0f;
         [Tooltip("타겟 탐색 사거리(월드)")]
         [SerializeField] float aimRange = 90f;
         [Tooltip("타겟 레이어(레이어 미설정 시 전체). 실제 적 판별은 IDamageable로 추가 필터")]
@@ -80,6 +82,8 @@ namespace VD.Player
         [SerializeField] float railDamageDecay = 0.7f;
         [Tooltip("레일 조준 원뿔 반각(도). 이 안 최근접에 스냅, 밖이면 축 직사")]
         [SerializeField] float railConeHalfAngle = 20f;
+        [Tooltip("레일 조준 원뿔 시작 반경(월드). 0=순수 원뿔")]
+        [SerializeField] float railConeStartRadius = 0f;
         [Tooltip("레일 조준 사거리(월드)")]
         [SerializeField] float railAimRange = 90f;
         [Tooltip("레일 줄기 간 간격(월드). 탄약>1일 때 나란한 레일 사이 폭")]
@@ -124,9 +128,9 @@ namespace VD.Player
         /// <summary>무기 인스턴스 팩토리 — 인스펙터 튜닝값 주입. 획득 시 startLevel=1(=탄약 1), 마일스톤 재픽업은 <see cref="IWeapon.LevelUp"/>.</summary>
         IWeapon BuildWeapon(WeaponId id, int startLevel) => id switch
         {
-            WeaponId.Straight => new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimRange, straightStreamSpacing, startLevel),
+            WeaponId.Straight => new StraightGun(fireInterval, projectileSpeed, projectileLifetime, aimConeHalfAngle, aimConeStartRadius, aimRange, straightStreamSpacing, startLevel),
             WeaponId.Homing   => new HomingMissile(homingFireInterval, homingInitialSpeed, homingAcceleration, homingMaxSpeed, homingLifetime, homingTurnRate, homingAimRange, startLevel),
-            WeaponId.Railgun  => new Railgun(railFireInterval, railSpeed, railLifetime, railMaxPierce, railDamageDecay, railConeHalfAngle, railAimRange, railStreamSpacing, startLevel),
+            WeaponId.Railgun  => new Railgun(railFireInterval, railSpeed, railLifetime, railMaxPierce, railDamageDecay, railConeHalfAngle, railConeStartRadius, railAimRange, railStreamSpacing, startLevel),
             _ => null,
         };
 
@@ -186,15 +190,17 @@ namespace VD.Player
             return gm == null || (gm.State == GameState.Playing && !gm.CombatFrozen);
         }
 
-        // [임시] 조준 원뿔 시각화(기관총) — 축 + 사거리 끝 링 + 스포크. 검증·튜닝 후 제거.
+        // [임시] 조준 프러스텀 시각화(기관총) — 축 + 시작 링(startRadius) + 끝 링 + 측선. 검증·튜닝 후 제거.
         void OnDrawGizmos()
         {
             if (!drawAimGizmo || firePoint == null) return;
 
             Vector3 o = firePoint.position;
             Vector3 axis = firePoint.forward;
-            float a = aimConeHalfAngle * Mathf.Deg2Rad;
-            float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
+            float tan = Mathf.Tan(aimConeHalfAngle * Mathf.Deg2Rad);
+            float startR = aimConeStartRadius;
+            float endR = startR + tan * aimRange;   // 프러스텀 끝 반경
+            Vector3 endC = o + axis * aimRange;
 
             Vector3 up = Vector3.Cross(axis, Vector3.up);
             if (up.sqrMagnitude < 1e-4f) up = Vector3.Cross(axis, Vector3.right);
@@ -202,19 +208,23 @@ namespace VD.Player
             Vector3 right = Vector3.Cross(axis, up).normalized;
 
             Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.9f);
-            Gizmos.DrawLine(o, o + axis * aimRange);   // 조준 축
+            Gizmos.DrawLine(o, endC);   // 조준 축
 
             const int seg = 32;
-            Vector3 prev = Vector3.zero;
+            Vector3 prevS = Vector3.zero, prevE = Vector3.zero;
             for (int i = 0; i <= seg; i++)
             {
                 float t = (i / (float)seg) * Mathf.PI * 2f;
                 Vector3 radial = up * Mathf.Cos(t) + right * Mathf.Sin(t);
-                Vector3 dir = axis * ca + radial * sa;   // 원뿔 표면 방향
-                Vector3 p = o + dir * aimRange;          // 사거리(구 반지름) 위 점
-                if (i > 0) Gizmos.DrawLine(prev, p);     // 사거리 끝 링
-                if (i % 8 == 0) Gizmos.DrawLine(o, p);   // 스포크 4개
-                prev = p;
+                Vector3 ps = o + radial * startR;      // 시작 링(직경 = 2×startRadius)
+                Vector3 pe = endC + radial * endR;     // 끝 링
+                if (i > 0)
+                {
+                    if (startR > 0f) Gizmos.DrawLine(prevS, ps);   // 시작 링
+                    Gizmos.DrawLine(prevE, pe);                    // 끝 링
+                }
+                if (i % 8 == 0) Gizmos.DrawLine(ps, pe);           // 측선(프러스텀 모서리) 4개
+                prevS = ps; prevE = pe;
             }
         }
     }

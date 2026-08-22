@@ -40,6 +40,9 @@ namespace VD.Enemy
         [Tooltip("오브 색 드랍(3-5) — 순서=색 인덱스(0녹·1빨·2파, Orb.colorVisuals와 일치). 각 SO의 minWave/weight/xp가 데이터.")]
         [SerializeField] OrbDefinition[] orbColors = Array.Empty<OrbDefinition>();
 
+        [Tooltip("웨이브 밴드 스폰 프로파일(3-4). 현재 wave ≤ maxWave인 가장 좁은 밴드에서 가중 랜덤. 비우면 spawnTable 폴백. Spawn Profile Authoring 편집.")]
+        [SerializeField] SpawnProfileDefinition[] waveBands = Array.Empty<SpawnProfileDefinition>();
+
         [Header("스폰 (수치는 Day5 튜닝)")]
         [Tooltip("스폰 간격(초)")]
         [SerializeField] float spawnInterval = 1.0f;
@@ -81,9 +84,15 @@ namespace VD.Enemy
 
         IEnumerable<UnityEngine.AddressableAssets.AssetReferenceGameObject> DistinctVisuals()
         {
-            // 스폰 표의 적 비주얼 프리로드(캐시가 GUID로 dedupe). 웨이브 밴드 프로파일 비주얼은 3-4에서 합류.
+            // 스폰 표 + 모든 웨이브 밴드의 적 비주얼 프리로드(캐시가 GUID로 dedupe).
             foreach (var entry in spawnTable)
                 if (entry.def != null) yield return entry.def.visual;
+
+            if (waveBands != null)
+                foreach (var b in waveBands)
+                    if (b != null && b.table != null)
+                        foreach (var e in b.table)
+                            if (e.def != null) yield return e.def.visual;
         }
 
         void Update()
@@ -91,6 +100,7 @@ namespace VD.Enemy
             if (!_ready || !IsPlaying() || pool == null) return;
 
             // 3-1: 웨이브 기반 동시상한 + 주기(전부 WaveDifficultyConfig 데이터). 상한 미만일 때 주기마다 1마리씩.
+            int wave = difficulty != null ? difficulty.CurrentWave : 1;
             int cap = difficulty != null ? difficulty.CurrentCap : 10;
 
             _cooldown -= Time.deltaTime;
@@ -98,8 +108,8 @@ namespace VD.Enemy
             if (pool.ActiveCount >= cap) return;            // 상한 도달 → 슬롯 빌 때까지 보류(쿨다운 0 유지 → 다음 프레임 재시도)
             _cooldown = difficulty != null ? difficulty.CurrentInterval : 2f;
 
-            // WHICH 적 = 표 가중 랜덤. 웨이브 밴드 스폰 프로파일은 3-4에서 추가.
-            EnemyDefinition def = PickFromTable(spawnTable);
+            // WHICH 적 = 현재 웨이브 밴드에서 가중 랜덤(3-4). 밴드 없으면 spawnTable 폴백.
+            EnemyDefinition def = PickForWave(wave);
             if (def == null) return;
 
             float x = UnityEngine.Random.Range(spawnXRange.x, spawnXRange.y);
@@ -111,6 +121,44 @@ namespace VD.Enemy
             e.transform.SetPositionAndRotation(new Vector3(x, y, spawnZ), Quaternion.LookRotation(Vector3.back, Vector3.up));
             e.Launch(despawnZ);           // 속도는 적 stats에서(M2-5b). 여기선 despawn 경계만 주입
             e.SetDropHandler(DropOrb);   // 실사망 시 오브 드랍(M1-5). dropOrb 데이터화(비주얼/xp)는 이후
+        }
+
+        /// <summary>현재 웨이브에 맞는 밴드에서 적 하나 선택(3-4). 밴드 없으면 spawnTable 폴백.</summary>
+        EnemyDefinition PickForWave(int wave)
+        {
+            var band = CurrentBand(wave);
+            if (band != null) return PickFromEntries(band.table);
+            return PickFromTable(spawnTable);
+        }
+
+        /// <summary>현재 wave ≤ maxWave인 <b>가장 좁은</b>(maxWave 최소) 유효 밴드. 없으면 null.</summary>
+        SpawnProfileDefinition CurrentBand(int wave)
+        {
+            if (waveBands == null) return null;
+            SpawnProfileDefinition best = null;
+            foreach (var b in waveBands)
+            {
+                if (b == null || b.table == null || b.table.Length == 0) continue;
+                if (wave <= b.maxWave && (best == null || b.maxWave < best.maxWave)) best = b;
+            }
+            return best;
+        }
+
+        static EnemyDefinition PickFromEntries(SpawnProfileDefinition.Entry[] entries)
+        {
+            float total = 0f;
+            foreach (var e in entries)
+                if (e.def != null && e.weight > 0f) total += e.weight;
+            if (total <= 0f) return null;
+
+            float r = UnityEngine.Random.Range(0f, total);
+            foreach (var e in entries)
+            {
+                if (e.def == null || e.weight <= 0f) continue;
+                r -= e.weight;
+                if (r <= 0f) return e.def;
+            }
+            return null;
         }
 
         static EnemyDefinition PickFromTable(SpawnEntry[] entries)

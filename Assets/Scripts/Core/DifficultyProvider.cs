@@ -13,7 +13,7 @@ namespace VD.Core
         [SerializeField] WaveDifficultyConfig config;
 
         float _elapsed;
-        bool _wasPlaying;
+        GameState _prevState = GameState.Boot;
         int _lastWave = 1;
 
         /// <summary>편집 데이터(툴/디버그).</summary>
@@ -37,10 +37,15 @@ namespace VD.Core
 
         void Update()
         {
-            bool playing = GameManager.Instance == null || GameManager.Instance.State == GameState.Playing;
-            if (playing && !_wasPlaying) ResetRun();   // (재)시작 진입 → 리셋
-            _wasPlaying = playing;
-            if (!playing) return;
+            var gm = GameManager.Instance;
+            GameState state = gm == null ? GameState.Playing : gm.State;
+
+            // (재)시작 진입 시에만 리셋 — 일시정지(Paused)→재개는 이어감(설정창 열어도 웨이브 유지).
+            if (state == GameState.Playing && _prevState != GameState.Playing && _prevState != GameState.Paused)
+                ResetRun();
+            _prevState = state;
+            if (state != GameState.Playing) return;
+            if (gm != null && gm.CombatFrozen) return;   // 튜토리얼 등 전투 정지 중엔 웨이브 시계도 멈춤
 
             _elapsed += Time.deltaTime;   // timeScale 0(일시정지/게임오버)이면 dt=0 → 자연 정지
 
@@ -62,6 +67,7 @@ namespace VD.Core
         {
             if (config == null) return;
             string msg = config.BannerFor(wave);   // ≤60 로테이션 / 61+ 고정 / wave1 없음
+            Debug.Log($"[TEMP] Wave {wave} 진입 — banner: {(string.IsNullOrEmpty(msg) ? "(없음)" : msg)}");   // 검증용
             if (!string.IsNullOrEmpty(msg))
                 GameManager.Instance?.Events?.RaiseDifficultyBanner(msg);
         }

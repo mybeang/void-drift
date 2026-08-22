@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84413b2d8cc810b4780e158366bf8f0b, type: 3}
   m_Name: WaveDifficultyConfig
   m_EditorClassIdentifier: VD.Runtime::VD.Core.WaveDifficultyConfig
-  secondsPerWave: 60
+  secondsPerWave: 30
   scaledWaveMax: 60
   capBase: 10
   capIncrement: 1

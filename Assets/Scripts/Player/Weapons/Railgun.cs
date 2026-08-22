@@ -18,6 +18,7 @@ namespace VD.Player
         readonly int _maxPierce;
         readonly float _damageDecay;
         readonly float _coneHalfAngle;
+        readonly float _coneStartRadius;
         readonly float _aimRange;
         readonly float _streamSpacing;
 
@@ -30,7 +31,7 @@ namespace VD.Player
         /// <summary>최대 관통 수 강화(누적) — 한 줄기가 뚫는 몹 수 +amount(상한 <see cref="MaxPierceCap"/>).</summary>
         public void AddPierce(int amount) => _bonusPierce += amount;
 
-        public Railgun(float fireInterval, float projectileSpeed, float projectileLifetime, int maxPierce, float damageDecay, float coneHalfAngle, float aimRange, float streamSpacing, int startLevel)
+        public Railgun(float fireInterval, float projectileSpeed, float projectileLifetime, int maxPierce, float damageDecay, float coneHalfAngle, float coneStartRadius, float aimRange, float streamSpacing, int startLevel)
             : base(startLevel)
         {
             _fireInterval = fireInterval;
@@ -39,6 +40,7 @@ namespace VD.Player
             _maxPierce = maxPierce;
             _damageDecay = damageDecay;
             _coneHalfAngle = coneHalfAngle;
+            _coneStartRadius = coneStartRadius;
             _aimRange = aimRange;
             _streamSpacing = streamSpacing;
         }
@@ -55,7 +57,7 @@ namespace VD.Player
 
             // 조준 방향 = 축(FirePoint.forward). 원뿔 안에 적 있으면 스냅. 타겟 없어도 직선 발사.
             Vector3 dir = ctx.FirePoint.forward;
-            if (ctx.TryConeTarget(_aimRange, _coneHalfAngle, out Vector3 aimPoint))
+            if (ctx.TryConeTarget(_aimRange, _coneHalfAngle, _coneStartRadius, out Vector3 aimPoint))
                 dir = (aimPoint - ctx.FirePoint.position).normalized;
             Quaternion rot = Quaternion.LookRotation(dir, Vector3.up);
 

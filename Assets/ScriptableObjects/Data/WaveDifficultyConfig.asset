@@ -26,13 +26,13 @@ MonoBehaviour:
   post60GrowthPeriodSec: 30
   statCurves:
   - kind: 0
-    baseValue: 30
-    maxValue: 300
+    baseValue: 50
+    maxValue: 1000
     startWave: 1
     endWave: 60
   - kind: 1
-    baseValue: 500
-    maxValue: 1000
+    baseValue: 800
+    maxValue: 2000
     startWave: 40
     endWave: 60
   - kind: 2

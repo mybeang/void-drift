@@ -38,11 +38,9 @@ namespace VD.Core
         [Tooltip("색별 크리스탈 자식. 드랍 색 롤에 따라 하나만 활성. 페이드는 전 자식 캐시라 무관")]
         [SerializeField] GameObject[] colorVisuals;
 
-        [Header("페이드아웃 (플레이어 평면 통과 후 흐려짐, I-5)")]
-        [Tooltip("페이드 시작선을 플레이어 z보다 앞으로(+Z, 오브가 도달하기 전) 당기는 거리. 0=플레이어 평면부터, 양수면 그만큼 앞에서 흐려지기 시작. 수치 Day5")]
-        [SerializeField] float fadeStartOffset = 5f;
-        [Tooltip("페이드 시작선을 지난 뒤 이 거리만큼 흐르는 동안 알파를 1→0으로 선형 감소. despawn(z<=despawnZ) 전에 완전투명이 될 필요는 없음 — '흐려짐이 인지될' 수준으로만 튜닝하면 됨(반납은 despawnZ 기준 유지). 0 이하면 페이드 비활성. 수치 Day5")]
-        [SerializeField] float fadeDistance = 20f;
+        // 페이드아웃 밴드(월드 Z) — red(fadeStartZ, 여기부터 흐려짐)→blue(fadeEndZ, 완전투명). OrbPool이 주입(단일 소스+기즈모).
+        float _fadeStartZ = -3f;
+        float _fadeEndZ = -25f;
 
         Transform _target;
         Action<Orb> _return;
@@ -78,18 +76,22 @@ namespace VD.Core
                 if (colorVisuals[i] != null) colorVisuals[i].SetActive(i == colorIndex);
         }
 
-        /// <summary>풀 Get 시 호출 — 타깃(플레이어)·반납 콜백·자석 보너스 배선 + 캡처 상태 리셋.</summary>
-        public void OnSpawned(Transform target, Action<Orb> returnToPool, float magnetBonus)
+        /// <summary>풀 Get 시 호출 — 타깃(플레이어)·반납 콜백·자석 보너스·페이드 밴드(Z) 배선 + 캡처 상태 리셋.</summary>
+        public void OnSpawned(Transform target, Action<Orb> returnToPool, float magnetBonus, float fadeStartZ, float fadeEndZ)
         {
             _target = target;
             _return = returnToPool;
             _magnetBonus = magnetBonus;
+            _fadeStartZ = fadeStartZ;
+            _fadeEndZ = fadeEndZ;
             _captured = false;
             _lastAlpha = -1f;   // 재사용 풀: 이전 사이클의 페이드 잔상 제거
             SetAlpha(1f);       // 또렷한 상태로 시작
         }
 
-        /// <summary>파티클 4종의 _BaseColor 알파를 원본×<paramref name="a"/>로 세팅(MPB, 공유 재질 안전). I-5 페이드.</summary>
+        /// <summary>파티클 _BaseColor를 원본×<paramref name="a"/>로 세팅(MPB, 공유 재질 안전) — <b>RGB·알파 전 채널 곱</b>.
+        /// 크리스탈 재질이 프리멀티플라이드 알파(SrcOne/DstOneMinusSrcA)라 알파만 낮추면 애디티브로 남는다 → RGB까지 함께 낮춰야 사라짐.
+        /// (애디티브·알파블렌드 재질도 전 채널 곱이면 동일하게 페이드.)</summary>
         void SetAlpha(float a)
         {
             if (_fadeRenderers == null) return;
@@ -101,9 +103,7 @@ namespace VD.Core
                 var r = _fadeRenderers[i];
                 if (r == null) continue;
                 r.GetPropertyBlock(_mpb);
-                Color c = _baseColors[i];
-                c.a *= a;
-                _mpb.SetColor(BaseColorID, c);
+                _mpb.SetColor(BaseColorID, _baseColors[i] * a);   // RGB·A 전부 스케일 → 어떤 블렌드든 페이드
                 r.SetPropertyBlock(_mpb);
             }
         }
@@ -141,13 +141,11 @@ namespace VD.Core
             // 반경 밖(또는 타깃 없음): 전방(-Z)으로 그냥 흘러 지나침 → 뒤로 빠지면 반납
             transform.position += Vector3.back * (driftSpeed * Time.deltaTime);
 
-            // 페이드아웃(I-5): 미캡처 오브가 페이드 시작선(플레이어 z + 앞당김 오프셋)을 지나면 거리에 비례해 흐려짐.
-            // fadeDistance는 완만함만 조절 — despawnZ 도달 시 알파가 0이 아니어도 아래에서 반납(완전투명 불요).
-            if (_target != null && fadeDistance > 0f)
-            {
-                float past = (_target.position.z + fadeStartOffset) - transform.position.z;   // 양수 = 시작선 통과
-                SetAlpha(past <= 0f ? 1f : 1f - past / fadeDistance);
-            }
+            // 페이드아웃(red→blue Z밴드): z ≥ fadeStartZ(red)=또렷, z ≤ fadeEndZ(blue)=투명, 사이 선형.
+            // 캡처된 오브는 위에서 SetAlpha(1)로 복원(끌려오는 중엔 안 흐려짐). 반납은 despawnZ 기준 유지.
+            float denom = _fadeStartZ - _fadeEndZ;
+            if (Mathf.Abs(denom) > 0.01f)
+                SetAlpha(1f - Mathf.Clamp01((_fadeStartZ - transform.position.z) / denom));
 
             if (transform.position.z <= despawnZ) _return?.Invoke(this);
         }

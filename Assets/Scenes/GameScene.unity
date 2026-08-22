@@ -2009,6 +2009,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: VD.Runtime::VD.Core.OrbPool
   prefab: {fileID: 4821000016379537057, guid: ac72bb33cc219cc4ea7a4c0ff3574915, type: 3}
   prewarmCount: 16
+  fadeStartZ: 10
+  fadeEndZ: -10
+  drawFadeGizmo: 1
+  gizmoHalfSize: {x: 26, y: 13}
 --- !u!4 &509099121
 Transform:
   m_ObjectHideFlags: 0
@@ -2935,7 +2939,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 10
   far clip plane: 300
   field of view: 55
   orthographic: 0
@@ -10487,6 +10491,14 @@ PrefabInstance:
     - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: aimConeHalfAngle
       value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: aimConeStartRadius
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4716115734946056527, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
+      propertyPath: railConeStartRadius
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4798779706923505197, guid: 28b7a862f8f657a4f9116435a88e2d90, type: 3}
       propertyPath: m_Name

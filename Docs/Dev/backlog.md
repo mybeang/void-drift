@@ -44,7 +44,7 @@
 | **M2** | 에디터 커스텀 툴 (핵심 어필) | 🔴 | 🟢 **완료**(M2-1~2-5✅, 다음 M3) | [backlog-M2.md](backlog-M2.md) | SO DB + 적 조합 오서링 + 유효성 경고 + Addressables + 스폰 연결 |
 | **M3** | 적 다양성 & 3choice 풀 (Must 완성) | 🔴 | 🔴 미착수 | [backlog-M3.md](backlog-M3.md) | 이동/공격 AI 모듈, 아키타입, 최소 강화 풀 |
 | **M4** | 확장 (Should) | 🟡 | 🟡 미착수 | [backlog-M4.md](backlog-M4.md) | 무기 3종·레벨, 실드, 난이도 페이즈, 에디터 툴 2~3층, VFX, 하이스코어 |
-| **M5** | 빌드 & 폴리싱 (Must 빌드 + Nice) | 🔴/🟢 | 🔴 미착수 | [backlog-M5.md](backlog-M5.md) | 모바일 가로 Android 빌드 + 데모영상 + (Nice)사운드/특수기능/Firebase |
+| **M5** | 빌드 & 폴리싱 (Must 빌드 + Nice) | 🔴/🟢 | 🟡 진행중 (M5-9·5-5·5-10 ✅) | [backlog-M5.md](backlog-M5.md) | 모바일 가로 Android 빌드 + 데모영상 + (Nice)사운드/특수기능/Firebase |
 
 > 빌드 순서: **M0 → M1 → M2 → M3** 까지가 Must 코어. 이후 M4 Should, M5는 모바일 빌드(Must)를 앞당겨 M3 직후에 1차 실행 권장(빌드 리스크 조기 발견).
 
@@ -55,7 +55,7 @@
 - **수치 미정(Day5)**: 이동 감도/데드존, 발사 간격, 적 스탯 전반, 레벨 임계값 곡선, 페이즈 길이/상승률/점프폭, 처치 점수값, 무기 레벨 수치. → 대부분 **에디터 툴/SO 데이터**로 관리(하드코딩 지양).
 - **미해결 결정**: 실드 버튼 좌/우 옵션, 데미지 넘버 도입 여부, 월드스페이스 체력바 도입 여부(빨간 피격 연출로 대체 가능).
 - **확인 필요**: 임포트 우주선 에셋 중 적/플레이어 배분. (~~Input System 활성 핸들러~~·~~R3.Unity 설치 여부~~ → M0-3에서 해소: New 단독 / 설치)
-- **이슈 트래커**: [issues.md](issues.md) — I-1 이동 관성감(보류).
+- **이슈 트래커**: [issues.md](issues.md) — **열림**: I-5(라인 통과 오브 페이드 튜닝 파킹) · **I-7**(SFX 끊김 — 연사 중 적 파괴음 겹침 시 기관총음 끊김, 보류). I-1~4·I-6 해결.
 
 ## 진행 로그
 
@@ -90,4 +90,8 @@
 | 2026-08-19 | **M2-3 완료(`[x]`)** — ⭐UI Toolkit 오서링 창(공고 1순위). `Assets/Scripts/Editor/Authoring/`: 재사용 베이스 `SoTableEditorView<T>`(VisualElement — 목록 `MultiColumnListView`+상세 `PropertyField`+New/Delete/Reload+선택전환/창닫힘 저장+Name 편집+`CustomizeDetail` 훅) 위에 `EnemyTableEditorView`(컬럼 ⚠·archetype·moveAI·attackAI·Range + 공격AI별 stats 필드 실시간 비활성)+`EnemyAuthoringWindow`(메뉴 `Window/Void Drift/Enemy Authoring`)+`SoTableEditor.uss`. 확장성=도메인별 에디터를 베이스로 저렴하게(별창/탭은 2번째 때 결정). 왕복 검증·에러 0. |
 | 2026-08-20 | **M2-4 완료(`[x]`, a~e)** — 유효성 경고(테이블→검증 툴 격상). R1·R2=`VD.Core.EnemyValidation.Validate`→`EnemyWarning` 리스트, R3(비주얼 `archetype:` 라벨 교차)=`VD.Editor`의 `AppendLabelWarning`(에디터 전용 Addressables API라 Editor층 불가피). 표시=경고박스+모순 필드 red(`.so-field-error`)+목록 행 ⚠, 실시간. **차단 아님(비차단 저장)**. e=창 실측(사용자 육안) 통과. 다음 = M2-5(툴 데이터→런타임 스폰). |
 | 2026-08-20 | **M2-5 완료(`[x]`, a~f) ⇒ M2 완료** — 툴 데이터→런타임 스폰(**조립형/빌더**). 공통 로직 셸(`Enemy.prefab` 비주얼 분리) + 주입 조립: `EnemyBuilder`가 ①비주얼(`EnemyVisualCache` Addressables 로드→`AttachVisual`) ②effective 스탯(`StatScaler`×`DifficultyProvider` 배율 1.0 스텁→`ApplyStats`). `EnemySpawner` DB=`SpawnEntry[]`(def+weight) **가중 랜덤**+프리로드. 스탯 3층 분리(base RO/배율/effective). **스코프=비주얼+스탯만**(AI=M3, 드랍오브 데이터화·실배율=이후). Play 검증: 22체 3종 모델·가중 분포·SO별 스탯 반영·에러 0(사용자 육안). 기술문서 [06_EnemyPipeline.md](06_EnemyPipeline.md) 작성. 이슈 I-2(플레이어 Aim 어색) 등록(보류). 다음 = M3. |
+| 2026-08-22 | **M5-9 완료(`[x]`)** — 타이틀 씬. `TitleController`(VD.UI): 배경 `voidDriftTitle`+로고 `logo`(우상단)+`HighScoreRepository.Best` 표기, 하단 우측 **게임 시작/환경설정/게임 종료**(Sci-Fi UI `button1` 스프라이트 스왑, SUIT). 시작→`SceneTransition`("GameScene") 이클립스 와이프, 종료→`Application.Quit`. **⇒ 타이틀→게임→결과→타이틀 루프 성립.** Play 검증. |
+| 2026-08-22 | **M5-5 완료(`[x]`)** — 사운드/BGM. `AudioManager`(VD.Core, DontDestroyOnLoad 싱글톤·프리팹, 3씬)+`GameAudioMixer`(Master→BGM/SFX, 노출 MasterVol/BgmVol/SfxVol). 씬별 BGM 자동전환 + SFX 13종(3D `PlaySfx`/2D `PlayUi`) 배선(무기 발사·명중·적사망/자폭·피격[`DamageSource` 분기]·실드·UI 버튼). 3D=빈 보이스 선택, 무기음 트리밍. 기술문서 [07_AudioSystem.md](07_AudioSystem.md). 잔여 = **I-7**(보류). |
+| 2026-08-22 | **M5-10 완료(`[x]`)** — 사운드 설정창. `SettingsPanel` 프리팹(Sci-Fi UI window+슬라이더 3종[마스터/BGM/SFX]+퍼센트+닫기), 값=`AudioManager` 볼륨 API+PlayerPrefs 영속. **노출=타이틀(환경설정 버튼)+인게임(HUD 좌하단 기어, 열면 일시정지)**, 연결=`SettingsOpener`. Play 검증(열기·동기화·%·일시정지·재개). |
+| 2026-08-22 | **문서 다이어그램 Mermaid화** — Dev 기술문서(01·02·03·05·06)의 ASCII 다이어그램을 Mermaid로 변환. 신규 [07_AudioSystem.md](07_AudioSystem.md) 작성(Mermaid). |
 | 2026-08-21 | **M4-10 완료(`[x]`) ⇒ M4 기능 구현 전부 완료** — 로컬 하이스코어 + 게임오버 결과 화면(프로젝트 첫 씬 전환). 저장=**교체 이음새** `IHighScoreStore`→로컬 `LocalObscureStore`(persistentDataPath `.vdsys.dat`, **AES-256+SHA256 무결성 해시**, 변조 시 0 폴백)→**DB 역할 SO** `HighScoreRepository`(`Best`/`LastScore` 인메모리 씬전달/`Commit`·`LastWasRecord`). **Firebase(M5-7)=store 교체.** `GameOverFlow`(GameScene)=GameOver→폭발 `CFXR Explosion 1`(×1.5, 프리즈 중 unscaled)+플레이어 `SetActive(false)`→1.5s→`Commit`→`SceneTransition`(**이클립스 와이프**=절차적 검은 원 좌→우, DontDestroyOnLoad·unscaled). ResultScene=Cam+EventSystem+Canvas(GAME OVER/신기록!/SCORE/BEST/다시하기·타이틀)+`ResultView`. Play 검증(사용자). 이슈 **I-5**(라인 통과 페이드아웃) 신설. 남은 후속=밸런싱 데이터 일괄+M4-8 검증. |

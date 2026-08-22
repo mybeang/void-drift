@@ -119,7 +119,7 @@ namespace VD.UI
         static bool IsPlaying()
         {
             var gm = GameManager.Instance;
-            return gm == null || gm.State == GameState.Playing;   // 단독 테스트 허용
+            return gm == null || (gm.State == GameState.Playing && !gm.CombatFrozen);   // 단독 테스트 허용
         }
     }
 }

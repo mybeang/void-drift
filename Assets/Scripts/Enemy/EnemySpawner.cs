@@ -78,29 +78,25 @@ namespace VD.Enemy
 
         IEnumerable<UnityEngine.AddressableAssets.AssetReferenceGameObject> DistinctVisuals()
         {
-            // 기본 표 + 모든 페이즈 프로파일(M4-6)의 적 비주얼 프리로드(캐시가 GUID로 dedupe).
+            // 스폰 표의 적 비주얼 프리로드(캐시가 GUID로 dedupe). 웨이브 밴드 프로파일 비주얼은 3-4에서 합류.
             foreach (var entry in spawnTable)
                 if (entry.def != null) yield return entry.def.visual;
-
-            if (difficulty != null)
-                foreach (var prof in difficulty.Profiles())
-                    if (prof.table != null)
-                        foreach (var e in prof.table)
-                            if (e.def != null) yield return e.def.visual;
         }
 
         void Update()
         {
             if (!_ready || !IsPlaying() || pool == null) return;
 
+            // 3-1: 웨이브 기반 동시상한 + 주기(전부 WaveDifficultyConfig 데이터). 상한 미만일 때 주기마다 1마리씩.
+            int cap = difficulty != null ? difficulty.CurrentCap : 10;
+
             _cooldown -= Time.deltaTime;
             if (_cooldown > 0f) return;
+            if (pool.ActiveCount >= cap) return;            // 상한 도달 → 슬롯 빌 때까지 보류(쿨다운 0 유지 → 다음 프레임 재시도)
+            _cooldown = difficulty != null ? difficulty.CurrentInterval : 2f;
 
-            // M4-6: 현재 페이즈의 스폰 프로파일 우선(적 조합·밀도). 없으면 기본 표/간격으로 폴백.
-            SpawnProfileDefinition prof = CurrentProfile();
-            _cooldown = (prof != null && prof.spawnInterval > 0f) ? prof.spawnInterval : spawnInterval;
-
-            EnemyDefinition def = PickWeighted(prof);
+            // WHICH 적 = 표 가중 랜덤. 웨이브 밴드 스폰 프로파일은 3-4에서 추가.
+            EnemyDefinition def = PickFromTable(spawnTable);
             if (def == null) return;
 
             float x = UnityEngine.Random.Range(spawnXRange.x, spawnXRange.y);
@@ -112,41 +108,6 @@ namespace VD.Enemy
             e.transform.SetPositionAndRotation(new Vector3(x, y, spawnZ), Quaternion.LookRotation(Vector3.back, Vector3.up));
             e.Launch(despawnZ);           // 속도는 적 stats에서(M2-5b). 여기선 despawn 경계만 주입
             e.SetDropHandler(DropOrb);   // 실사망 시 오브 드랍(M1-5). dropOrb 데이터화(비주얼/xp)는 이후
-        }
-
-        /// <summary>현재 페이즈의 유효한 스폰 프로파일(테이블에 유효 항목 있음). 없으면 null(기본 표 폴백, M4-6).</summary>
-        SpawnProfileDefinition CurrentProfile()
-        {
-            var phase = difficulty != null ? difficulty.CurrentPhase : null;
-            var prof = phase != null ? phase.spawnProfile : null;
-            if (prof != null && prof.table != null)
-                foreach (var e in prof.table)
-                    if (e.def != null && e.weight > 0f) return prof;   // 유효 항목 하나라도 있으면 사용
-            return null;
-        }
-
-        /// <summary>가중 랜덤으로 스폰 후보 하나 선택 — 프로파일(있으면) 아니면 기본 표. 유효 없으면 null.</summary>
-        EnemyDefinition PickWeighted(SpawnProfileDefinition prof)
-        {
-            if (prof != null) return PickFromEntries(prof.table);
-            return PickFromTable(spawnTable);
-        }
-
-        static EnemyDefinition PickFromEntries(SpawnProfileDefinition.Entry[] entries)
-        {
-            float total = 0f;
-            foreach (var e in entries)
-                if (e.def != null && e.weight > 0f) total += e.weight;
-            if (total <= 0f) return null;
-
-            float r = UnityEngine.Random.Range(0f, total);
-            foreach (var e in entries)
-            {
-                if (e.def == null || e.weight <= 0f) continue;
-                r -= e.weight;
-                if (r <= 0f) return e.def;
-            }
-            return null;
         }
 
         static EnemyDefinition PickFromTable(SpawnEntry[] entries)
@@ -190,7 +151,7 @@ namespace VD.Enemy
         static bool IsPlaying()
         {
             var gm = GameManager.Instance;
-            return gm == null || gm.State == GameState.Playing;
+            return gm == null || (gm.State == GameState.Playing && !gm.CombatFrozen);
         }
     }
 }

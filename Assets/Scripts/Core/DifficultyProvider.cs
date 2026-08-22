@@ -3,83 +3,67 @@ using UnityEngine;
 namespace VD.Core
 {
     /// <summary>
-    /// 전역 난이도 → 적 스탯 배율 제공 (M4-5, progression-design §2). 적 빌더가 스폰 시 <see cref="StatMultiplier"/>를
-    /// base 스탯에 곱해 effective를 만든다(<see cref="StatScaler"/>). base(적 테이블 RO)·배율(여기)·effective(런타임) 3층 분리.
-    /// <para><b>곡선</b>: <see cref="phases"/>(순서 배열)를 경과시간(Playing 중)으로 훑어 —
-    /// 페이즈 내부는 start→end 선형 <b>미세 상승</b>, 경계는 다음 페이즈 start로 <b>점프</b> + <see cref="GameEvents.DifficultyBanner"/> 안내.
-    /// 마지막 페이즈 이후는 그 end 배율로 유지. 수치는 SO(오서링 툴 편집). 리런(재-Playing) 시 경과시간 리셋.</para>
+    /// 웨이브 난이도 런타임 소스(밸런싱 패스 3-1·3-2). 데이터는 전부 <see cref="WaveDifficultyConfig"/>(오서링 툴 편집),
+    /// 여기선 경과시간→웨이브를 세고 config의 공식으로 <b>동시상한·소환주기·스탯·승급배너</b>를 제공한다.
+    /// <para>(구 페이즈 배율 스텁 폐기 — 스탯은 단일배율이 아니라 스탯별 곡선(config).) 리런(재-Playing) 시 리셋.</para>
     /// </summary>
     public sealed class DifficultyProvider : MonoBehaviour
     {
-        [Tooltip("난이도 페이즈 순서 배열(시간축). Difficulty Authoring 창에서 편집한 SO를 순서대로 배치")]
-        [SerializeField] DifficultyPhaseDefinition[] phases = new DifficultyPhaseDefinition[0];
+        [Tooltip("웨이브 난이도 설정 SO(Difficulty Authoring 편집). 비우면 안전 폴백(wave만).")]
+        [SerializeField] WaveDifficultyConfig config;
 
         float _elapsed;
-        float _currentMult = 1f;
-        int _phaseIndex;
         bool _wasPlaying;
+        int _lastWave = 1;
 
-        /// <summary>현재 전역 스탯 배율(체력/속도/데미지). 스폰 시 빌더가 질의.</summary>
-        public float StatMultiplier => _currentMult;
+        /// <summary>편집 데이터(툴/디버그).</summary>
+        public WaveDifficultyConfig Config => config;
 
-        /// <summary>현재 페이즈 정의(스폰 프로파일 질의용, M4-6). 페이즈 없으면 null.</summary>
-        public DifficultyPhaseDefinition CurrentPhase =>
-            (phases != null && _phaseIndex >= 0 && _phaseIndex < phases.Length) ? phases[_phaseIndex] : null;
+        /// <summary>현재 웨이브. 1웨이브=config.secondsPerWave(기본 60초).</summary>
+        public int CurrentWave => config != null ? config.WaveAt(_elapsed) : Mathf.FloorToInt(_elapsed / 60f) + 1;
 
-        /// <summary>모든 페이즈의 스폰 프로파일 열거(M4-6 프리로드용). null 프로파일은 스킵.</summary>
-        public System.Collections.Generic.IEnumerable<SpawnProfileDefinition> Profiles()
+        /// <summary>현재 동시 필드 적 상한.</summary>
+        public int CurrentCap => config != null ? config.CapAt(CurrentWave) : 10;
+
+        /// <summary>현재 소환 주기(초).</summary>
+        public float CurrentInterval => config != null ? config.IntervalAt(CurrentWave) : 2f;
+
+        /// <summary>현재 웨이브의 스탯 값. 아직 미등장(예: 고체력 wave&lt;40)이면 false.</summary>
+        public bool TryStatValue(WaveStatKind kind, out float value)
         {
-            if (phases == null) yield break;
-            foreach (var p in phases)
-                if (p != null && p.spawnProfile != null) yield return p.spawnProfile;
+            value = 0f;
+            return config != null && config.TryStatValue(kind, CurrentWave, _elapsed, out value);
         }
 
         void Update()
         {
             bool playing = GameManager.Instance == null || GameManager.Instance.State == GameState.Playing;
-            if (playing && !_wasPlaying) ResetRun();   // (재)시작 진입 → 경과시간 리셋
+            if (playing && !_wasPlaying) ResetRun();   // (재)시작 진입 → 리셋
             _wasPlaying = playing;
             if (!playing) return;
 
             _elapsed += Time.deltaTime;   // timeScale 0(일시정지/게임오버)이면 dt=0 → 자연 정지
-            Recompute();
+
+            int w = CurrentWave;
+            if (w != _lastWave)
+            {
+                OnWaveChanged(w);
+                _lastWave = w;
+            }
         }
 
         void ResetRun()
         {
             _elapsed = 0f;
-            _phaseIndex = 0;
-            _currentMult = (phases != null && phases.Length > 0 && phases[0] != null) ? phases[0].startMultiplier : 1f;
+            _lastWave = 1;   // wave 1 시작(승급 배너 없음)
         }
 
-        void Recompute()
+        void OnWaveChanged(int wave)
         {
-            if (phases == null || phases.Length == 0) { _currentMult = 1f; return; }
-
-            // 누적 지속시간으로 현재 페이즈 탐색.
-            float t = _elapsed;
-            int idx = 0;
-            while (idx < phases.Length - 1 && phases[idx] != null && t >= phases[idx].durationSeconds)
-            {
-                t -= phases[idx].durationSeconds;
-                idx++;
-            }
-
-            var p = phases[idx];
-            if (p != null)
-            {
-                float dur = Mathf.Max(0.01f, p.durationSeconds);
-                float frac = Mathf.Clamp01(t / dur);   // 마지막 페이즈는 초과 시 1로 클램프 → end 유지
-                _currentMult = Mathf.Lerp(p.startMultiplier, p.endMultiplier, frac);
-            }
-
-            // 페이즈 경계 진입 → 안내 문구 발행(첫 페이즈 0은 경계 아님).
-            if (idx != _phaseIndex)
-            {
-                _phaseIndex = idx;
-                if (p != null && !string.IsNullOrEmpty(p.bannerText))
-                    GameManager.Instance?.Events?.RaiseDifficultyBanner(p.bannerText);
-            }
+            if (config == null) return;
+            string msg = config.BannerFor(wave);   // ≤60 로테이션 / 61+ 고정 / wave1 없음
+            if (!string.IsNullOrEmpty(msg))
+                GameManager.Instance?.Events?.RaiseDifficultyBanner(msg);
         }
     }
 }

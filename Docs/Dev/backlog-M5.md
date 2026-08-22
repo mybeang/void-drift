@@ -53,6 +53,7 @@
 - **작업**: 마스터/BGM/SFX 볼륨 슬라이더 + 저장(PlayerPrefs 등). M5-5 오디오 믹서/시스템 연동. 노출 위치(타이틀 or 일시정지)는 착수 시 결정.
 - **의존**: M5-5. **문서**: ui-design.md
 - **✅ 완료(노출=타이틀+인게임 둘 다, 사용자 확정)**: `SettingsPanel`(VD.UI) 프리팹 1개(`Assets/Prefabs/SettingsPanel.prefab`) — Sci-Fi UI `window_transparent` + 딤 배경, **마스터/BGM/SFX 슬라이더 3종**(트랙=`progress_bar_background`·시안 필·`bar_blue` 핸들) + **퍼센트 표기** + `button1` 닫기. 값=`AudioManager.SetMaster/Bgm/SfxVolume`(실시간) + **PlayerPrefs 영속**(닫을 때 Save), 시작 시 `AudioManager`가 저장값 로드·적용. **타이틀**: 게임시작·게임종료 사이 "환경설정" 버튼(정지 없음). **인게임**: HUD 좌하단 **기어 버튼**(`button1` + `Settings_Simple_Icons_UI` 기어) → 열면 `GameManager.Pause()`(timeScale 0), 닫으면 `Resume()`. 버튼→패널 연결 = `SettingsOpener`(VD.UI, `pauseGameWhileOpen` 인스턴스별). Play 검증: 타이틀/인게임 열기·동기화·%·일시정지·재개 정상. **세부(딤 농도·기어 크기/색·슬라이더 두께)=사용자 조정.**
+- **▶ 밸런싱 패스 확장(2026-08-22)**: `SettingsPanel`→**`SoundSettingsPanel`** 개명(스크립트+프리팹, GUID 유지). 인게임에 **일시정지 메뉴 `SettingsPanel`**(신규, VD.UI, HUD Canvas) 추가 — **기어 버튼+ESC**로 여닫고 열면 정지, Sci-Fi 창+**5버튼**(게임 재개[닫기+Resume]·새로 시작[`SceneTransition`→GameScene]·환경 설정[→`SoundSettingsPanel.Open`]·타이틀로[→TitleScene]·게임 종료[빌드=`Application.Quit`, 에디터=플레이 정지]). 인게임 `SoundSettingsPanel` 인스턴스=`pauseGameWhileOpen=false`(메뉴가 정지 소유, 닫으면 메뉴 복귀). 타이틀=무변경(`SettingsOpener`→SoundSettingsPanel 직접). Play 검증 완료(사용자). 레이아웃/문구=시작값(사용자 조정).
 
 ### M5-8 · 스폰 패턴 / 포메이션 (편대·웨이브 형태) 🟢
 - **목적**: 적이 **랜덤 위치로만** 나오지 않고, 편대/웨이브 등 **공간적 패턴(모양)** 으로도 등장해 연출·난이도 다양화.

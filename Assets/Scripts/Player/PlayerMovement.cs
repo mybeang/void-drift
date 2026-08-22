@@ -147,7 +147,7 @@ namespace VD.Player
         {
             var gm = GameManager.Instance;
             // GameManager 없이 단독 테스트 시엔 동작 허용.
-            return gm == null || gm.State == GameState.Playing;
+            return gm == null || (gm.State == GameState.Playing && !gm.CombatFrozen);
         }
     }
 }

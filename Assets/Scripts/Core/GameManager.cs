@@ -19,6 +19,10 @@ namespace VD.Core
         /// <summary>현재 상태(스냅샷). 스트림 구독은 <see cref="GameEvents.State"/>.</summary>
         public GameState State => _events.State.CurrentValue;
 
+        /// <summary>전투(이동·사격·스폰) 일시 보류 플래그. 튜토리얼 창 등이 사용 —
+        /// <b>timeScale은 건드리지 않는다</b>(Pause와 구분). true면 Playing이어도 각 시스템의 IsPlaying이 false로 간주.</summary>
+        public bool CombatFrozen { get; set; }
+
         void Awake()
         {
             if (Instance != null && Instance != this)

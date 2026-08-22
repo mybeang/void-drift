@@ -72,3 +72,12 @@
 - 드래그 감도 / 데드존 실제 수치 (Day5)
 - 실드 버튼 위치 좌/우 옵션 여부
 - HUD 레이아웃 (인게임 UI 방식 TODO와 연동)
+
+## 8. 조작법 튜토리얼 (구현됨, 밸런싱 패스 2026-08-22)
+
+- **게임 시작 시** 조작법 창이 HUD 위를 덮는다(`VD.UI.TutorialController`, `Tutorial Canvas`, Sci-Fi 창).
+- 열려 있는 동안 **이동·사격·스폰 정지** — `GameManager.CombatFrozen`(각 시스템 `IsPlaying`이 검사). **`timeScale`은 0 아님** → 배경/BGM 유지.
+- **"시작하기"** → 전투 시작. **"다시 보지 않기"** 체크 → `PlayerPrefs`(`vd_tutorial_hidden`) 저장, 다음부터 스킵.
+- **PC/모바일 분기**(`Application.isMobilePlatform`): PC=WASD·화살표(이동)/Space(실드)/ESC(메뉴)(키보드 아이콘), 모바일=가로 폰+조이스틱+손가락 그림. **디버그 키(P/G/R)는 안내하지 않음.**
+- **ESC = 인게임 일시정지 메뉴**(사운드 설정·새로 시작·타이틀·종료). 상세 = [backlog-M5.md](../Dev/backlog-M5.md) M5-10 밸런싱 패스 확장.
+- 레이아웃/문구/폰 그림 = 시작값(디테일 튜닝 대상).

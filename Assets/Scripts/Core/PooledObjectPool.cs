@@ -20,6 +20,9 @@ namespace VD.Core
 
         readonly Queue<T> _idle = new Queue<T>();
 
+        /// <summary>현재 대여(활성) 중인 항목 수 — Get에서 +1, Return에서 -1. 스폰 동시 상한 판정 등에 사용(3-1).</summary>
+        public int ActiveCount { get; private set; }
+
         protected virtual void Awake()
         {
             for (int i = 0; i < prewarmCount; i++)
@@ -35,6 +38,7 @@ namespace VD.Core
         {
             T item = _idle.Count > 0 ? _idle.Dequeue() : Create();
             item.gameObject.SetActive(true);
+            ActiveCount++;
             OnGet(item);
             return item;
         }
@@ -46,6 +50,7 @@ namespace VD.Core
             OnReturn(item);
             item.gameObject.SetActive(false);
             _idle.Enqueue(item);
+            if (ActiveCount > 0) ActiveCount--;
         }
 
         /// <summary>인스턴스 생성. 기본은 prefab을 이 풀의 자식으로 Instantiate. 필요 시 하위가 override.</summary>

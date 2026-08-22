@@ -4,11 +4,10 @@ using UnityEngine;
 namespace VD.Core
 {
     /// <summary>
-    /// 스폰 프로파일 SO (M4-6, enemy-design §5 3층) — 한 인스턴스 = 하나의 "적 조합 + 밀도" 큐레이션.
-    /// <see cref="DifficultyPhaseDefinition.spawnProfile"/>로 페이즈에 연결되어, 그 페이즈 동안
-    /// <see cref="EnemySpawner"/>가 <see cref="table"/>에서 가중 랜덤으로 적을 뽑고 <see cref="spawnInterval"/>로 밀도를 정한다.
-    /// <para>페이즈 경계마다 프로파일이 바뀌면 "순한 조합 → 위협 조합" 전환이 됨(progression-design §2).
-    /// 수치·조합은 Day5(오서링 툴 `Spawn Profile Authoring` 편집). 프로파일 미지정/빈 테이블이면 스포너가 기본 표로 폴백.</para>
+    /// 스폰 프로파일 SO (M4-6 → 밸런싱 패스 3-4에서 웨이브 밴드에 연결 예정) — 한 인스턴스 = 하나의 "적 조합 + 밀도" 큐레이션.
+    /// <see cref="table"/>에서 가중 랜덤으로 적을 뽑고 <see cref="spawnInterval"/>로 밀도를 정한다.
+    /// <para>구 페이즈 연결(<c>DifficultyPhaseDefinition</c>)은 폐기 — 3-4에서 <b>웨이브 밴드</b>별 프로파일로 재배선한다.
+    /// 수치·조합은 오서링 툴 `Spawn Profile Authoring` 편집.</para>
     /// </summary>
     [CreateAssetMenu(fileName = "Spawn_", menuName = "Void Drift/Spawn Profile")]
     public sealed class SpawnProfileDefinition : ScriptableObject

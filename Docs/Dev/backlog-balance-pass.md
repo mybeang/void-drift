@@ -19,13 +19,14 @@
 - **구현**: `VD.UI.JoystickView`(가상 스틱 단일 소스, 입력+시각, `Value`=단위 원반) + `VD.Player.PlayerMovement`가 `Value` 읽어 이동(키보드와 동일 파이프라인·합산, `dragGain`→`pointerMoveSpeed`). GameScene HUD Canvas에 `Joystick/Base/Knob` 배선. 튜닝값: `pointerMoveSpeed=1.2`·`knobRadius=90`·`deadZone01=0.08`.
 - **DoD**: ✅ 방향 유지 시 그 방향으로 계속 이동, 떼면 정지, 세기 비례 속도. (Play 검증 완료, 사용자 확인.)
 
-## ② 조작법 튜토리얼 (시작 시)  🔴
-- [ ] 게임 시작 시 **큰 창으로 덮기**(HUD 위). 열려 있는 동안:
-  - [ ] **이동·사격·스폰 전부 정지**(입력 차단 + `PlayerShooter`/`EnemySpawner` 게이트). `timeScale`은 0 아님.
-- [ ] **"닫기"** → 이동·사격·스폰 시작.
-- [ ] **"더 이상 보지 않기"** 체크 → PlayerPrefs 저장, 다음부턴 스킵.
-- [ ] **PC/모바일 조작법 자동 분기**(플랫폼 감지). 감지 불가 시 한 창에 둘 다 표기.
-- **DoD**: 시작 시 창 표시(그동안 전투 정지) → 닫기 시 게임 시작, "더 이상 보지 않기" 시 재시작해도 안 뜸.
+## ② 조작법 튜토리얼 (시작 시)  ✅ 완료(2026-08-22)
+- [x] 게임 시작 시 **큰 창으로 덮기**(HUD 위, `Tutorial Canvas` order 150 + Sci-Fi `window_transparent`). 열려 있는 동안:
+  - [x] **이동·사격·스폰 전부 정지** — **`GameManager.CombatFrozen`** 게이트 추가(timeScale **0 아님** → 배경/BGM 유지). `PlayerMovement`·`PlayerShooter`·`EnemySpawner`·`JoystickView`의 `IsPlaying()`이 함께 검사.
+- [x] **"시작하기"(닫기)** → `CombatFrozen=false`로 이동·사격·스폰 시작.
+- [x] **"다시 보지 않기"** 토글 → PlayerPrefs(`vd_tutorial_hidden`) 저장, 다음부턴 스킵. (에디터는 `forceShowInEditor`로 항상 표시 — 스킵 테스트 시 끄기.)
+- [x] **PC/모바일 조작법 자동 분기**(`Application.isMobilePlatform`). PC 패널=WASD·화살표(이동)/Space(실드)/ESC(메뉴)(GameInputControllerIconsFree 아이콘, **디버그 키 미포함**), 모바일 패널=가로 폰 그림+조이스틱+손가락(hand-point)+텍스트.
+- **구현**: `VD.UI.TutorialController` + 씬 `Tutorial Canvas`(GameScene). ESC=일시정지 메뉴(Part A와 연동). 레이아웃/문구=시작값(사용자 조정).
+- **DoD**: ✅ 시작 시 창 표시(전투 정지·배경 유지) → 시작하기 시 전투 시작, "다시 보지 않기" 시 재시작해도 안 뜸. (Play 검증 완료, 사용자 확인.)
 - **참고**: 조작 문서 = [controls-design.md](../Designs/controls-design.md).
 
 ---
@@ -121,8 +122,8 @@
 - [ ] **드랍 모델 변경**: 적 SO의 `dropOrb` 고정 → **웨이브 기반 색 롤**(스폰/드랍 시 결정). (기존 `Orb`/`OrbPool`·비주얼 교체 로직 재사용)
 - **DoD**: wave 30 전 녹색만, 30~50 녹+빨, 50+ 녹+빨+파 5:3:1.
 
-### 3-6. 플레이어  🔴
-- [ ] `PlayerHealth.maxHp` **100 → 50**.
+### 3-6. 플레이어  ✅ 완료(2026-08-22)
+- [x] `PlayerHealth.maxHp` **100 → 50** (스크립트 기본값 + `Player.prefab` 직렬화값 둘 다).
 - [x] 초기 데미지 = `PlayerShooter.projectileDamage` = **10** (이미 그 값, 변경 없음).
 
 ---

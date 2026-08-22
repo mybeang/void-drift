@@ -208,8 +208,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: VD.Runtime::VD.Player.PlayerMovement
   targetCamera: {fileID: 0}
-  dragGain: 5
-  deadZoneScreenFraction: 0.002
+  joystick: {fileID: 0}
+  pointerMoveSpeed: 1.2
   maxSpeed: 45
   keyboardMoveSpeed: 1.2
   spawnViewportPoint: {x: 0.5, y: 0.42}
@@ -295,7 +295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4142458973e493e4482adc82bbff83f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: VD.Runtime::VD.Player.PlayerHealth
-  maxHp: 100
+  maxHp: 50
 --- !u!114 &4744366412177827500
 MonoBehaviour:
   m_ObjectHideFlags: 0

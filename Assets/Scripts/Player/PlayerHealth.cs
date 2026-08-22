@@ -14,8 +14,8 @@ namespace VD.Player
     [RequireComponent(typeof(Collider))]
     public sealed class PlayerHealth : MonoBehaviour
     {
-        [Tooltip("최대 체력. 수치는 Day5")]
-        [SerializeField] float maxHp = 100f;
+        [Tooltip("최대 체력(밸런싱 패스 3-6: 100→50)")]
+        [SerializeField] float maxHp = 50f;
 
         float _hp;
         bool _dead;

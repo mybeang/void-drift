@@ -183,7 +183,7 @@ namespace VD.Player
         {
             var gm = GameManager.Instance;
             // GameManager 없이 단독 테스트 시엔 동작 허용(PlayerMovement와 동일 정책).
-            return gm == null || gm.State == GameState.Playing;
+            return gm == null || (gm.State == GameState.Playing && !gm.CombatFrozen);
         }
 
         // [임시] 조준 원뿔 시각화(기관총) — 축 + 사거리 끝 링 + 스포크. 검증·튜닝 후 제거.

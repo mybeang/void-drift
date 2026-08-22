@@ -41,9 +41,9 @@ namespace VD.Enemy
             float vScale = def.visualScale > 0f ? def.visualScale : 1f;
             shell.AttachVisual(_cache != null ? _cache.Resolve(def.visual) : null, vScale);
 
-            // ② 스탯: base × 전역배율 → effective (배율 소스 없으면 1.0)
-            float mult = _difficulty != null ? _difficulty.StatMultiplier : 1f;
-            shell.ApplyStats(StatScaler.Scale(def.stats, mult));
+            // ② 스탯: 현재 base 그대로. 웨이브 곡선(healthClass/공격AI → WaveDifficultyConfig) 배선은 3-2.
+            //    (구 단일 전역배율 폐기 — DifficultyProvider는 웨이브·스탯곡선 소스로 개편됨.)
+            shell.ApplyStats(def.stats);
 
             // ③ AI 모듈 부착: 이동(M3-1) + 공격(M3-2).
             shell.SetMoveBehaviour(ResolveMove(def.moveAI));
